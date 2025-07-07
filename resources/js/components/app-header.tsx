@@ -11,7 +11,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key } from 'lucide-react';
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -20,6 +20,80 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: '/dashboard',
         icon: Home,
+    },
+    {
+        title: 'Kas & Bank',
+        href: '/kas',
+        icon: Wallet,
+        children: [
+            {
+                title: 'Dashboard',
+                href: '/kas',
+                icon: LayoutGrid,
+                permission: 'kas.view',
+            },
+            {
+                title: 'Transaksi Kas',
+                href: '/kas/cash-transactions',
+                icon: Wallet,
+                permission: 'kas.cash-transaction.view',
+            },
+            {
+                title: 'Bank Account',
+                href: '/kas/bank-accounts',
+                icon: Building2,
+                permission: 'kas.bank-account.view',
+            },
+            {
+                title: 'Transaksi Bank',
+                href: '/kas/bank-transactions',
+                icon: Landmark,
+                permission: 'kas.bank-transaction.view',
+            },
+            {
+                title: 'Transaksi Giro',
+                href: '/kas/giro-transactions',
+                icon: Receipt,
+                permission: 'kas.giro-transaction.view',
+            },
+        ],
+    },
+    {
+        title: 'Akuntansi',
+        href: '/akuntansi',
+        icon: Calculator,
+        children: [
+            {
+                title: 'Dashboard',
+                href: '/akuntansi',
+                icon: Calculator,
+                permission: 'akuntansi.view',
+            },
+            {
+                title: 'Daftar Akun',
+                href: '/akuntansi/daftar-akun',
+                icon: BookOpen,
+                permission: 'akuntansi.daftar-akun.view',
+            },
+            {
+                title: 'Jurnal',
+                href: '/akuntansi/jurnal',
+                icon: FileText,
+                permission: 'akuntansi.jurnal.view',
+            },
+            {
+                title: 'Buku Besar',
+                href: '/akuntansi/buku-besar',
+                icon: Book,
+                permission: 'akuntansi.buku-besar.view',
+            },
+            {
+                title: 'Laporan Keuangan',
+                href: '/akuntansi/laporan',
+                icon: BarChart,
+                permission: 'akuntansi.laporan.view',
+            },
+        ],
     },
     {
         title: 'Settings',
@@ -119,14 +193,13 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                     <div className="flex h-full flex-col justify-between text-sm">
                                         <div className="flex flex-col space-y-2">
                                             {filteredNavItems.map((item) => (
-                                                <div key={item.title} className="space-y-2">
-                                                    <Link 
-                                                        href={item.href} 
-                                                        className={cn(
-                                                            "flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                                                            page.url.startsWith(item.href) && "bg-accent text-accent-foreground"
-                                                        )}
-                                                    >
+                                                <div key={item.title} className="space-y-2">                                    <Link 
+                                        href={item.href} 
+                                        className={cn(
+                                            "flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                                            (page.url === item.href || page.url.startsWith(item.href + '/')) && "bg-accent text-accent-foreground"
+                                        )}
+                                    >
                                                         {item.icon && <Icon iconNode={item.icon} className="h-5 w-5 shrink-0" />}
                                                         <span>{item.title}</span>
                                                     </Link>
@@ -186,7 +259,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                 <DropdownMenuTrigger
                                                     className={cn(
                                                         "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground",
-                                                        page.url.startsWith(item.href) && activeItemStyles,
+                                                        (page.url === item.href || page.url.startsWith(item.href + '/')) && activeItemStyles,
                                                         'h-9 cursor-pointer px-3',
                                                     )}
                                                 >
@@ -213,7 +286,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                         </DropdownMenuItem>
                                                     ))}
                                                 </DropdownMenuContent>
-                                                {page.url.startsWith(item.href) && (
+                                                {(page.url === item.href || page.url.startsWith(item.href + '/')) && (
                                                     <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
                                                 )}
                                             </DropdownMenu>
@@ -223,14 +296,14 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                     href={item.href}
                                                     className={cn(
                                                         "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground",
-                                                        page.url === item.href && activeItemStyles,
+                                                        (page.url === item.href || page.url.startsWith(item.href + '/')) && activeItemStyles,
                                                         'h-9 cursor-pointer px-3',
                                                     )}
                                                 >
                                                     {item.icon && <Icon iconNode={item.icon} className="mr-2 h-4 w-4" />}
                                                     {item.title}
                                                 </Link>
-                                                {page.url === item.href && (
+                                                {(page.url === item.href || page.url.startsWith(item.href + '/')) && (
                                                     <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
                                                 )}
                                             </>
