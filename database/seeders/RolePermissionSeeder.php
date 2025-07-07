@@ -91,5 +91,7 @@ class RolePermissionSeeder extends Seeder
             'dashboard.view'
         ])->pluck('id');
         $userRole->permissions()->sync($userPermissions);
+
+        $this->command->info('Roles and permissions created successfully!');
     }
 }
