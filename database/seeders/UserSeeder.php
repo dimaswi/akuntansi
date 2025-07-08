@@ -24,19 +24,19 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Dimas Wisnu Wirawan',
                 'nip' => '2023.01.02.03',
-                'password' => bcrypt('password123'),
+                'password' => bcrypt('12345'),
                 'role_id' => $adminRole?->id,
             ],
             [
                 'name' => 'Manager User',
                 'nip' => '2023.01.02.04',
-                'password' => bcrypt('password123'),
+                'password' => bcrypt('12345'),
                 'role_id' => $managerRole?->id,
             ],
             [
                 'name' => 'Regular User',
                 'nip' => '2023.01.02.05',
-                'password' => bcrypt('password123'),
+                'password' => bcrypt('12345'),
                 'role_id' => $userRole?->id,
             ]
         ];

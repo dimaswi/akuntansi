@@ -128,7 +128,7 @@ export default function PermissionIndex({ permissions, modules, filters }: Props
         router.visit(route("permissions.create", { module: newModuleName }));
     };
 
-    const getModuleColor = (module: string) => {
+    const getModuleColor = (module: string | null | undefined) => {
         const colors = [
             "bg-blue-100 text-blue-800",
             "bg-green-100 text-green-800",
@@ -137,6 +137,11 @@ export default function PermissionIndex({ permissions, modules, filters }: Props
             "bg-pink-100 text-pink-800",
             "bg-indigo-100 text-indigo-800",
         ];
+        
+        if (!module) {
+            return "bg-gray-100 text-gray-800";
+        }
+        
         const hash = module.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return colors[hash % colors.length];
     };
@@ -295,7 +300,7 @@ export default function PermissionIndex({ permissions, modules, filters }: Props
                                         <TableCell className="font-medium">{permission.display_name}</TableCell>
                                         <TableCell>
                                             <Badge className={getModuleColor(permission.module)}>
-                                                {permission.module}
+                                                {permission.module || "No Module"}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="max-w-xs truncate">{permission.description || "-"}</TableCell>
