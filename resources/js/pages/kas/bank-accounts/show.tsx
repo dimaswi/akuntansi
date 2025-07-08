@@ -67,19 +67,16 @@ export default function ShowBankAccount() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Bank Account - ${bank_account.kode_rekening}`} />
 
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
+            <div className="p-4">
+                <div className="flex items-center justify-between pb-4">
                     <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
+                        <div className="p-2 rounded-lg">
                             <Building2 className="h-6 w-6 text-blue-600" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">
                                 Detail Bank Account
                             </h1>
-                            <p className="text-muted-foreground">
-                                Informasi lengkap rekening bank {bank_account.kode_rekening}
-                            </p>
                         </div>
                     </div>
                     <div className="flex space-x-2">

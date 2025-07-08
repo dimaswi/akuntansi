@@ -149,7 +149,17 @@ export default function CashTransactionEdit() {
                                 </AlertDescription>
                             </Alert>
                         ) : (
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            <>
+                                {/* Info */}
+                                <Alert className="border-blue-200 bg-blue-50 mb-6">
+                                    <AlertCircle className="h-4 w-4 text-blue-600" />
+                                    <AlertDescription className="text-blue-800">
+                                        <strong>Panduan:</strong> Untuk penerimaan kas, pilih "Sumber Dana" dari mana uang diterima (misal: Pendapatan Penjualan). 
+                                        Untuk pengeluaran kas, pilih "Tujuan Penggunaan Dana" kemana uang digunakan (misal: Biaya Operasional).
+                                    </AlertDescription>
+                                </Alert>
+
+                                <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Nomor Transaksi (Read Only) */}
                                     <div className="space-y-2">
@@ -241,28 +251,65 @@ export default function CashTransactionEdit() {
                                         )}
                                     </div>
 
-                                    {/* Akun Lawan */}
+                                    {/* Sumber/Tujuan Dana */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="daftar_akun_lawan_id">Akun Lawan *</Label>
+                                        <Label htmlFor="daftar_akun_lawan_id">
+                                            {data.jenis_transaksi === 'penerimaan' || data.jenis_transaksi === 'uang_muka_penerimaan' || data.jenis_transaksi === 'transfer_masuk' ? 
+                                                'Sumber Dana *' : 'Tujuan Penggunaan Dana *'
+                                            }
+                                        </Label>
                                         <Select
                                             value={data.daftar_akun_lawan_id}
                                             onValueChange={(value) => setData('daftar_akun_lawan_id', value)}
                                             required
                                         >
                                             <SelectTrigger className={errors.daftar_akun_lawan_id ? 'border-red-500' : ''}>
-                                                <SelectValue placeholder="Pilih akun lawan" />
+                                                <SelectValue placeholder={
+                                                    data.jenis_transaksi === 'penerimaan' || data.jenis_transaksi === 'uang_muka_penerimaan' || data.jenis_transaksi === 'transfer_masuk' ? 
+                                                    'Pilih sumber dana' : 'Pilih tujuan penggunaan dana'
+                                                } />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {(daftarAkun || []).map((akun: DaftarAkun) => (
-                                                    <SelectItem key={akun.id} value={akun.id.toString()}>
-                                                        {akun.kode_akun} - {akun.nama_akun}
-                                                    </SelectItem>
-                                                ))}
+                                                {data.jenis_transaksi === 'penerimaan' || data.jenis_transaksi === 'uang_muka_penerimaan' || data.jenis_transaksi === 'transfer_masuk' ? (
+                                                    // Untuk penerimaan kas - tampilkan akun pendapatan, modal, kewajiban
+                                                    (daftarAkun || [])
+                                                        .filter((akun: DaftarAkun) => 
+                                                            akun.jenis_akun === 'pendapatan' || 
+                                                            akun.jenis_akun === 'kewajiban' ||
+                                                            akun.jenis_akun === 'modal' ||
+                                                            akun.jenis_akun === 'aset'
+                                                        )
+                                                        .map((akun: DaftarAkun) => (
+                                                            <SelectItem key={akun.id} value={akun.id.toString()}>
+                                                                {akun.kode_akun} - {akun.nama_akun}
+                                                            </SelectItem>
+                                                        ))
+                                                ) : (
+                                                    // Untuk pengeluaran kas - tampilkan akun biaya/beban, aset, kewajiban
+                                                    (daftarAkun || [])
+                                                        .filter((akun: DaftarAkun) => 
+                                                            akun.jenis_akun === 'biaya' || 
+                                                            akun.jenis_akun === 'beban' ||
+                                                            akun.jenis_akun === 'aset' ||
+                                                            akun.jenis_akun === 'kewajiban'
+                                                        )
+                                                        .map((akun: DaftarAkun) => (
+                                                            <SelectItem key={akun.id} value={akun.id.toString()}>
+                                                                {akun.kode_akun} - {akun.nama_akun}
+                                                            </SelectItem>
+                                                        ))
+                                                )}
                                             </SelectContent>
                                         </Select>
                                         {errors.daftar_akun_lawan_id && (
                                             <p className="text-sm text-red-500">{errors.daftar_akun_lawan_id}</p>
                                         )}
+                                        <p className="text-xs text-gray-500">
+                                            {data.jenis_transaksi === 'penerimaan' || data.jenis_transaksi === 'uang_muka_penerimaan' || data.jenis_transaksi === 'transfer_masuk' ? 
+                                                'Pilih akun yang menjadi sumber dana yang diterima' : 
+                                                'Pilih akun yang menjadi tujuan penggunaan dana'
+                                            }
+                                        </p>
                                     </div>
 
                                     {/* Pihak Terkait */}
@@ -343,6 +390,7 @@ export default function CashTransactionEdit() {
                                     </Button>
                                 </div>
                             </form>
+                            </>
                         )}
                     </CardContent>
                 </Card>

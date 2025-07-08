@@ -100,8 +100,7 @@ interface Props {
 }
 
 const breadcrumbs = [
-    { title: "Dashboard", href: route("dashboard") },
-    { title: "Kas & Bank", href: "#" },
+    { title: <Receipt className="h-4 w-4" />, href: route("kas.index") },
     { title: "Transaksi Giro", href: "#" },
 ];
 
@@ -258,17 +257,14 @@ export default function GiroTransactionIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Transaksi Giro" />
 
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
+            <div className="p-4">
+                <div className="flex items-center justify-between pb-4">
                     <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
+                        <div className="p-2 rounded-lg">
                             <Receipt className="h-6 w-6 text-blue-600" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">Transaksi Giro</h1>
-                            <p className="text-muted-foreground">
-                                Kelola giro masuk dan giro keluar perusahaan
-                            </p>
                         </div>
                     </div>
                     <Button onClick={() => router.visit(route("kas.giro-transactions.create"))}>

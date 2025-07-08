@@ -80,15 +80,14 @@ export default function EditBankAccount() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Edit Bank Account - ${bank_account.kode_rekening}`} />
 
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
+            <div className="p-4">
+                <div className="flex items-center justify-between pb-4">
                     <div className="flex items-center space-x-3">
-                        <div className="rounded-lg bg-blue-100 p-2">
+                        <div className="rounded-lg p-2">
                             <Building2 className="h-6 w-6 text-blue-600" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">Edit Bank Account</h1>
-                            <p className="text-muted-foreground">Perbarui informasi rekening bank {bank_account.kode_rekening}</p>
                         </div>
                     </div>
                     <Button variant="outline" onClick={() => router.visit(route('kas.bank-accounts.show', bank_account.id))}>

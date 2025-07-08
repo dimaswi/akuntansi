@@ -93,11 +93,16 @@ class CashTransactionController extends Controller
             ->orderBy('kode_akun')
             ->get();
 
-        $akunLawan = DaftarAkun::aktif()->orderBy('kode_akun')->get();
+        // Daftar akun untuk sumber/tujuan transaksi
+        $daftarAkun = DaftarAkun::aktif()
+            ->whereIn('jenis_akun', ['pendapatan', 'biaya', 'beban', 'kewajiban', 'modal', 'aset'])
+            ->orderBy('jenis_akun')
+            ->orderBy('kode_akun')
+            ->get();
 
         return Inertia::render('kas/cash-transactions/create', [
             'daftarAkunKas' => $akunKas,
-            'daftarAkun' => $akunLawan,
+            'daftarAkun' => $daftarAkun,
             'jenisTransaksi' => [
                 'penerimaan' => 'Penerimaan Kas',
                 'pengeluaran' => 'Pengeluaran Kas',
@@ -158,12 +163,17 @@ class CashTransactionController extends Controller
             ->orderBy('kode_akun')
             ->get();
 
-        $akunLawan = DaftarAkun::aktif()->orderBy('kode_akun')->get();
+        // Daftar akun untuk sumber/tujuan transaksi
+        $daftarAkun = DaftarAkun::aktif()
+            ->whereIn('jenis_akun', ['pendapatan', 'biaya', 'beban', 'kewajiban', 'modal', 'aset'])
+            ->orderBy('jenis_akun')
+            ->orderBy('kode_akun')
+            ->get();
 
         return Inertia::render('kas/cash-transactions/edit', [
             'cashTransaction' => $cashTransaction,
             'daftarAkunKas' => $akunKas,
-            'daftarAkun' => $akunLawan,
+            'daftarAkun' => $daftarAkun,
             'jenisTransaksi' => [
                 'penerimaan' => 'Penerimaan Kas',
                 'pengeluaran' => 'Pengeluaran Kas',
@@ -339,5 +349,92 @@ class CashTransactionController extends Controller
         }
 
         return $totalSaldo;
+    }
+
+    /**
+     * Otomatis menentukan akun lawan berdasarkan jenis dan kategori transaksi
+     */
+    private function getAkunLawan($jenisTransaksi, $kategoriTransaksi)
+    {
+        // Mapping kategori ke akun
+        $akunMapping = [
+            'penerimaan' => [
+                'penjualan' => '4.1.1.01', // Pendapatan Penjualan
+                'piutang' => '1.1.2.01', // Piutang Usaha
+                'investasi' => '3.1.1.01', // Modal Disetor
+                'bunga' => '4.2.1.01', // Pendapatan Bunga
+                'lain_lain' => '4.9.1.01' // Pendapatan Lain-lain
+            ],
+            'pengeluaran' => [
+                'pembelian' => '5.1.1.01', // Biaya Pembelian
+                'gaji' => '5.2.1.01', // Biaya Gaji
+                'operasional' => '5.3.1.01', // Biaya Operasional
+                'pinjaman' => '2.2.1.01', // Hutang Jangka Panjang
+                'lain_lain' => '5.9.1.01' // Biaya Lain-lain
+            ]
+        ];
+
+        // Tentukan jenis transaksi utama
+        $jenisUtama = 'penerimaan';
+        if (in_array($jenisTransaksi, ['pengeluaran', 'uang_muka_pengeluaran', 'transfer_keluar'])) {
+            $jenisUtama = 'pengeluaran';
+        }
+
+        // Ambil kode akun dari mapping
+        $kodeAkun = $akunMapping[$jenisUtama][$kategoriTransaksi] ?? null;
+
+        if (!$kodeAkun) {
+            // Fallback ke akun default
+            $kodeAkun = $jenisUtama === 'penerimaan' ? '4.9.1.01' : '5.9.1.01';
+        }
+
+        // Cari akun berdasarkan kode, jika tidak ada buat default
+        $akun = DaftarAkun::where('kode_akun', $kodeAkun)->first();
+        
+        if (!$akun) {
+            // Buat akun default jika belum ada
+            $akun = $this->createDefaultAkun($jenisUtama, $kategoriTransaksi, $kodeAkun);
+        }
+
+        return $akun->id;
+    }
+
+    /**
+     * Buat akun default jika belum ada
+     */
+    private function createDefaultAkun($jenisUtama, $kategoriTransaksi, $kodeAkun)
+    {
+        $namaAkun = match($kategoriTransaksi) {
+            'penjualan' => 'Pendapatan Penjualan',
+            'piutang' => 'Piutang Usaha',
+            'investasi' => 'Modal Disetor',
+            'bunga' => 'Pendapatan Bunga',
+            'pembelian' => 'Biaya Pembelian',
+            'gaji' => 'Biaya Gaji',
+            'operasional' => 'Biaya Operasional',
+            'pinjaman' => 'Hutang Jangka Panjang',
+            default => $jenisUtama === 'penerimaan' ? 'Pendapatan Lain-lain' : 'Biaya Lain-lain'
+        };
+
+        $jenisAkun = match($kategoriTransaksi) {
+            'penjualan', 'bunga', 'lain_lain' => 'pendapatan',
+            'piutang' => 'aset',
+            'investasi' => 'modal',
+            'pembelian', 'gaji', 'operasional' => 'biaya',
+            'pinjaman' => 'kewajiban',
+            default => $jenisUtama === 'penerimaan' ? 'pendapatan' : 'biaya'
+        };
+
+        $saldoNormal = in_array($jenisAkun, ['aset', 'biaya']) ? 'debit' : 'kredit';
+
+        return DaftarAkun::create([
+            'kode_akun' => $kodeAkun,
+            'nama_akun' => $namaAkun,
+            'jenis_akun' => $jenisAkun,
+            'saldo_normal' => $saldoNormal,
+            'level' => 1,
+            'is_aktif' => true,
+            'keterangan' => 'Auto-generated for cash transactions'
+        ]);
     }
 }

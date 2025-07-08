@@ -118,13 +118,27 @@ class BankTransactionController extends Controller
             ->orderBy('nama_bank')
             ->get(['id', 'kode_rekening', 'nama_bank', 'nama_rekening', 'nomor_rekening']);
 
+        // Daftar akun untuk akun lawan transaksi bank
         $daftarAkun = DaftarAkun::aktif()
+            ->whereIn('jenis_akun', ['pendapatan', 'biaya', 'beban', 'kewajiban', 'modal', 'aset'])
+            ->orderBy('jenis_akun')
             ->orderBy('kode_akun')
             ->get(['id', 'kode_akun', 'nama_akun', 'jenis_akun']);
 
         return Inertia::render('kas/bank-transactions/create', [
             'bank_accounts' => $bankAccounts,
             'daftar_akun' => $daftarAkun,
+            'jenisTransaksi' => [
+                'setoran' => 'Setoran',
+                'penarikan' => 'Penarikan',
+                'transfer_masuk' => 'Transfer Masuk',
+                'transfer_keluar' => 'Transfer Keluar',
+                'kliring_masuk' => 'Kliring Masuk',
+                'kliring_keluar' => 'Kliring Keluar',
+                'bunga_bank' => 'Bunga Bank',
+                'biaya_admin' => 'Biaya Admin',
+                'pajak_bunga' => 'Pajak Bunga',
+            ],
         ]);
     }
 
@@ -153,7 +167,7 @@ class BankTransactionController extends Controller
 
         $validated['user_id'] = Auth::id();
         $validated['status'] = 'draft';
-        $validated['tanggal_efektif'] = $validated['tanggal_efektif'] ?: $validated['tanggal_transaksi'];
+        $validated['tanggal_efektif'] = $validated['tanggal_efektif'] ?? $validated['tanggal_transaksi'];
 
         $bankTransaction = BankTransaction::create($validated);
 
@@ -197,7 +211,10 @@ class BankTransactionController extends Controller
             ->orderBy('nama_bank')
             ->get(['id', 'kode_rekening', 'nama_bank', 'nama_rekening', 'nomor_rekening']);
 
+        // Daftar akun untuk akun lawan transaksi bank
         $daftarAkun = DaftarAkun::aktif()
+            ->whereIn('jenis_akun', ['pendapatan', 'biaya', 'beban', 'kewajiban', 'modal', 'aset'])
+            ->orderBy('jenis_akun')
             ->orderBy('kode_akun')
             ->get(['id', 'kode_akun', 'nama_akun', 'jenis_akun']);
 
@@ -205,6 +222,17 @@ class BankTransactionController extends Controller
             'bank_transaction' => $bankTransaction,
             'bank_accounts' => $bankAccounts,
             'daftar_akun' => $daftarAkun,
+            'jenisTransaksi' => [
+                'setoran' => 'Setoran',
+                'penarikan' => 'Penarikan',
+                'transfer_masuk' => 'Transfer Masuk',
+                'transfer_keluar' => 'Transfer Keluar',
+                'kliring_masuk' => 'Kliring Masuk',
+                'kliring_keluar' => 'Kliring Keluar',
+                'bunga_bank' => 'Bunga Bank',
+                'biaya_admin' => 'Biaya Admin',
+                'pajak_bunga' => 'Pajak Bunga',
+            ],
         ]);
     }
 
@@ -231,7 +259,7 @@ class BankTransactionController extends Controller
             'daftar_akun_lawan_id' => 'required|exists:daftar_akun,id',
         ]);
 
-        $validated['tanggal_efektif'] = $validated['tanggal_efektif'] ?: $validated['tanggal_transaksi'];
+        $validated['tanggal_efektif'] = $validated['tanggal_efektif'] ?? $validated['tanggal_transaksi'];
 
         $bankTransaction->update($validated);
 

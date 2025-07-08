@@ -36,13 +36,14 @@ interface BankTransaction {
     id: number;
     nomor_transaksi: string;
     tanggal_transaksi: string;
+    tanggal_efektif?: string;
     bank_account_id: number;
     jenis_transaksi: string;
     jumlah: number;
-    daftar_akun_id: number;
+    daftar_akun_lawan_id: number;
     keterangan: string;
     pihak_terkait?: string;
-    referensi?: string;
+    nomor_referensi?: string;
     status: string;
 }
 
@@ -66,13 +67,14 @@ export default function EditBankTransaction() {
     const { data, setData, put, processing, errors, reset } = useForm({
         nomor_transaksi: bank_transaction.nomor_transaksi || "",
         tanggal_transaksi: bank_transaction.tanggal_transaksi || "",
+        tanggal_efektif: bank_transaction.tanggal_efektif || "",
         bank_account_id: bank_transaction.bank_account_id?.toString() || "",
         jenis_transaksi: bank_transaction.jenis_transaksi || "",
         jumlah: bank_transaction.jumlah?.toString() || "",
-        daftar_akun_id: bank_transaction.daftar_akun_id?.toString() || "",
+        daftar_akun_lawan_id: bank_transaction.daftar_akun_lawan_id?.toString() || "",
         keterangan: bank_transaction.keterangan || "",
         pihak_terkait: bank_transaction.pihak_terkait || "",
-        referensi: bank_transaction.referensi || "",
+        nomor_referensi: bank_transaction.nomor_referensi || "",
         status: bank_transaction.status || "draft",
     });
 
@@ -170,6 +172,24 @@ export default function EditBankTransaction() {
                                         </div>
 
                                         <div className="space-y-2">
+                                            <Label htmlFor="tanggal_efektif">Tanggal Efektif</Label>
+                                            <Input
+                                                id="tanggal_efektif"
+                                                type="date"
+                                                value={data.tanggal_efektif}
+                                                onChange={(e) => setData("tanggal_efektif", e.target.value)}
+                                                className={errors.tanggal_efektif ? "border-red-500" : ""}
+                                                placeholder="Kosongkan jika sama dengan tanggal transaksi"
+                                            />
+                                            {errors.tanggal_efektif && (
+                                                <p className="text-sm text-red-500">{errors.tanggal_efektif}</p>
+                                            )}
+                                            <p className="text-xs text-gray-500">
+                                                Kosongkan jika sama dengan tanggal transaksi
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
                                             <Label htmlFor="bank_account_id">
                                                 Bank Account <span className="text-red-500">*</span>
                                             </Label>
@@ -236,14 +256,16 @@ export default function EditBankTransaction() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="daftar_akun_id">
-                                                Akun Terkait <span className="text-red-500">*</span>
+                                            <Label htmlFor="daftar_akun_lawan_id">
+                                                {data.jenis_transaksi === 'setoran' || data.jenis_transaksi === 'transfer_masuk' || data.jenis_transaksi === 'kliring_masuk' || data.jenis_transaksi === 'bunga_bank' 
+                                                    ? 'Sumber Dana' 
+                                                    : 'Tujuan Penggunaan Dana'} <span className="text-red-500">*</span>
                                             </Label>
                                             <Select
-                                                value={data.daftar_akun_id}
-                                                onValueChange={(value) => setData("daftar_akun_id", value)}
+                                                value={data.daftar_akun_lawan_id}
+                                                onValueChange={(value) => setData("daftar_akun_lawan_id", value)}
                                             >
-                                                <SelectTrigger className={errors.daftar_akun_id ? "border-red-500" : ""}>
+                                                <SelectTrigger className={errors.daftar_akun_lawan_id ? "border-red-500" : ""}>
                                                     <SelectValue placeholder="Pilih akun" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -254,8 +276,8 @@ export default function EditBankTransaction() {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            {errors.daftar_akun_id && (
-                                                <p className="text-sm text-red-500">{errors.daftar_akun_id}</p>
+                                            {errors.daftar_akun_lawan_id && (
+                                                <p className="text-sm text-red-500">{errors.daftar_akun_lawan_id}</p>
                                             )}
                                         </div>
 
@@ -271,12 +293,12 @@ export default function EditBankTransaction() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="referensi">Referensi</Label>
+                                            <Label htmlFor="nomor_referensi">Referensi</Label>
                                             <Input
-                                                id="referensi"
+                                                id="nomor_referensi"
                                                 type="text"
-                                                value={data.referensi}
-                                                onChange={(e) => setData("referensi", e.target.value)}
+                                                value={data.nomor_referensi}
+                                                onChange={(e) => setData("nomor_referensi", e.target.value)}
                                                 placeholder="No. referensi/dokumen"
                                             />
                                         </div>

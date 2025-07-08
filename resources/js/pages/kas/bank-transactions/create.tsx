@@ -50,13 +50,14 @@ export default function CreateBankTransaction() {
     const { data, setData, post, processing, errors, reset } = useForm({
         nomor_transaksi: "",
         tanggal_transaksi: new Date().toISOString().split('T')[0],
+        tanggal_efektif: "",
         bank_account_id: "",
         jenis_transaksi: "",
         jumlah: "",
-        daftar_akun_id: "",
+        daftar_akun_lawan_id: "",
         keterangan: "",
         pihak_terkait: "",
-        referensi: "",
+        nomor_referensi: "",
         status: "draft",
     });
 
@@ -154,6 +155,24 @@ export default function CreateBankTransaction() {
                                         </div>
 
                                         <div className="space-y-2">
+                                            <Label htmlFor="tanggal_efektif">Tanggal Efektif</Label>
+                                            <Input
+                                                id="tanggal_efektif"
+                                                type="date"
+                                                value={data.tanggal_efektif}
+                                                onChange={(e) => setData("tanggal_efektif", e.target.value)}
+                                                className={errors.tanggal_efektif ? "border-red-500" : ""}
+                                                placeholder="Kosongkan jika sama dengan tanggal transaksi"
+                                            />
+                                            {errors.tanggal_efektif && (
+                                                <p className="text-sm text-red-500">{errors.tanggal_efektif}</p>
+                                            )}
+                                            <p className="text-xs text-gray-500">
+                                                Kosongkan jika sama dengan tanggal transaksi
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
                                             <Label htmlFor="bank_account_id">
                                                 Bank Account <span className="text-red-500">*</span>
                                             </Label>
@@ -220,14 +239,16 @@ export default function CreateBankTransaction() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="daftar_akun_id">
-                                                Akun Terkait <span className="text-red-500">*</span>
+                                            <Label htmlFor="daftar_akun_lawan_id">
+                                                {data.jenis_transaksi === 'setoran' || data.jenis_transaksi === 'transfer_masuk' || data.jenis_transaksi === 'kliring_masuk' || data.jenis_transaksi === 'bunga_bank' 
+                                                    ? 'Sumber Dana' 
+                                                    : 'Tujuan Penggunaan Dana'} <span className="text-red-500">*</span>
                                             </Label>
                                             <Select
-                                                value={data.daftar_akun_id}
-                                                onValueChange={(value) => setData("daftar_akun_id", value)}
+                                                value={data.daftar_akun_lawan_id}
+                                                onValueChange={(value) => setData("daftar_akun_lawan_id", value)}
                                             >
-                                                <SelectTrigger className={errors.daftar_akun_id ? "border-red-500" : ""}>
+                                                <SelectTrigger className={errors.daftar_akun_lawan_id ? "border-red-500" : ""}>
                                                     <SelectValue placeholder="Pilih akun" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -238,8 +259,8 @@ export default function CreateBankTransaction() {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            {errors.daftar_akun_id && (
-                                                <p className="text-sm text-red-500">{errors.daftar_akun_id}</p>
+                                            {errors.daftar_akun_lawan_id && (
+                                                <p className="text-sm text-red-500">{errors.daftar_akun_lawan_id}</p>
                                             )}
                                         </div>
 
@@ -255,12 +276,12 @@ export default function CreateBankTransaction() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="referensi">Referensi</Label>
+                                            <Label htmlFor="nomor_referensi">Referensi</Label>
                                             <Input
-                                                id="referensi"
+                                                id="nomor_referensi"
                                                 type="text"
-                                                value={data.referensi}
-                                                onChange={(e) => setData("referensi", e.target.value)}
+                                                value={data.nomor_referensi}
+                                                onChange={(e) => setData("nomor_referensi", e.target.value)}
                                                 placeholder="No. referensi/dokumen"
                                             />
                                         </div>
