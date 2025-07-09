@@ -209,7 +209,6 @@ export default function DaftarAkunIndex() {
                     <Table>
                         <TableHeader className="bg-gray-100">
                             <TableRow>
-                                <TableHead className="w-[50px]">No.</TableHead>
                                 <TableHead>Kode Akun</TableHead>
                                 <TableHead>Nama Akun</TableHead>
                                 <TableHead>Jenis Akun</TableHead>
@@ -222,16 +221,13 @@ export default function DaftarAkunIndex() {
                         <TableBody>
                             {daftarAkun.data.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                         Tidak ada data ditemukan
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 daftarAkun.data.map((akun, index) => (
                                     <TableRow key={akun.id}>
-                                        <TableCell className="font-medium">
-                                            {(daftarAkun.current_page - 1) * daftarAkun.per_page + index + 1}
-                                        </TableCell>
                                         <TableCell className="font-mono font-medium">
                                             {akun.kode_akun}
                                         </TableCell>
