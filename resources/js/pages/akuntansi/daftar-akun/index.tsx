@@ -236,7 +236,17 @@ export default function DaftarAkunIndex() {
                                             {akun.kode_akun}
                                         </TableCell>
                                         <TableCell>
-                                            <div className={`${akun.level > 1 ? 'ml-' + (akun.level - 1) * 4 : ''}`}>
+                                            <div 
+                                                className="flex items-center"
+                                                style={{ 
+                                                    marginLeft: akun.level > 1 ? `${(akun.level - 1) * 16}px` : '0px' 
+                                                }}
+                                            >
+                                                {akun.level > 1 && (
+                                                    <span className="text-gray-400 mr-2">
+                                                        {'└'.repeat(1)} 
+                                                    </span>
+                                                )}
                                                 {akun.nama_akun}
                                             </div>
                                         </TableCell>

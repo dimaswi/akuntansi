@@ -10,6 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { SearchableAccountSelect } from "@/components/ui/searchable-account-select";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem } from "@/types";
 import { Head, router, useForm, usePage } from "@inertiajs/react";
@@ -256,29 +257,18 @@ export default function EditBankTransaction() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="daftar_akun_lawan_id">
-                                                {data.jenis_transaksi === 'setoran' || data.jenis_transaksi === 'transfer_masuk' || data.jenis_transaksi === 'kliring_masuk' || data.jenis_transaksi === 'bunga_bank' 
-                                                    ? 'Sumber Dana' 
-                                                    : 'Tujuan Penggunaan Dana'} <span className="text-red-500">*</span>
-                                            </Label>
-                                            <Select
+                                            <SearchableAccountSelect
+                                                accounts={daftar_akun || []}
                                                 value={data.daftar_akun_lawan_id}
                                                 onValueChange={(value) => setData("daftar_akun_lawan_id", value)}
-                                            >
-                                                <SelectTrigger className={errors.daftar_akun_lawan_id ? "border-red-500" : ""}>
-                                                    <SelectValue placeholder="Pilih akun" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {(daftar_akun || []).map((akun) => (
-                                                        <SelectItem key={akun.id} value={akun.id.toString()}>
-                                                            {akun.kode_akun} - {akun.nama_akun}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.daftar_akun_lawan_id && (
-                                                <p className="text-sm text-red-500">{errors.daftar_akun_lawan_id}</p>
-                                            )}
+                                                label={
+                                                    (data.jenis_transaksi === 'setoran' || data.jenis_transaksi === 'transfer_masuk' || data.jenis_transaksi === 'kliring_masuk' || data.jenis_transaksi === 'bunga_bank' 
+                                                        ? 'Sumber Dana' 
+                                                        : 'Tujuan Penggunaan Dana') + ' *'
+                                                }
+                                                placeholder="Pilih akun"
+                                                error={errors.daftar_akun_lawan_id}
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
