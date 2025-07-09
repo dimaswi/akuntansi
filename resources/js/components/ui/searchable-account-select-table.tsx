@@ -114,7 +114,7 @@ export function SearchableAccountSelectTable({
     // Close dropdown when clicking outside
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+            if (inputRef.current && !inputRef.current.closest('.relative')?.contains(event.target as Node)) {
                 setOpen(false);
                 setSearchValue("");
                 setHighlightedIndex(-1);
@@ -210,7 +210,14 @@ export function SearchableAccountSelectTable({
                         filteredAccounts.map((account, index) => (
                             <div
                                 key={account.id}
-                                onClick={() => handleSelect(account)}
+                                onMouseDown={(e) => {
+                                    e.preventDefault(); // Prevent input blur
+                                    handleSelect(account);
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSelect(account);
+                                }}
                                 className={cn(
                                     "px-3 py-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0",
                                     "hover:bg-gray-50",

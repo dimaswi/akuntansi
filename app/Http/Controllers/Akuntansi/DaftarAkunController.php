@@ -64,7 +64,7 @@ class DaftarAkunController extends Controller
             'sub_jenis' => 'required|string',
             'saldo_normal' => 'required|in:debit,kredit',
             'induk_akun_id' => 'nullable|exists:daftar_akun,id',
-            'level' => 'required|integer|min:1|max:5',
+            'level' => 'required|integer|min:1|max:10',
             'is_aktif' => 'boolean',
             'keterangan' => 'nullable|string',
         ]);
@@ -121,7 +121,7 @@ class DaftarAkunController extends Controller
             'sub_jenis' => 'required|string',
             'saldo_normal' => 'required|in:debit,kredit',
             'induk_akun_id' => 'nullable|exists:daftar_akun,id',
-            'level' => 'required|integer|min:1|max:5',
+            'level' => 'required|integer|min:1|max:10',
             'is_aktif' => 'boolean',
             'keterangan' => 'nullable|string',
         ]);
