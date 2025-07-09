@@ -76,6 +76,31 @@ export default function CashTransactionCreate() {
         });
     };
 
+    const handleSubmitAndCreateAnother: FormEventHandler = (e) => {
+        e.preventDefault();
+        
+        post('/kas/cash-transactions', {
+            onSuccess: () => {
+                toast.success('Transaksi kas berhasil dibuat');
+                // Reset form untuk membuat transaksi baru
+                setData({
+                    nomor_transaksi: '',
+                    tanggal_transaksi: new Date().toISOString().split('T')[0],
+                    jenis_transaksi: '',
+                    jumlah: '',
+                    keterangan: '',
+                    pihak_terkait: '',
+                    referensi: '',
+                    daftar_akun_kas_id: '',
+                    daftar_akun_lawan_id: '',
+                });
+            },
+            onError: () => {
+                toast.error('Gagal membuat transaksi kas');
+            },
+        });
+    };
+
     const formatCurrency = (value: string) => {
         // Remove non-numeric characters except decimal point
         const numericValue = value.replace(/[^\d]/g, '');
@@ -331,6 +356,25 @@ export default function CashTransactionCreate() {
                                         <>
                                             <Save className="h-4 w-4" />
                                             Simpan
+                                        </>
+                                    )}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={handleSubmitAndCreateAnother}
+                                    disabled={processing}
+                                    className="gap-2"
+                                >
+                                    {processing ? (
+                                        <>
+                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                            Menyimpan...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="h-4 w-4" />
+                                            Simpan & Buat Lagi
                                         </>
                                     )}
                                 </Button>

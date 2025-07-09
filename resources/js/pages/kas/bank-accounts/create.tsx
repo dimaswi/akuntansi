@@ -69,6 +69,34 @@ export default function CreateBankAccount() {
         });
     }
 
+    function submitAndCreateAnother(e: React.FormEvent) {
+        e.preventDefault();
+
+        post(route("kas.bank-accounts.store"), {
+            onSuccess: () => {
+                toast.success("Bank Account berhasil ditambahkan");
+                // Reset form untuk membuat bank account baru
+                reset();
+                setData({
+                    kode_rekening: "",
+                    nama_bank: "",
+                    nama_rekening: "",
+                    nomor_rekening: "",
+                    cabang: "",
+                    saldo_awal: "",
+                    jenis_rekening: "",
+                    daftar_akun_id: "",
+                    keterangan: "",
+                    is_aktif: true,
+                });
+            },
+            onError: (errors) => {
+                console.error("Form errors:", errors);
+                toast.error("Terjadi kesalahan saat menyimpan data");
+            },
+        });
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Tambah Bank Account" />
@@ -284,7 +312,17 @@ export default function CreateBankAccount() {
                         <Button type="submit" disabled={processing}>
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
-                            Simpan
+                            Simpan & Kembali
+                        </Button>
+                        <Button 
+                            type="button" 
+                            variant="secondary" 
+                            onClick={submitAndCreateAnother}
+                            disabled={processing}
+                        >
+                            {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
+                            {!processing && <Save className="mr-2 h-4 w-4" />}
+                            Simpan & Buat Lagi
                         </Button>
                     </div>
                 </form>

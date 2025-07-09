@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, useForm, usePage } from "@inertiajs/react";
+import { router } from "@inertiajs/react";
 import { ArrowLeft, Save, Key, Lock } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -36,6 +37,26 @@ export default function PermissionCreate({ modules, presetModule }: Props) {
         post(route("permissions.store"), {
             onSuccess: () => {
                 toast.success("Permission berhasil ditambahkan");
+                // Reset form untuk membuat permission baru
+                setData({
+                    name: "",
+                    display_name: "",
+                    description: "",
+                    module: presetModule || "",
+                });
+            },
+            onError: () => {
+                toast.error("Gagal menambahkan permission");
+            },
+        });
+    };
+
+    const handleSubmitAndGoBack = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(route("permissions.store"), {
+            onSuccess: () => {
+                toast.success("Permission berhasil ditambahkan");
+                router.visit('/master/permissions');
             },
             onError: () => {
                 toast.error("Gagal menambahkan permission");
@@ -245,7 +266,25 @@ export default function PermissionCreate({ modules, presetModule }: Props) {
                                 ) : (
                                     <>
                                         <Save className="h-4 w-4 mr-2" />
-                                        Simpan Permission
+                                        Simpan & Buat Lagi
+                                    </>
+                                )}
+                            </Button>
+                            <Button 
+                                type="button" 
+                                variant="secondary" 
+                                onClick={handleSubmitAndGoBack}
+                                disabled={processing}
+                            >
+                                {processing ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                        Menyimpan...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4 mr-2" />
+                                        Simpan & Kembali
                                     </>
                                 )}
                             </Button>

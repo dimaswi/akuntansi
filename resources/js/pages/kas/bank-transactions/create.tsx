@@ -79,6 +79,35 @@ export default function CreateBankTransaction() {
         });
     }
 
+    function submitAndCreateAnother(e: React.FormEvent) {
+        e.preventDefault();
+
+        post(route("kas.bank-transactions.store"), {
+            onSuccess: () => {
+                toast.success("Transaksi bank berhasil ditambahkan");
+                // Reset form untuk membuat transaksi baru
+                reset();
+                setData({
+                    nomor_transaksi: "",
+                    tanggal_transaksi: new Date().toISOString().split('T')[0],
+                    tanggal_efektif: "",
+                    bank_account_id: "",
+                    jenis_transaksi: "",
+                    jumlah: "",
+                    daftar_akun_lawan_id: "",
+                    keterangan: "",
+                    pihak_terkait: "",
+                    nomor_referensi: "",
+                    status: "draft",
+                });
+            },
+            onError: (errors) => {
+                console.error("Form errors:", errors);
+                toast.error("Terjadi kesalahan saat menyimpan data");
+            },
+        });
+    }
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("id-ID", {
             style: "currency",
@@ -355,6 +384,16 @@ export default function CreateBankTransaction() {
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
                             Simpan
+                        </Button>
+                        <Button 
+                            type="button" 
+                            variant="secondary" 
+                            onClick={submitAndCreateAnother}
+                            disabled={processing}
+                        >
+                            {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
+                            {!processing && <Save className="mr-2 h-4 w-4" />}
+                            Simpan & Buat Lagi
                         </Button>
                     </div>
                 </form>

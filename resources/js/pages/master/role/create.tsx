@@ -56,6 +56,25 @@ export default function CreateRole() {
         });
     };
 
+    const submitAndCreateAnother: FormEventHandler = (e) => {
+        e.preventDefault();
+
+        post('/master/roles', {
+            onSuccess: () => {
+                toast.success('Role berhasil dibuat');
+                // Reset form untuk membuat role baru
+                setData({
+                    display_name: '',
+                    description: '',
+                    permission_ids: [],
+                });
+            },
+            onError: () => {
+                toast.error('Gagal membuat role');
+            }
+        });
+    };
+
     const handlePermissionChange = (permissionId: number, checked: boolean) => {
         if (checked) {
             setData('permission_ids', [...data.permission_ids, permissionId]);
@@ -237,7 +256,25 @@ export default function CreateRole() {
                             ) : (
                                 <>
                                     <Save className="mr-2 h-4 w-4" />
-                                    Create Role
+                                    Simpan & Kembali
+                                </>
+                            )}
+                        </Button>
+                        <Button 
+                            type="button" 
+                            variant="secondary" 
+                            onClick={submitAndCreateAnother}
+                            disabled={processing}
+                        >
+                            {processing ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="mr-2 h-4 w-4" />
+                                    Simpan & Buat Lagi
                                 </>
                             )}
                         </Button>
