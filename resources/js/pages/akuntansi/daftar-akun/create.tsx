@@ -96,6 +96,31 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
         });
     };
 
+    const handleSubmitAndCreateAnother = (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        post('/akuntansi/daftar-akun', {
+            onSuccess: () => {
+                toast.success('Akun berhasil ditambahkan');
+                // Reset form untuk membuat akun baru
+                setData({
+                    kode_akun: '',
+                    nama_akun: '',
+                    jenis_akun: '',
+                    sub_jenis: '',
+                    saldo_normal: 'debit',
+                    induk_akun_id: '',
+                    level: 1,
+                    is_aktif: true,
+                    keterangan: '',
+                });
+            },
+            onError: () => {
+                toast.error('Gagal menambahkan akun');
+            },
+        });
+    };
+
     const handleJenisAkunChange = (value: string) => {
         setData({
             ...data,
@@ -293,6 +318,24 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                         <>
                                             <Save className="mr-2 h-4 w-4" />
                                             Simpan
+                                        </>
+                                    )}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={handleSubmitAndCreateAnother}
+                                    disabled={processing}
+                                >
+                                    {processing ? (
+                                        <>
+                                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
+                                            Menyimpan...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="mr-2 h-4 w-4" />
+                                            Simpan & Buat Lagi
                                         </>
                                     )}
                                 </Button>

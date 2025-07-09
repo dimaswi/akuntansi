@@ -80,6 +80,35 @@ export default function CreateGiroTransaction() {
         });
     }
 
+    function submitAndCreateAnother(e: React.FormEvent) {
+        e.preventDefault();
+
+        post(route("kas.giro-transactions.store"), {
+            onSuccess: () => {
+                toast.success("Transaksi giro berhasil ditambahkan");
+                // Reset form untuk membuat transaksi baru
+                reset();
+                setData({
+                    nomor_giro: "",
+                    tanggal_giro: new Date().toISOString().split('T')[0],
+                    tanggal_jatuh_tempo: "",
+                    bank_account_id: "",
+                    jenis_giro: "",
+                    jumlah: "",
+                    daftar_akun_id: "",
+                    penerbit: "",
+                    penerima: "",
+                    keterangan: "",
+                    status_giro: "pending",
+                });
+            },
+            onError: (errors) => {
+                console.error("Form errors:", errors);
+                toast.error("Terjadi kesalahan saat menyimpan data");
+            },
+        });
+    }
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("id-ID", {
             style: "currency",
@@ -352,6 +381,16 @@ export default function CreateGiroTransaction() {
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
                             Simpan
+                        </Button>
+                        <Button 
+                            type="button" 
+                            variant="secondary" 
+                            onClick={submitAndCreateAnother}
+                            disabled={processing}
+                        >
+                            {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
+                            {!processing && <Save className="mr-2 h-4 w-4" />}
+                            Simpan & Buat Lagi
                         </Button>
                     </div>
                 </form>

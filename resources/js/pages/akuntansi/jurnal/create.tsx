@@ -130,6 +130,64 @@ export default function CreateJurnal() {
         });
     };
 
+    const submitAndCreateAnother: FormEventHandler = (e) => {
+        e.preventDefault();
+        setProcessing(true);
+        setErrors({});
+
+        // Validate details
+        const validDetails = details.filter(detail => 
+            detail.daftar_akun_id > 0 && 
+            (detail.jumlah_debit > 0 || detail.jumlah_kredit > 0)
+        );
+
+        if (validDetails.length < 2) {
+            toast.error('Minimal harus ada 2 baris jurnal yang valid');
+            setProcessing(false);
+            return;
+        }
+
+        const totalDebit = validDetails.reduce((sum, detail) => sum + detail.jumlah_debit, 0);
+        const totalKredit = validDetails.reduce((sum, detail) => sum + detail.jumlah_kredit, 0);
+
+        if (totalDebit !== totalKredit) {
+            toast.error('Total debit dan kredit harus seimbang');
+            setProcessing(false);
+            return;
+        }
+
+        const submitData = {
+            ...formData,
+            details: validDetails,
+        };
+
+        router.post(route('akuntansi.jurnal.store'), submitData as any, {
+            onSuccess: () => {
+                toast.success('Jurnal berhasil dibuat');
+                // Reset form untuk membuat jurnal baru
+                setFormData({
+                    nomor_jurnal: '',
+                    tanggal_transaksi: new Date().toISOString().split('T')[0],
+                    jenis_referensi: '',
+                    nomor_referensi: '',
+                    keterangan: '',
+                });
+                setDetails([
+                    { daftar_akun_id: 0, jumlah_debit: 0, jumlah_kredit: 0, keterangan: '' },
+                    { daftar_akun_id: 0, jumlah_debit: 0, jumlah_kredit: 0, keterangan: '' },
+                ]);
+            },
+            onError: (responseErrors) => {
+                setErrors(responseErrors);
+                toast.error('Gagal membuat jurnal. Periksa data yang dimasukkan.');
+                setProcessing(false);
+            },
+            onFinish: () => {
+                setProcessing(false);
+            }
+        });
+    };
+
     const addDetail = () => {
         setDetails([...details, { daftar_akun_id: 0, jumlah_debit: 0, jumlah_kredit: 0, keterangan: '' }]);
     };
@@ -391,6 +449,16 @@ export default function CreateJurnal() {
                             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             <Save className="mr-2 h-4 w-4" />
                             Simpan
+                        </Button>
+                        <Button 
+                            type="button" 
+                            variant="secondary" 
+                            onClick={submitAndCreateAnother}
+                            disabled={processing || !isBalanced}
+                        >
+                            {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <Save className="mr-2 h-4 w-4" />
+                            Simpan & Buat Lagi
                         </Button>
                     </div>
                 </form>

@@ -60,6 +60,27 @@ export default function CreateUser() {
         });
     };
 
+    const handleSubmitAndGoBack = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(route('users.store'), {
+            onSuccess: () => {
+                toast.success('User berhasil dibuat!');
+                router.visit('/master/users');
+            },
+            onError: (errors) => {
+                console.error('Validation errors:', errors);
+                
+                // Show specific error messages if available
+                if (Object.keys(errors).length > 0) {
+                    const firstError = Object.values(errors)[0];
+                    toast.error(typeof firstError === 'string' ? firstError : 'Gagal membuat user. Periksa kembali data yang dimasukkan.');
+                } else {
+                    toast.error('Terjadi kesalahan saat membuat user.');
+                }
+            },
+        });
+    };
+
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: <Users />,
@@ -204,7 +225,17 @@ export default function CreateUser() {
                                     className="flex items-center gap-2"
                                 >
                                     <Save className="h-4 w-4" />
-                                    {processing ? 'Menyimpan...' : 'Simpan User'}
+                                    {processing ? 'Menyimpan...' : 'Simpan & Buat Lagi'}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={handleSubmitAndGoBack}
+                                    disabled={processing}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Save className="h-4 w-4" />
+                                    {processing ? 'Menyimpan...' : 'Simpan & Kembali'}
                                 </Button>
                             </div>
                         </form>
