@@ -10,6 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { SearchableAccountSelect } from "@/components/ui/searchable-account-select";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem } from "@/types";
 import { Head, router, useForm, usePage } from "@inertiajs/react";
@@ -236,27 +237,14 @@ export default function CreateGiroTransaction() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="daftar_akun_id">
-                                                Akun Terkait <span className="text-red-500">*</span>
-                                            </Label>
-                                            <Select
+                                            <SearchableAccountSelect
+                                                accounts={daftar_akun || []}
                                                 value={data.daftar_akun_id}
                                                 onValueChange={(value) => setData("daftar_akun_id", value)}
-                                            >
-                                                <SelectTrigger className={errors.daftar_akun_id ? "border-red-500" : ""}>
-                                                    <SelectValue placeholder="Pilih akun" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {(daftar_akun || []).map((akun) => (
-                                                        <SelectItem key={akun.id} value={akun.id.toString()}>
-                                                            {akun.kode_akun} - {akun.nama_akun}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.daftar_akun_id && (
-                                                <p className="text-sm text-red-500">{errors.daftar_akun_id}</p>
-                                            )}
+                                                label="Akun Terkait *"
+                                                placeholder="Pilih akun"
+                                                error={errors.daftar_akun_id}
+                                            />
                                         </div>
 
                                         {data.jenis_giro === "masuk" ? (

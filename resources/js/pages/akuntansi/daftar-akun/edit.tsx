@@ -259,7 +259,7 @@ export default function DaftarAkunEdit({ daftarAkun, indukAkun }: Props) {
                                         id="level"
                                         type="number"
                                         min="1"
-                                        max="5"
+                                        max="10"
                                         value={data.level}
                                         onChange={(e) => setData('level', parseInt(e.target.value))}
                                     />
