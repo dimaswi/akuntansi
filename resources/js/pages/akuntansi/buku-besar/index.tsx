@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableAccountSelect } from "@/components/ui/searchable-account-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -175,19 +176,12 @@ export default function BukuBesarIndex({ bukuBesar, semuaAkun, filters, jenisAku
 
                                     <div>
                                         <Label htmlFor="akun">Akun Spesifik</Label>
-                                        <Select value={selectedAkun} onValueChange={setSelectedAkun}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Pilih akun" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">Semua Akun</SelectItem>
-                                                {semuaAkun.map((akun) => (
-                                                    <SelectItem key={akun.id} value={akun.id.toString()}>
-                                                        {akun.kode_akun} - {akun.nama_akun}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <SearchableAccountSelect
+                                            accounts={semuaAkun}
+                                            value={selectedAkun === 'all' ? '' : selectedAkun}
+                                            onValueChange={(value) => setSelectedAkun(value || 'all')}
+                                            placeholder="Semua Akun"
+                                        />
                                     </div>
 
                                     <div>

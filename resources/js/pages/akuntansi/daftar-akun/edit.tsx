@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableAccountSelect } from "@/components/ui/searchable-account-select";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, useForm } from "@inertiajs/react";
@@ -241,35 +242,14 @@ export default function DaftarAkunEdit({ daftarAkun, indukAkun }: Props) {
 
                                 {/* Induk Akun */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="induk_akun_id">Induk Akun</Label>
-                                    <div className="flex gap-2">
-                                        <Select
-                                            value={data.induk_akun_id || undefined}
-                                            onValueChange={(value) => setData('induk_akun_id', value || '')}
-                                        >
-                                            <SelectTrigger className="flex-1">
-                                                <SelectValue placeholder="Pilih induk akun (opsional)" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {indukAkun.map((akun) => (
-                                                    <SelectItem key={akun.id} value={akun.id.toString()}>
-                                                        {akun.kode_akun} - {akun.nama_akun}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {data.induk_akun_id && (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setData('induk_akun_id', '')}
-                                                className="px-3"
-                                            >
-                                                Clear
-                                            </Button>
-                                        )}
-                                    </div>
+                                    <SearchableAccountSelect
+                                        accounts={indukAkun}
+                                        value={data.induk_akun_id}
+                                        onValueChange={(value) => setData('induk_akun_id', value)}
+                                        label="Induk Akun"
+                                        placeholder="Pilih induk akun (opsional)"
+                                        error={errors.induk_akun_id}
+                                    />
                                 </div>
 
                                 {/* Level */}
