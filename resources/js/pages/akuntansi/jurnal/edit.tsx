@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableAccountSelectTable } from "@/components/ui/searchable-account-select-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, SharedData } from '@/types';
@@ -364,21 +365,12 @@ export default function EditJurnal() {
                                         {details.map((detail, index) => (
                                             <TableRow key={index}>
                                                 <TableCell>
-                                                    <Select
-                                                        value={detail.daftar_akun_id.toString()}
-                                                        onValueChange={(value) => updateDetail(index, 'daftar_akun_id', parseInt(value))}
-                                                    >
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Pilih akun" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {daftar_akun.map((akun) => (
-                                                                <SelectItem key={akun.id} value={akun.id.toString()}>
-                                                                    {akun.kode_akun} - {akun.nama_akun}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <SearchableAccountSelectTable
+                                                        accounts={daftar_akun}
+                                                        value={detail.daftar_akun_id}
+                                                        onValueChange={(value) => updateDetail(index, 'daftar_akun_id', value)}
+                                                        placeholder="Pilih akun"
+                                                    />
                                                 </TableCell>
                                                 <TableCell>
                                                     <Input
