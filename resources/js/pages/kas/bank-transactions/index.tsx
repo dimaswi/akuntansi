@@ -39,6 +39,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { route } from "ziggy-js";
+import { usePermission } from "@/hooks/use-permission";
 
 interface BankAccount {
     id: number;
@@ -104,6 +105,7 @@ const breadcrumbs = [
 
 export default function BankTransactionIndex() {
     const { bank_transactions, filters, bank_accounts } = usePage<Props>().props;
+    const { hasPermission } = usePermission();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -169,15 +171,8 @@ export default function BankTransactionIndex() {
     };
 
     const handlePost = (id: number) => {
-        router.post(route("kas.bank-transactions.post", id), {}, {
-            onSuccess: () => {
-                toast.success("Transaksi bank berhasil diposting");
-            },
-            onError: (error) => {
-                console.error("Post error:", error);
-                toast.error("Gagal memposting transaksi bank");
-            },
-        });
+        // Redirect to batch posting page with single transaction
+        router.visit(`/kas/bank-transactions/post-to-journal?ids[]=${id}`);
     };
 
     const formatCurrency = (amount: number) => {
@@ -236,10 +231,23 @@ export default function BankTransactionIndex() {
                             <h1 className="text-2xl font-bold tracking-tight">Transaksi Bank</h1>
                         </div>
                     </div>
-                    <Button onClick={() => router.visit(route("kas.bank-transactions.create"))}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Tambah Transaksi
-                    </Button>
+                    <div className="flex gap-2">
+                        {hasPermission('akuntansi.journal-posting.view') && (
+                            <Button 
+                                variant="outline"
+                                onClick={() => router.visit(route("kas.bank-transactions.show-post-to-journal"))}
+                            >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Posting ke Jurnal
+                            </Button>
+                        )}
+                        {hasPermission('kas.cash-management.daily-entry') && (
+                            <Button onClick={() => router.visit(route("kas.bank-transactions.create"))}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Tambah Transaksi
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -450,47 +458,55 @@ export default function BankTransactionIndex() {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex items-center justify-end space-x-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route("kas.bank-transactions.show", transaction.id)
-                                                                )
-                                                            }
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
+                                                        {hasPermission('kas.cash-management.view') && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route("kas.bank-transactions.show", transaction.id)
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                         {!transaction.is_posted && (
                                                             <>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() =>
-                                                                        router.visit(
-                                                                            route("kas.bank-transactions.edit", transaction.id)
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Edit3 className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() => handlePost(transaction.id)}
-                                                                >
-                                                                    <CheckCircle className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() => {
-                                                                        setDeleteId(transaction.id);
-                                                                        setShowDeleteDialog(true);
-                                                                    }}
-                                                                >
-                                                                    <Trash className="h-4 w-4" />
-                                                                </Button>
+                                                                {hasPermission('kas.cash-management.daily-entry') && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={() =>
+                                                                            router.visit(
+                                                                                route("kas.bank-transactions.edit", transaction.id)
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <Edit3 className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
+                                                                {hasPermission('akuntansi.journal-posting.post') && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={() => handlePost(transaction.id)}
+                                                                    >
+                                                                        <CheckCircle className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
+                                                                {hasPermission('kas.bank-transaction.delete') && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={() => {
+                                                                            setDeleteId(transaction.id);
+                                                                            setShowDeleteDialog(true);
+                                                                        }}
+                                                                    >
+                                                                        <Trash className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
                                                             </>
                                                         )}
                                                     </div>

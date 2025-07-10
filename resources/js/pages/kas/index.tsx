@@ -67,7 +67,7 @@ export default function KasDashboard() {
 
                 {/* Quick Actions */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    {hasPermission('kas.cash-transaction.create') && (
+                    {hasPermission('kas.cash-management.daily-entry') && (
                         <Card className="hover:shadow-md transition-shadow cursor-pointer">
                             <Link href="/kas/cash-transactions/create">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -86,7 +86,7 @@ export default function KasDashboard() {
                         </Card>
                     )}
 
-                    {hasPermission('kas.bank-transaction.create') && (
+                    {hasPermission('kas.cash-management.daily-entry') && (
                         <Card className="hover:shadow-md transition-shadow cursor-pointer">
                             <Link href="/kas/bank-transactions/create">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -310,7 +310,7 @@ export default function KasDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            {hasPermission('kas.cash-transaction.view') && (
+                            {hasPermission('kas.cash-management.view') && (
                                 <Button variant="outline" asChild className="h-20 flex-col">
                                     <Link href="/kas/cash-transactions">
                                         <Wallet className="h-6 w-6 mb-2" />
@@ -328,7 +328,7 @@ export default function KasDashboard() {
                                 </Button>
                             )}
 
-                            {hasPermission('kas.bank-transaction.view') && (
+                            {hasPermission('kas.cash-management.view') && (
                                 <Button variant="outline" asChild className="h-20 flex-col">
                                     <Link href="/kas/bank-transactions">
                                         <Landmark className="h-6 w-6 mb-2" />

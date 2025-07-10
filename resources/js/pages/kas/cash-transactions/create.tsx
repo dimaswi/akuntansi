@@ -11,7 +11,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { SearchableAccountSelect } from "@/components/ui/searchable-account-select";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, useForm, usePage } from "@inertiajs/react";
@@ -19,7 +18,7 @@ import { Save, ArrowLeft, Wallet, AlertCircle } from "lucide-react";
 import { FormEventHandler } from "react";
 import { toast } from "sonner";
 
-interface DaftarAkun {
+interface DaftarAkunKas {
     id: number;
     kode_akun: string;
     nama_akun: string;
@@ -27,8 +26,7 @@ interface DaftarAkun {
 }
 
 interface Props extends SharedData {
-    daftarAkunKas: DaftarAkun[];
-    daftarAkun: DaftarAkun[];
+    daftarAkunKas: DaftarAkunKas[];
     jenisTransaksi: Record<string, string>;
 }
 
@@ -48,35 +46,21 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function CashTransactionCreate() {
-    const { daftarAkunKas, daftarAkun, jenisTransaksi } = usePage<Props>().props;
+    const { daftarAkunKas, jenisTransaksi } = usePage<Props>().props;
     
     const { data, setData, post, processing, errors } = useForm({
         nomor_transaksi: '',
         tanggal_transaksi: new Date().toISOString().split('T')[0],
         jenis_transaksi: '',
+        kategori_transaksi: '',
         jumlah: '',
         keterangan: '',
         pihak_terkait: '',
         referensi: '',
         daftar_akun_kas_id: '',
-        daftar_akun_lawan_id: '',
     });
 
     const handleSubmit: FormEventHandler = (e) => {
-        e.preventDefault();
-        
-        post('/kas/cash-transactions', {
-            onSuccess: () => {
-                toast.success('Transaksi kas berhasil dibuat');
-                router.visit('/kas/cash-transactions');
-            },
-            onError: () => {
-                toast.error('Gagal membuat transaksi kas');
-            },
-        });
-    };
-
-    const handleSubmitAndCreateAnother: FormEventHandler = (e) => {
         e.preventDefault();
         
         post('/kas/cash-transactions', {
@@ -87,13 +71,27 @@ export default function CashTransactionCreate() {
                     nomor_transaksi: '',
                     tanggal_transaksi: new Date().toISOString().split('T')[0],
                     jenis_transaksi: '',
+                    kategori_transaksi: '',
                     jumlah: '',
                     keterangan: '',
                     pihak_terkait: '',
                     referensi: '',
                     daftar_akun_kas_id: '',
-                    daftar_akun_lawan_id: '',
                 });
+            },
+            onError: () => {
+                toast.error('Gagal membuat transaksi kas');
+            },
+        });
+    };
+
+    const handleSubmitAndGoBack: FormEventHandler = (e) => {
+        e.preventDefault();
+        
+        post('/kas/cash-transactions', {
+            onSuccess: () => {
+                toast.success('Transaksi kas berhasil dibuat');
+                router.visit('/kas/cash-transactions');
             },
             onError: () => {
                 toast.error('Gagal membuat transaksi kas');
@@ -187,7 +185,7 @@ export default function CashTransactionCreate() {
                                 <div className="space-y-2">
                                     <Label htmlFor="jenis_transaksi">Jenis Transaksi *</Label>
                                     <Select
-                                        value={data.jenis_transaksi}
+                                        value={data.jenis_transaksi || undefined}
                                         onValueChange={(value) => setData('jenis_transaksi', value)}
                                         required
                                     >
@@ -195,15 +193,50 @@ export default function CashTransactionCreate() {
                                             <SelectValue placeholder="Pilih jenis transaksi" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {Object.entries(jenisTransaksi).map(([key, value]) => (
-                                                <SelectItem key={key} value={key}>
-                                                    {value as string}
-                                                </SelectItem>
-                                            ))}
+                                            <SelectItem value="penerimaan">Penerimaan Kas</SelectItem>
+                                            <SelectItem value="pengeluaran">Pengeluaran Kas</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {errors.jenis_transaksi && (
                                         <p className="text-sm text-red-500">{errors.jenis_transaksi}</p>
+                                    )}
+                                </div>
+
+                                {/* Kategori Transaksi */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="kategori_transaksi">Kategori Transaksi *</Label>
+                                    <Select
+                                        value={data.kategori_transaksi || undefined}
+                                        onValueChange={(value) => setData('kategori_transaksi', value)}
+                                        required
+                                    >
+                                        <SelectTrigger className={errors.kategori_transaksi ? 'border-red-500' : ''}>
+                                            <SelectValue placeholder="Pilih kategori transaksi" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {data.jenis_transaksi === 'penerimaan' ? (
+                                                <>
+                                                    <SelectItem value="penjualan">Penjualan</SelectItem>
+                                                    <SelectItem value="piutang">Pelunasan Piutang</SelectItem>
+                                                    <SelectItem value="investasi">Investasi/Modal</SelectItem>
+                                                    <SelectItem value="bunga">Bunga Bank</SelectItem>
+                                                    <SelectItem value="lain_lain">Lain-lain</SelectItem>
+                                                </>
+                                            ) : data.jenis_transaksi === 'pengeluaran' ? (
+                                                <>
+                                                    <SelectItem value="pembelian">Pembelian</SelectItem>
+                                                    <SelectItem value="gaji">Gaji/Upah</SelectItem>
+                                                    <SelectItem value="operasional">Biaya Operasional</SelectItem>
+                                                    <SelectItem value="pinjaman">Pembayaran Pinjaman</SelectItem>
+                                                    <SelectItem value="lain_lain">Lain-lain</SelectItem>
+                                                </>
+                                            ) : (
+                                                <SelectItem value="none" disabled>Pilih jenis transaksi terlebih dahulu</SelectItem>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.kategori_transaksi && (
+                                        <p className="text-sm text-red-500">{errors.kategori_transaksi}</p>
                                     )}
                                 </div>
 
@@ -225,52 +258,26 @@ export default function CashTransactionCreate() {
 
                                 {/* Akun Kas */}
                                 <div className="space-y-2">
-                                    <SearchableAccountSelect
-                                        accounts={daftarAkunKas || []}
-                                        value={data.daftar_akun_kas_id}
+                                    <Label htmlFor="daftar_akun_kas_id">Akun Kas *</Label>
+                                    <Select
+                                        value={data.daftar_akun_kas_id || undefined}
                                         onValueChange={(value) => setData('daftar_akun_kas_id', value)}
-                                        label="Akun Kas *"
-                                        placeholder="Pilih akun kas"
-                                        error={errors.daftar_akun_kas_id}
-                                    />
-                                </div>
-
-                                {/* Sumber/Tujuan Dana */}
-                                <div className="space-y-2">
-                                    <SearchableAccountSelect
-                                        accounts={
-                                            data.jenis_transaksi === 'penerimaan' || data.jenis_transaksi === 'uang_muka_penerimaan' || data.jenis_transaksi === 'transfer_masuk' 
-                                            ? (daftarAkun || []).filter((akun: DaftarAkun) => 
-                                                akun.jenis_akun === 'pendapatan' || 
-                                                akun.jenis_akun === 'kewajiban' ||
-                                                akun.jenis_akun === 'modal' ||
-                                                akun.jenis_akun === 'aset'
-                                            )
-                                            : (daftarAkun || []).filter((akun: DaftarAkun) => 
-                                                akun.jenis_akun === 'biaya' || 
-                                                akun.jenis_akun === 'beban' ||
-                                                akun.jenis_akun === 'aset' ||
-                                                akun.jenis_akun === 'kewajiban'
-                                            )
-                                        }
-                                        value={data.daftar_akun_lawan_id}
-                                        onValueChange={(value) => setData('daftar_akun_lawan_id', value)}
-                                        label={
-                                            data.jenis_transaksi === 'penerimaan' || data.jenis_transaksi === 'uang_muka_penerimaan' || data.jenis_transaksi === 'transfer_masuk' ? 
-                                            'Sumber Dana *' : 'Tujuan Penggunaan Dana *'
-                                        }
-                                        placeholder={
-                                            data.jenis_transaksi === 'penerimaan' || data.jenis_transaksi === 'uang_muka_penerimaan' || data.jenis_transaksi === 'transfer_masuk' ? 
-                                            'Pilih sumber dana' : 'Pilih tujuan penggunaan dana'
-                                        }
-                                        error={errors.daftar_akun_lawan_id}
-                                    />
-                                    <p className="text-xs text-gray-500">
-                                        {data.jenis_transaksi === 'penerimaan' || data.jenis_transaksi === 'uang_muka_penerimaan' || data.jenis_transaksi === 'transfer_masuk' ? 
-                                            'Pilih akun yang menjadi sumber dana yang diterima' : 
-                                            'Pilih akun yang menjadi tujuan penggunaan dana'
-                                        }
-                                    </p>
+                                        required
+                                    >
+                                        <SelectTrigger className={errors.daftar_akun_kas_id ? 'border-red-500' : ''}>
+                                            <SelectValue placeholder="Pilih akun kas" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {daftarAkunKas.map((akun) => (
+                                                <SelectItem key={akun.id} value={akun.id.toString()}>
+                                                    {akun.kode_akun} - {akun.nama_akun}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.daftar_akun_kas_id && (
+                                        <p className="text-sm text-red-500">{errors.daftar_akun_kas_id}</p>
+                                    )}
                                 </div>
 
                                 {/* Pihak Terkait */}
@@ -327,9 +334,9 @@ export default function CashTransactionCreate() {
                             <Alert className="border-blue-200 bg-blue-50">
                                 <AlertCircle className="h-4 w-4 text-blue-600" />
                                 <AlertDescription className="text-blue-800">
-                                    <strong>Panduan:</strong> Untuk penerimaan kas, pilih "Sumber Dana" dari mana uang diterima (misal: Pendapatan Penjualan). 
-                                    Untuk pengeluaran kas, pilih "Tujuan Penggunaan Dana" kemana uang digunakan (misal: Biaya Operasional).
-                                    Transaksi akan disimpan dengan status draft dan perlu diposting untuk membuat jurnal.
+                                    <strong>Info Workflow Baru:</strong> Transaksi kas akan disimpan dengan status draft 
+                                    dan tidak langsung membuat jurnal. Akuntan akan melakukan posting ke jurnal secara batch 
+                                    dengan memilih akun lawan yang sesuai.
                                 </AlertDescription>
                             </Alert>
 
@@ -355,14 +362,14 @@ export default function CashTransactionCreate() {
                                     ) : (
                                         <>
                                             <Save className="h-4 w-4" />
-                                            Simpan
+                                            Simpan & Buat Lagi
                                         </>
                                     )}
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="secondary"
-                                    onClick={handleSubmitAndCreateAnother}
+                                    onClick={handleSubmitAndGoBack}
                                     disabled={processing}
                                     className="gap-2"
                                 >
@@ -374,7 +381,7 @@ export default function CashTransactionCreate() {
                                     ) : (
                                         <>
                                             <Save className="h-4 w-4" />
-                                            Simpan & Buat Lagi
+                                            Simpan & Kembali
                                         </>
                                     )}
                                 </Button>

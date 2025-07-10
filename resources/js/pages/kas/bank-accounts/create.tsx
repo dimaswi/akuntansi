@@ -60,21 +60,6 @@ export default function CreateBankAccount() {
         post(route("kas.bank-accounts.store"), {
             onSuccess: () => {
                 toast.success("Bank Account berhasil ditambahkan");
-                router.visit(route("kas.bank-accounts.index"));
-            },
-            onError: (errors) => {
-                console.error("Form errors:", errors);
-                toast.error("Terjadi kesalahan saat menyimpan data");
-            },
-        });
-    }
-
-    function submitAndCreateAnother(e: React.FormEvent) {
-        e.preventDefault();
-
-        post(route("kas.bank-accounts.store"), {
-            onSuccess: () => {
-                toast.success("Bank Account berhasil ditambahkan");
                 // Reset form untuk membuat bank account baru
                 reset();
                 setData({
@@ -89,6 +74,21 @@ export default function CreateBankAccount() {
                     keterangan: "",
                     is_aktif: true,
                 });
+            },
+            onError: (errors) => {
+                console.error("Form errors:", errors);
+                toast.error("Terjadi kesalahan saat menyimpan data");
+            },
+        });
+    }
+
+    function submitAndGoBack(e: React.FormEvent) {
+        e.preventDefault();
+
+        post(route("kas.bank-accounts.store"), {
+            onSuccess: () => {
+                toast.success("Bank Account berhasil ditambahkan");
+                router.visit(route("kas.bank-accounts.index"));
             },
             onError: (errors) => {
                 console.error("Form errors:", errors);
@@ -312,17 +312,17 @@ export default function CreateBankAccount() {
                         <Button type="submit" disabled={processing}>
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
-                            Simpan & Kembali
+                            Simpan & Buat Lagi
                         </Button>
                         <Button 
                             type="button" 
                             variant="secondary" 
-                            onClick={submitAndCreateAnother}
+                            onClick={submitAndGoBack}
                             disabled={processing}
                         >
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
-                            Simpan & Buat Lagi
+                            Simpan & Kembali
                         </Button>
                     </div>
                 </form>

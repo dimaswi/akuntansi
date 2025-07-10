@@ -10,7 +10,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { SearchableAccountSelect } from "@/components/ui/searchable-account-select";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem } from "@/types";
 import { Head, router, useForm, usePage } from "@inertiajs/react";
@@ -26,16 +25,8 @@ interface BankAccount {
     saldo_berjalan: number;
 }
 
-interface DaftarAkun {
-    id: number;
-    kode_akun: string;
-    nama_akun: string;
-    jenis_akun: string;
-}
-
 interface Props {
     bank_accounts: BankAccount[];
-    daftar_akun: DaftarAkun[];
     [key: string]: any;
 }
 
@@ -46,7 +37,7 @@ const breadcrumbs = [
 ];
 
 export default function CreateBankTransaction() {
-    const { bank_accounts, daftar_akun } = usePage<Props>().props;
+    const { bank_accounts } = usePage<Props>().props;
 
     const { data, setData, post, processing, errors, reset } = useForm({
         nomor_transaksi: "",
@@ -55,7 +46,7 @@ export default function CreateBankTransaction() {
         bank_account_id: "",
         jenis_transaksi: "",
         jumlah: "",
-        daftar_akun_lawan_id: "",
+        kategori_transaksi: "",
         keterangan: "",
         pihak_terkait: "",
         nomor_referensi: "",
@@ -70,21 +61,6 @@ export default function CreateBankTransaction() {
         post(route("kas.bank-transactions.store"), {
             onSuccess: () => {
                 toast.success("Transaksi bank berhasil ditambahkan");
-                router.visit(route("kas.bank-transactions.index"));
-            },
-            onError: (errors) => {
-                console.error("Form errors:", errors);
-                toast.error("Terjadi kesalahan saat menyimpan data");
-            },
-        });
-    }
-
-    function submitAndCreateAnother(e: React.FormEvent) {
-        e.preventDefault();
-
-        post(route("kas.bank-transactions.store"), {
-            onSuccess: () => {
-                toast.success("Transaksi bank berhasil ditambahkan");
                 // Reset form untuk membuat transaksi baru
                 reset();
                 setData({
@@ -94,12 +70,27 @@ export default function CreateBankTransaction() {
                     bank_account_id: "",
                     jenis_transaksi: "",
                     jumlah: "",
-                    daftar_akun_lawan_id: "",
+                    kategori_transaksi: "",
                     keterangan: "",
                     pihak_terkait: "",
                     nomor_referensi: "",
                     status: "draft",
                 });
+            },
+            onError: (errors) => {
+                console.error("Form errors:", errors);
+                toast.error("Terjadi kesalahan saat menyimpan data");
+            },
+        });
+    }
+
+    function submitAndGoBack(e: React.FormEvent) {
+        e.preventDefault();
+
+        post(route("kas.bank-transactions.store"), {
+            onSuccess: () => {
+                toast.success("Transaksi bank berhasil ditambahkan");
+                router.visit(route("kas.bank-transactions.index"));
             },
             onError: (errors) => {
                 console.error("Form errors:", errors);
@@ -207,7 +198,7 @@ export default function CreateBankTransaction() {
                                                 Bank Account <span className="text-red-500">*</span>
                                             </Label>
                                             <Select
-                                                value={data.bank_account_id}
+                                                value={data.bank_account_id || undefined}
                                                 onValueChange={(value) => setData("bank_account_id", value)}
                                             >
                                                 <SelectTrigger className={errors.bank_account_id ? "border-red-500" : ""}>
@@ -231,7 +222,7 @@ export default function CreateBankTransaction() {
                                                 Jenis Transaksi <span className="text-red-500">*</span>
                                             </Label>
                                             <Select
-                                                value={data.jenis_transaksi}
+                                                value={data.jenis_transaksi || undefined}
                                                 onValueChange={(value) => setData("jenis_transaksi", value)}
                                             >
                                                 <SelectTrigger className={errors.jenis_transaksi ? "border-red-500" : ""}>
@@ -269,18 +260,39 @@ export default function CreateBankTransaction() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <SearchableAccountSelect
-                                                accounts={daftar_akun || []}
-                                                value={data.daftar_akun_lawan_id}
-                                                onValueChange={(value) => setData("daftar_akun_lawan_id", value)}
-                                                label={
-                                                    (data.jenis_transaksi === 'setoran' || data.jenis_transaksi === 'transfer_masuk' || data.jenis_transaksi === 'kliring_masuk' || data.jenis_transaksi === 'bunga_bank' 
-                                                        ? 'Sumber Dana' 
-                                                        : 'Tujuan Penggunaan Dana') + ' *'
-                                                }
-                                                placeholder="Pilih akun"
-                                                error={errors.daftar_akun_lawan_id}
-                                            />
+                                            <Label htmlFor="kategori_transaksi">
+                                                Kategori Transaksi <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Select
+                                                value={data.kategori_transaksi || undefined}
+                                                onValueChange={(value) => setData("kategori_transaksi", value)}
+                                            >
+                                                <SelectTrigger className={errors.kategori_transaksi ? "border-red-500" : ""}>
+                                                    <SelectValue placeholder="Pilih kategori transaksi" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {data.jenis_transaksi === 'penerimaan' || data.jenis_transaksi === 'transfer_masuk' ? (
+                                                        <>
+                                                            <SelectItem value="pendapatan_operasional">Pendapatan Operasional</SelectItem>
+                                                            <SelectItem value="pendapatan_non_operasional">Pendapatan Non-Operasional</SelectItem>
+                                                            <SelectItem value="pinjaman">Pinjaman</SelectItem>
+                                                            <SelectItem value="modal">Modal</SelectItem>
+                                                            <SelectItem value="lainnya_masuk">Lainnya</SelectItem>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <SelectItem value="biaya_operasional">Biaya Operasional</SelectItem>
+                                                            <SelectItem value="biaya_non_operasional">Biaya Non-Operasional</SelectItem>
+                                                            <SelectItem value="pembelian_aset">Pembelian Aset</SelectItem>
+                                                            <SelectItem value="pembayaran_kewajiban">Pembayaran Kewajiban</SelectItem>
+                                                            <SelectItem value="lainnya_keluar">Lainnya</SelectItem>
+                                                        </>
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.kategori_transaksi && (
+                                                <p className="text-sm text-red-500">{errors.kategori_transaksi}</p>
+                                            )}
                                         </div>
 
                                         <div className="space-y-2">
@@ -358,14 +370,15 @@ export default function CreateBankTransaction() {
 
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Catatan</CardTitle>
+                                    <CardTitle>Cash Management</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <ul className="text-sm text-muted-foreground space-y-2">
-                                        <li>• Transaksi akan tersimpan sebagai draft</li>
-                                        <li>• Posting dilakukan setelah transaksi dibuat</li>
-                                        <li>• Jurnal otomatis akan dibuat saat posting</li>
-                                        <li>• Saldo bank akan terupdate otomatis</li>
+                                        <li>• Transaksi disimpan untuk tracking arus kas</li>
+                                        <li>• Saldo bank diupdate secara real-time</li>
+                                        <li>• Laporan arus kas generate otomatis</li>
+                                        <li>• Jurnal akuntansi dibuat terpisah</li>
+                                        <li>• Rekonsiliasi bank dapat dilakukan</li>
                                     </ul>
                                 </CardContent>
                             </Card>
@@ -383,17 +396,17 @@ export default function CreateBankTransaction() {
                         <Button type="submit" disabled={processing}>
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
-                            Simpan
+                            Simpan & Buat Lagi
                         </Button>
                         <Button 
                             type="button" 
                             variant="secondary" 
-                            onClick={submitAndCreateAnother}
+                            onClick={submitAndGoBack}
                             disabled={processing}
                         >
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
-                            Simpan & Buat Lagi
+                            Simpan & Kembali
                         </Button>
                     </div>
                 </form>

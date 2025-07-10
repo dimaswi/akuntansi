@@ -16,6 +16,7 @@ class CashTransaction extends Model
         'nomor_transaksi',
         'tanggal_transaksi',
         'jenis_transaksi',
+        'kategori_transaksi',
         'jumlah',
         'keterangan',
         'pihak_terkait',

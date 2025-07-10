@@ -17,6 +17,7 @@ class BankTransaction extends Model
         'tanggal_transaksi',
         'tanggal_efektif',
         'jenis_transaksi',
+        'kategori_transaksi',
         'bank_account_id',
         'jumlah',
         'keterangan',
