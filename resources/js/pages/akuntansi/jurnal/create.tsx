@@ -117,7 +117,18 @@ export default function CreateJurnal() {
         router.post(route('akuntansi.jurnal.store'), submitData as any, {
             onSuccess: () => {
                 toast.success('Jurnal berhasil dibuat');
-                router.visit(route('akuntansi.jurnal.index'));
+                // Reset form untuk membuat jurnal baru
+                setFormData({
+                    nomor_jurnal: '',
+                    tanggal_transaksi: new Date().toISOString().split('T')[0],
+                    jenis_referensi: '',
+                    nomor_referensi: '',
+                    keterangan: '',
+                });
+                setDetails([
+                    { daftar_akun_id: 0, jumlah_debit: 0, jumlah_kredit: 0, keterangan: '' },
+                    { daftar_akun_id: 0, jumlah_debit: 0, jumlah_kredit: 0, keterangan: '' },
+                ]);
             },
             onError: (responseErrors) => {
                 setErrors(responseErrors);
@@ -130,7 +141,7 @@ export default function CreateJurnal() {
         });
     };
 
-    const submitAndCreateAnother: FormEventHandler = (e) => {
+    const submitAndGoBack: FormEventHandler = (e) => {
         e.preventDefault();
         setProcessing(true);
         setErrors({});
@@ -164,18 +175,7 @@ export default function CreateJurnal() {
         router.post(route('akuntansi.jurnal.store'), submitData as any, {
             onSuccess: () => {
                 toast.success('Jurnal berhasil dibuat');
-                // Reset form untuk membuat jurnal baru
-                setFormData({
-                    nomor_jurnal: '',
-                    tanggal_transaksi: new Date().toISOString().split('T')[0],
-                    jenis_referensi: '',
-                    nomor_referensi: '',
-                    keterangan: '',
-                });
-                setDetails([
-                    { daftar_akun_id: 0, jumlah_debit: 0, jumlah_kredit: 0, keterangan: '' },
-                    { daftar_akun_id: 0, jumlah_debit: 0, jumlah_kredit: 0, keterangan: '' },
-                ]);
+                router.visit(route('akuntansi.jurnal.index'));
             },
             onError: (responseErrors) => {
                 setErrors(responseErrors);
@@ -448,17 +448,17 @@ export default function CreateJurnal() {
                         <Button type="submit" disabled={processing || !isBalanced}>
                             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             <Save className="mr-2 h-4 w-4" />
-                            Simpan
+                            Simpan & Buat Lagi
                         </Button>
                         <Button 
                             type="button" 
                             variant="secondary" 
-                            onClick={submitAndCreateAnother}
+                            onClick={submitAndGoBack}
                             disabled={processing || !isBalanced}
                         >
                             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             <Save className="mr-2 h-4 w-4" />
-                            Simpan & Buat Lagi
+                            Simpan & Kembali
                         </Button>
                     </div>
                 </form>

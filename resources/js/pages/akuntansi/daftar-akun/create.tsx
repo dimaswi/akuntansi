@@ -88,20 +88,6 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
         post('/akuntansi/daftar-akun', {
             onSuccess: () => {
                 toast.success('Akun berhasil ditambahkan');
-                router.visit('/akuntansi/daftar-akun');
-            },
-            onError: () => {
-                toast.error('Gagal menambahkan akun');
-            },
-        });
-    };
-
-    const handleSubmitAndCreateAnother = (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        post('/akuntansi/daftar-akun', {
-            onSuccess: () => {
-                toast.success('Akun berhasil ditambahkan');
                 // Reset form untuk membuat akun baru
                 setData({
                     kode_akun: '',
@@ -114,6 +100,20 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                     is_aktif: true,
                     keterangan: '',
                 });
+            },
+            onError: () => {
+                toast.error('Gagal menambahkan akun');
+            },
+        });
+    };
+
+    const handleSubmitAndGoBack = (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        post('/akuntansi/daftar-akun', {
+            onSuccess: () => {
+                toast.success('Akun berhasil ditambahkan');
+                router.visit('/akuntansi/daftar-akun');
             },
             onError: () => {
                 toast.error('Gagal menambahkan akun');
@@ -317,14 +317,14 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                     ) : (
                                         <>
                                             <Save className="mr-2 h-4 w-4" />
-                                            Simpan
+                                            Simpan & Buat Lagi
                                         </>
                                     )}
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="secondary"
-                                    onClick={handleSubmitAndCreateAnother}
+                                    onClick={handleSubmitAndGoBack}
                                     disabled={processing}
                                 >
                                     {processing ? (
@@ -335,7 +335,7 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                     ) : (
                                         <>
                                             <Save className="mr-2 h-4 w-4" />
-                                            Simpan & Buat Lagi
+                                            Simpan & Kembali
                                         </>
                                     )}
                                 </Button>

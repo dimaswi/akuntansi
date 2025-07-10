@@ -71,21 +71,6 @@ export default function CreateGiroTransaction() {
         post(route("kas.giro-transactions.store"), {
             onSuccess: () => {
                 toast.success("Transaksi giro berhasil ditambahkan");
-                router.visit(route("kas.giro-transactions.index"));
-            },
-            onError: (errors) => {
-                console.error("Form errors:", errors);
-                toast.error("Terjadi kesalahan saat menyimpan data");
-            },
-        });
-    }
-
-    function submitAndCreateAnother(e: React.FormEvent) {
-        e.preventDefault();
-
-        post(route("kas.giro-transactions.store"), {
-            onSuccess: () => {
-                toast.success("Transaksi giro berhasil ditambahkan");
                 // Reset form untuk membuat transaksi baru
                 reset();
                 setData({
@@ -101,6 +86,21 @@ export default function CreateGiroTransaction() {
                     keterangan: "",
                     status_giro: "pending",
                 });
+            },
+            onError: (errors) => {
+                console.error("Form errors:", errors);
+                toast.error("Terjadi kesalahan saat menyimpan data");
+            },
+        });
+    }
+
+    function submitAndGoBack(e: React.FormEvent) {
+        e.preventDefault();
+
+        post(route("kas.giro-transactions.store"), {
+            onSuccess: () => {
+                toast.success("Transaksi giro berhasil ditambahkan");
+                router.visit(route("kas.giro-transactions.index"));
             },
             onError: (errors) => {
                 console.error("Form errors:", errors);
@@ -380,17 +380,17 @@ export default function CreateGiroTransaction() {
                         <Button type="submit" disabled={processing}>
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
-                            Simpan
+                            Simpan & Buat Lagi
                         </Button>
                         <Button 
                             type="button" 
                             variant="secondary" 
-                            onClick={submitAndCreateAnother}
+                            onClick={submitAndGoBack}
                             disabled={processing}
                         >
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
-                            Simpan & Buat Lagi
+                            Simpan & Kembali
                         </Button>
                     </div>
                 </form>

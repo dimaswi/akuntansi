@@ -19,6 +19,7 @@ class GiroTransaction extends Model
         'tanggal_cair',
         'jenis_giro',
         'status_giro',
+        'status', // New field for draft/posted workflow
         'bank_account_id',
         'jumlah',
         'nama_penerbit',
@@ -32,6 +33,8 @@ class GiroTransaction extends Model
         'user_id',
         'posted_at',
         'posted_by',
+        'posting_batch_data', // New field for batch posting
+        'posting_notes', // New field for posting notes
     ];
 
     protected $casts = [
@@ -40,6 +43,7 @@ class GiroTransaction extends Model
         'tanggal_cair' => 'date',
         'jumlah' => 'decimal:2',
         'posted_at' => 'datetime',
+        'posting_batch_data' => 'array', // Cast JSON to array
     ];
 
     public function bankAccount()
@@ -102,6 +106,22 @@ class GiroTransaction extends Model
     public function scopePending($query)
     {
         return $query->whereIn('status_giro', ['diterima', 'diserahkan_ke_bank']);
+    }
+
+    public function scopeDraft($query)
+    {
+        return $query->where('status', 'draft');
+    }
+
+    public function scopePosted($query)
+    {
+        return $query->where('status', 'posted');
+    }
+
+    public function scopeReadyForPosting($query)
+    {
+        return $query->where('status', 'draft')
+                    ->whereNotNull('daftar_akun_lawan_id');
     }
 
     public function isJatuhTempo()

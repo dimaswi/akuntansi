@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -26,6 +27,7 @@ import { Edit3, PlusCircle, Search, Trash, X, Loader2, Wallet, Eye, CheckCircle 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { route } from "ziggy-js";
+import { usePermission } from "@/hooks/use-permission";
 
 interface DaftarAkun {
     id: number;
@@ -135,6 +137,7 @@ const getJenisTransaksiBadge = (jenis: string) => {
 
 export default function CashTransactionIndex() {
     const { cashTransactions, filters, jenisTransaksi } = usePage<Props>().props;
+    const { hasPermission } = usePermission();
     const [search, setSearch] = useState(filters.search);
     const [deleteDialog, setDeleteDialog] = useState<{
         open: boolean;
@@ -248,15 +251,40 @@ export default function CashTransactionIndex() {
         }
     };
 
+    const [selectedTransactions, setSelectedTransactions] = useState<number[]>([]);
+
     const handlePost = (transaction: CashTransaction) => {
-        router.post(route('kas.cash-transactions.post', transaction.id), {}, {
-            onSuccess: () => {
-                toast.success(`Transaksi ${transaction.nomor_transaksi} berhasil diposting`);
-            },
-            onError: () => {
-                toast.error('Gagal memposting transaksi');
-            }
-        });
+        // Redirect to batch posting page with single transaction
+        router.visit(`/kas/cash-transactions/post-to-journal?ids[]=${transaction.id}`);
+    };
+
+    const handleBatchPost = () => {
+        if (selectedTransactions.length === 0) {
+            toast.error('Pilih minimal satu transaksi untuk diposting');
+            return;
+        }
+        
+        const queryParams = selectedTransactions.map(id => `ids[]=${id}`).join('&');
+        router.visit(`/kas/cash-transactions/post-to-journal?${queryParams}`);
+    };
+
+    const handleSelectTransaction = (transactionId: number, checked: boolean) => {
+        if (checked) {
+            setSelectedTransactions(prev => [...prev, transactionId]);
+        } else {
+            setSelectedTransactions(prev => prev.filter(id => id !== transactionId));
+        }
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            const draftTransactionIds = cashTransactions.data
+                .filter(t => t.status === 'draft')
+                .map(t => t.id);
+            setSelectedTransactions(draftTransactionIds);
+        } else {
+            setSelectedTransactions([]);
+        }
     };
 
     return (
@@ -275,13 +303,27 @@ export default function CashTransactionIndex() {
                                     Kelola transaksi penerimaan dan pengeluaran kas
                                 </CardDescription>
                             </div>
-                            <Button
-                                onClick={() => router.visit('/kas/cash-transactions/create')}
-                                className="gap-2"
-                            >
-                                <PlusCircle className="h-4 w-4" />
-                                Tambah Transaksi
-                            </Button>
+                            <div className="flex gap-2">
+                                {selectedTransactions.length > 0 && hasPermission('akuntansi.journal-posting.post') && (
+                                    <Button
+                                        onClick={handleBatchPost}
+                                        variant="secondary"
+                                        className="gap-2"
+                                    >
+                                        <CheckCircle className="h-4 w-4" />
+                                        Posting ke Jurnal ({selectedTransactions.length})
+                                    </Button>
+                                )}
+                                {hasPermission('kas.cash-management.daily-entry') && (
+                                    <Button
+                                        onClick={() => router.visit('/kas/cash-transactions/create')}
+                                        className="gap-2"
+                                    >
+                                        <PlusCircle className="h-4 w-4" />
+                                        Tambah Transaksi
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -373,6 +415,13 @@ export default function CashTransactionIndex() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-12">
+                                            <Checkbox
+                                                checked={selectedTransactions.length > 0 && selectedTransactions.length === cashTransactions.data.filter(t => t.status === 'draft').length}
+                                                onCheckedChange={handleSelectAll}
+                                                aria-label="Select all"
+                                            />
+                                        </TableHead>
                                         <TableHead>Nomor Transaksi</TableHead>
                                         <TableHead>Tanggal</TableHead>
                                         <TableHead>Jenis</TableHead>
@@ -385,13 +434,24 @@ export default function CashTransactionIndex() {
                                 <TableBody>
                                     {cashTransactions.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                                                 Tidak ada data transaksi kas
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         cashTransactions.data.map((transaction) => (
                                             <TableRow key={transaction.id}>
+                                                <TableCell>
+                                                    {transaction.status === 'draft' && (
+                                                        <Checkbox
+                                                            checked={selectedTransactions.includes(transaction.id)}
+                                                            onCheckedChange={(checked) => 
+                                                                handleSelectTransaction(transaction.id, checked as boolean)
+                                                            }
+                                                            aria-label={`Select transaction ${transaction.nomor_transaksi}`}
+                                                        />
+                                                    )}
+                                                </TableCell>
                                                 <TableCell className="font-medium">
                                                     {transaction.nomor_transaksi}
                                                 </TableCell>
@@ -412,38 +472,46 @@ export default function CashTransactionIndex() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => router.visit(`/kas/cash-transactions/${transaction.id}`)}
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
+                                                        {hasPermission('kas.cash-management.view') && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => router.visit(`/kas/cash-transactions/${transaction.id}`)}
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                         {transaction.status === 'draft' && (
                                                             <>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => router.visit(`/kas/cash-transactions/${transaction.id}/edit`)}
-                                                                >
-                                                                    <Edit3 className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => handlePost(transaction)}
-                                                                    className="text-green-600 hover:text-green-700"
-                                                                >
-                                                                    <CheckCircle className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => handleDeleteClick(transaction)}
-                                                                    className="text-destructive hover:text-destructive"
-                                                                >
-                                                                    <Trash className="h-4 w-4" />
-                                                                </Button>
+                                                                {hasPermission('kas.cash-management.daily-entry') && (
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => router.visit(`/kas/cash-transactions/${transaction.id}/edit`)}
+                                                                    >
+                                                                        <Edit3 className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
+                                                                {hasPermission('akuntansi.journal-posting.post') && (
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => handlePost(transaction)}
+                                                                        className="text-green-600 hover:text-green-700"
+                                                                    >
+                                                                        <CheckCircle className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
+                                                                {hasPermission('kas.cash-transaction.delete') && (
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => handleDeleteClick(transaction)}
+                                                                        className="text-destructive hover:text-destructive"
+                                                                    >
+                                                                        <Trash className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
                                                             </>
                                                         )}
                                                     </div>

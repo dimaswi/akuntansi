@@ -195,7 +195,7 @@ export default function EditBankTransaction() {
                                                 Bank Account <span className="text-red-500">*</span>
                                             </Label>
                                             <Select
-                                                value={data.bank_account_id}
+                                                value={data.bank_account_id || undefined}
                                                 onValueChange={(value) => setData("bank_account_id", value)}
                                             >
                                                 <SelectTrigger className={errors.bank_account_id ? "border-red-500" : ""}>
@@ -219,7 +219,7 @@ export default function EditBankTransaction() {
                                                 Jenis Transaksi <span className="text-red-500">*</span>
                                             </Label>
                                             <Select
-                                                value={data.jenis_transaksi}
+                                                value={data.jenis_transaksi || undefined}
                                                 onValueChange={(value) => setData("jenis_transaksi", value)}
                                             >
                                                 <SelectTrigger className={errors.jenis_transaksi ? "border-red-500" : ""}>

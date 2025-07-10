@@ -11,7 +11,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt } from 'lucide-react';
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -55,6 +55,18 @@ const mainNavItems: NavItem[] = [
                 href: '/kas/giro-transactions',
                 icon: Receipt,
                 permission: 'kas.giro-transaction.view',
+            },
+            {
+                title: 'Laporan Arus Kas',
+                href: '/kas/reports/cash-flow',
+                icon: TrendingUp,
+                permission: 'laporan.cash-flow.view',
+            },
+            {
+                title: 'Laporan Giro',
+                href: '/kas/reports/giro',
+                icon: FileBarChart,
+                permission: 'laporan.giro-report.view',
             },
         ],
     },

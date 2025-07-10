@@ -77,7 +77,7 @@ export default function CashTransactionEdit() {
         pihak_terkait: cashTransaction.pihak_terkait || '',
         referensi: cashTransaction.referensi || '',
         daftar_akun_kas_id: cashTransaction.daftar_akun_kas_id.toString(),
-        daftar_akun_lawan_id: cashTransaction.daftar_akun_lawan_id.toString(),
+        daftar_akun_lawan_id: cashTransaction.daftar_akun_lawan_id ? cashTransaction.daftar_akun_lawan_id.toString() : '',
     });
 
     const handleSubmit: FormEventHandler = (e) => {
@@ -192,7 +192,7 @@ export default function CashTransactionEdit() {
                                     <div className="space-y-2">
                                         <Label htmlFor="jenis_transaksi">Jenis Transaksi *</Label>
                                         <Select
-                                            value={data.jenis_transaksi}
+                                            value={data.jenis_transaksi || undefined}
                                             onValueChange={(value) => setData('jenis_transaksi', value)}
                                             required
                                         >
