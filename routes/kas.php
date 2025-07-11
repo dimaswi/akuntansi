@@ -82,6 +82,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('kas/cash-transactions/{cashTransaction}', [CashTransactionController::class, 'destroy'])
         ->name('kas.cash-transactions.destroy')
         ->middleware('permission:kas.cash-transaction.delete');
+        
+    // Individual Cash Transaction Posting
+    Route::post('kas/cash-transactions/{cashTransaction}/post', [CashTransactionController::class, 'postIndividual'])
+        ->name('kas.cash-transactions.post-individual')
+        ->middleware('permission:kas.cash-transaction.post');
 
     // Bank Transactions
     Route::get('kas/bank-transactions', [BankTransactionController::class, 'index'])
@@ -120,6 +125,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('kas/bank-transactions/{bankTransaction}', [BankTransactionController::class, 'destroy'])
         ->name('kas.bank-transactions.destroy')
         ->middleware('permission:kas.bank-transaction.delete');
+        
+    // Individual Bank Transaction Posting
+    Route::post('kas/bank-transactions/{bankTransaction}/post', [BankTransactionController::class, 'postIndividual'])
+        ->name('kas.bank-transactions.post-individual')
+        ->middleware('permission:kas.bank-transaction.post');
         
     Route::post('kas/bank-transactions/{bankTransaction}/reconcile', [BankTransactionController::class, 'reconcile'])
         ->name('kas.bank-transactions.reconcile')
@@ -162,6 +172,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('kas/giro-transactions/{giroTransaction}', [GiroTransactionController::class, 'destroy'])
         ->name('kas.giro-transactions.destroy')
         ->middleware('permission:kas.giro-transaction.delete');
+        
+    // Individual Giro Transaction Posting
+    Route::post('kas/giro-transactions/{giroTransaction}/post', [GiroTransactionController::class, 'postIndividual'])
+        ->name('kas.giro-transactions.post-individual')
+        ->middleware('permission:kas.giro-transaction.post');
         
     Route::post('kas/giro-transactions/{giroTransaction}/submit-to-bank', [GiroTransactionController::class, 'submitToBank'])
         ->name('kas.giro-transactions.submit-to-bank')

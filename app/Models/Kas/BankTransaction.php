@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Akuntansi\DaftarAkun;
 use App\Models\Akuntansi\Jurnal;
 use App\Models\User;
+use App\Traits\Approvable;
 
 class BankTransaction extends Model
 {
-    use HasFactory;
+    use HasFactory, Approvable;
 
     protected $fillable = [
         'nomor_transaksi',
@@ -122,5 +123,15 @@ class BankTransaction extends Model
         }
 
         return sprintf('%s/%s/%s/%04d', $prefix, $tahun, $bulan, $newNum);
+    }
+
+    protected function getApprovalEntityType(): string
+    {
+        return 'bank_transaction';
+    }
+
+    protected function getApprovalAmount(): float
+    {
+        return (float) $this->jumlah;
     }
 }

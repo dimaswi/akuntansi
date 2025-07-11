@@ -23,6 +23,7 @@ export interface NavItem {
     isActive?: boolean;
     children?: NavItem[];
     permission?: string;
+    permissions?: string[]; // Support for multiple permissions (OR logic)
 }
 
 export interface SharedData {

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Icon } from '@/components/icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,7 +12,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart } from 'lucide-react';
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Calendar } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -100,6 +101,12 @@ const mainNavItems: NavItem[] = [
                 permission: 'akuntansi.buku-besar.view',
             },
             {
+                title: 'Monthly Closing',
+                href: '/monthly-closing',
+                icon: Calendar,
+                permission: 'monthly-closing.view',
+            },
+            {
                 title: 'Laporan Keuangan',
                 href: '/akuntansi/laporan',
                 icon: BarChart,
@@ -132,6 +139,12 @@ const mainNavItems: NavItem[] = [
             },
         ],
     },
+    {
+        title: 'Approvals',
+        href: '/approvals',
+        icon: BookOpenCheck,
+        permissions: ['approval.cash-transactions.approve', 'approval.journal-posting.approve', 'approval.monthly-closing.approve'],
+    },
 ];
 
 const rightNavItems: NavItem[] = [
@@ -156,8 +169,23 @@ interface AppHeaderProps {
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
-    const { hasPermission } = usePermission();
+    const { hasPermission, hasAnyPermission } = usePermission();
     const getInitials = useInitials();
+
+    // Debug permissions in development
+    React.useEffect(() => {
+        console.log('[DEBUG] User permissions:', auth.permissions);
+        console.log('[DEBUG] User:', auth.user);
+        
+        const approvalPermissions = ['approval.cash-transactions.approve', 'approval.journal-posting.approve', 'approval.monthly-closing.approve'];
+        const hasAnyApproval = hasAnyPermission(approvalPermissions);
+        console.log('[DEBUG] Has any approval permission:', hasAnyApproval);
+        
+        approvalPermissions.forEach(perm => {
+            const hasPerm = hasPermission(perm);
+            console.log(`[DEBUG] Has ${perm}:`, hasPerm);
+        });
+    }, [auth.permissions, auth.user, hasPermission, hasAnyPermission]);
 
     // Filter navigation items based on permissions
     const filteredNavItems = mainNavItems.map(item => {
@@ -178,12 +206,25 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
         }
         
         // Check permission for non-parent items
+        // Support both single permission and permissions array (OR logic)
         if (item.permission && !hasPermission(item.permission)) {
+            return null;
+        }
+        
+        if (item.permissions && !hasAnyPermission(item.permissions)) {
+            console.log(`[DEBUG] Filtering out ${item.title} - no permissions match:`, item.permissions);
             return null;
         }
         
         return item;
     }).filter(Boolean) as NavItem[];
+
+    // Debug filtered navigation items
+    React.useEffect(() => {
+        console.log('[DEBUG] Filtered nav items:', filteredNavItems.map(item => item.title));
+        console.log('[DEBUG] Original nav items count:', mainNavItems.length);
+        console.log('[DEBUG] Filtered nav items count:', filteredNavItems.length);
+    }, [filteredNavItems]);
     return (
         <>
             <div className="border-b border-sidebar-border/80">

@@ -42,4 +42,17 @@ class Role extends Model
     {
         $this->permissions()->detach($permission);
     }
+    
+    public function syncPermissions($permissions): void
+    {
+        if ($permissions instanceof \Illuminate\Database\Eloquent\Collection) {
+            $permissionIds = $permissions->pluck('id')->toArray();
+        } elseif (is_array($permissions)) {
+            $permissionIds = $permissions;
+        } else {
+            $permissionIds = [$permissions];
+        }
+        
+        $this->permissions()->sync($permissionIds);
+    }
 }

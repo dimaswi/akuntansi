@@ -23,7 +23,7 @@ class CashFlowReportController extends Controller
 
         $tanggalDari = $request->get('tanggal_dari', now()->startOfMonth()->format('Y-m-d'));
         $tanggalSampai = $request->get('tanggal_sampai', now()->endOfMonth()->format('Y-m-d'));
-        $status = $request->get('status', 'all'); // all, draft, posted
+        $status = $request->get('status', 'all'); // all, draft, pending_approval, posted
         $jenisLaporan = $request->get('jenis_laporan', 'summary'); // summary, detail
         $tipeLaporan = $request->get('tipe_laporan', 'both'); // cash, bank, both
 
@@ -214,6 +214,12 @@ class CashFlowReportController extends Controller
                 'saldo' => 0,
                 'count' => 0
             ],
+            'pending_approval' => [
+                'penerimaan' => 0,
+                'pengeluaran' => 0,
+                'saldo' => 0,
+                'count' => 0
+            ],
             'posted' => [
                 'penerimaan' => 0,
                 'pengeluaran' => 0,
@@ -245,7 +251,7 @@ class CashFlowReportController extends Controller
         }
 
         // Calculate net cash flow for each status
-        foreach (['draft', 'posted', 'total'] as $status) {
+        foreach (['draft', 'pending_approval', 'posted', 'total'] as $status) {
             $summary[$status]['saldo'] = $summary[$status]['penerimaan'] - $summary[$status]['pengeluaran'];
         }
 
@@ -259,6 +265,12 @@ class CashFlowReportController extends Controller
     {
         $summary = [
             'draft' => [
+                'setoran' => 0,
+                'penarikan' => 0,
+                'saldo' => 0,
+                'count' => 0
+            ],
+            'pending_approval' => [
                 'setoran' => 0,
                 'penarikan' => 0,
                 'saldo' => 0,
@@ -295,7 +307,7 @@ class CashFlowReportController extends Controller
         }
 
         // Calculate net bank flow for each status
-        foreach (['draft', 'posted', 'total'] as $status) {
+        foreach (['draft', 'pending_approval', 'posted', 'total'] as $status) {
             $summary[$status]['saldo'] = $summary[$status]['setoran'] - $summary[$status]['penarikan'];
         }
 
@@ -314,6 +326,12 @@ class CashFlowReportController extends Controller
                 'saldo_bersih' => 0,
                 'count' => $cashSummary['draft']['count'] + $bankSummary['draft']['count']
             ],
+            'pending_approval' => [
+                'total_masuk' => $cashSummary['pending_approval']['penerimaan'] + $bankSummary['pending_approval']['setoran'],
+                'total_keluar' => $cashSummary['pending_approval']['pengeluaran'] + $bankSummary['pending_approval']['penarikan'],
+                'saldo_bersih' => 0,
+                'count' => $cashSummary['pending_approval']['count'] + $bankSummary['pending_approval']['count']
+            ],
             'posted' => [
                 'total_masuk' => $cashSummary['posted']['penerimaan'] + $bankSummary['posted']['setoran'],
                 'total_keluar' => $cashSummary['posted']['pengeluaran'] + $bankSummary['posted']['penarikan'],
@@ -329,7 +347,7 @@ class CashFlowReportController extends Controller
         ];
 
         // Calculate net flow for each status
-        foreach (['draft', 'posted', 'total'] as $status) {
+        foreach (['draft', 'pending_approval', 'posted', 'total'] as $status) {
             $combined[$status]['saldo_bersih'] = $combined[$status]['total_masuk'] - $combined[$status]['total_keluar'];
         }
 

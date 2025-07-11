@@ -527,4 +527,96 @@ class BankTransactionController extends Controller
 
         return sprintf('%s/%s/%s/%04d', $prefix, $tahun, $bulan, $newNum);
     }
+
+    /**
+     * Post individual bank transaction to journal
+     */
+    public function postIndividual(BankTransaction $bankTransaction)
+    {
+        try {
+            // Check if transaction is already posted
+            if ($bankTransaction->is_posted) {
+                return redirect()->back()->with('error', 'Transaksi sudah di-posting ke jurnal.');
+            }
+
+            // Check if transaction needs approval
+            if ($bankTransaction->requiresApproval()) {
+                // Check if approved
+                $approval = $bankTransaction->approvals()->where('status', 'approved')->first();
+                if (!$approval) {
+                    return redirect()->back()->with('error', 'Transaksi memerlukan approval sebelum dapat di-posting.');
+                }
+            }
+
+            DB::beginTransaction();
+
+            // Generate nomor jurnal
+            $nomorJurnal = $this->generateNomorJurnal();
+
+            // Create journal header
+            $jurnal = Jurnal::create([
+                'nomor_jurnal' => $nomorJurnal,
+                'tanggal_transaksi' => $bankTransaction->tanggal_transaksi,
+                'keterangan' => $bankTransaction->keterangan . ' - ' . ($bankTransaction->pihak_terkait ?: 'Bank Transfer'),
+                'nomor_referensi' => $bankTransaction->nomor_transaksi,
+                'total_debit' => $bankTransaction->jumlah,
+                'total_kredit' => $bankTransaction->jumlah,
+                'dibuat_oleh' => Auth::id(),
+                'status' => 'posted',
+                'tanggal_posting' => now(),
+                'diposting_oleh' => Auth::id()
+            ]);
+
+            // Create journal details based on transaction type
+            if (in_array($bankTransaction->jenis_transaksi, ['setoran', 'transfer_masuk', 'kliring_masuk', 'bunga_bank'])) {
+                // Bank balance increases (Debit), Counter account decreases (Credit)
+                DetailJurnal::create([
+                    'jurnal_id' => $jurnal->id,
+                    'daftar_akun_id' => $bankTransaction->bankAccount->daftar_akun_id,
+                    'keterangan' => $bankTransaction->keterangan,
+                    'jumlah_debit' => $bankTransaction->jumlah,
+                    'jumlah_kredit' => 0
+                ]);
+
+                DetailJurnal::create([
+                    'jurnal_id' => $jurnal->id,
+                    'daftar_akun_id' => $bankTransaction->daftar_akun_lawan_id,
+                    'keterangan' => $bankTransaction->keterangan,
+                    'jumlah_debit' => 0,
+                    'jumlah_kredit' => $bankTransaction->jumlah
+                ]);
+            } else {
+                // Bank balance decreases (Credit), Counter account increases (Debit)
+                DetailJurnal::create([
+                    'jurnal_id' => $jurnal->id,
+                    'daftar_akun_id' => $bankTransaction->daftar_akun_lawan_id,
+                    'keterangan' => $bankTransaction->keterangan,
+                    'jumlah_debit' => $bankTransaction->jumlah,
+                    'jumlah_kredit' => 0
+                ]);
+
+                DetailJurnal::create([
+                    'jurnal_id' => $jurnal->id,
+                    'daftar_akun_id' => $bankTransaction->bankAccount->daftar_akun_id,
+                    'keterangan' => $bankTransaction->keterangan,
+                    'jumlah_debit' => 0,
+                    'jumlah_kredit' => $bankTransaction->jumlah
+                ]);
+            }
+
+            // Update transaction
+            $bankTransaction->update([
+                'is_posted' => true,
+                'jurnal_id' => $jurnal->id,
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Transaksi berhasil di-posting ke jurnal dengan nomor: ' . $jurnal->nomor_jurnal);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Gagal mem-posting transaksi: ' . $e->getMessage());
+        }
+    }
 }

@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Akuntansi\DaftarAkun;
 use App\Models\Akuntansi\Jurnal;
 use App\Models\User;
+use App\Traits\Approvable;
 
 class GiroTransaction extends Model
 {
-    use HasFactory;
+    use HasFactory, Approvable;
 
     protected $fillable = [
         'nomor_giro',
@@ -132,5 +133,15 @@ class GiroTransaction extends Model
     public function canBeCashed()
     {
         return $this->status_giro === 'diserahkan_ke_bank' && $this->isJatuhTempo();
+    }
+
+    protected function getApprovalEntityType(): string
+    {
+        return 'giro_transaction';
+    }
+
+    protected function getApprovalAmount(): float
+    {
+        return (float) $this->jumlah;
     }
 }

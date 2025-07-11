@@ -115,16 +115,39 @@ class CashTransactionController extends Controller
             'daftar_akun_kas_id' => 'required|exists:daftar_akun,id'
         ]);
 
-        DB::transaction(function () use ($request) {
+        $cashTransaction = null;
+        $needsApproval = false;
+
+        DB::transaction(function () use ($request, &$cashTransaction, &$needsApproval) {
+            // Create cash transaction
             $cashTransaction = new CashTransaction($request->all());
             $cashTransaction->user_id = Auth::id();
             $cashTransaction->status = 'draft';
             $cashTransaction->nomor_transaksi = $cashTransaction->generateNomorTransaksi();
             $cashTransaction->save();
+
+            // Check if transaction needs approval
+            if ($cashTransaction->requiresApproval()) {
+                $needsApproval = true;
+                
+                // Create approval request
+                $approval = $cashTransaction->requestApproval(
+                    Auth::user(),
+                    'transaction',
+                    "Transaksi kas {$cashTransaction->jenis_transaksi} sebesar " . number_format((float)$cashTransaction->jumlah, 0, ',', '.') . " - {$cashTransaction->keterangan}"
+                );
+
+                // Update transaction status to pending approval
+                $cashTransaction->update(['status' => 'pending_approval']);
+            }
         });
 
+        $message = $needsApproval 
+            ? 'Transaksi kas berhasil dibuat dan menunggu approval sebelum dapat di-posting ke jurnal.'
+            : 'Transaksi kas berhasil dibuat dan menunggu posting ke jurnal.';
+
         return redirect()->route('kas.cash-transactions.index')
-            ->with('success', 'Transaksi kas berhasil dibuat dan menunggu posting ke jurnal.');
+            ->with('success', $message);
     }
 
     public function show(CashTransaction $cashTransaction)
@@ -391,5 +414,77 @@ class CashTransactionController extends Controller
         }
 
         return $totalSaldo;
+    }
+
+    /**
+     * Post individual cash transaction to journal
+     */
+    public function postIndividual(CashTransaction $cashTransaction)
+    {
+        try {
+            // Check if transaction is already posted
+            if ($cashTransaction->status === 'posted') {
+                return redirect()->back()->with('error', 'Transaksi sudah di-posting ke jurnal.');
+            }
+
+            // Check if transaction needs approval
+            if ($cashTransaction->requiresApproval()) {
+                // Check if approved
+                $approval = $cashTransaction->approvals()->where('status', 'approved')->first();
+                if (!$approval) {
+                    return redirect()->back()->with('error', 'Transaksi memerlukan approval sebelum dapat di-posting.');
+                }
+            }
+
+            DB::beginTransaction();
+
+            // Generate nomor jurnal
+            $nomorJurnal = $this->generateNomorJurnal();
+
+            // Create jurnal header
+            $jurnal = Jurnal::create([
+                'nomor_jurnal' => $nomorJurnal,
+                'tanggal_jurnal' => $cashTransaction->tanggal_transaksi,
+                'keterangan' => $cashTransaction->keterangan,
+                'user_id' => Auth::id(),
+                'total_debit' => $cashTransaction->jumlah,
+                'total_kredit' => $cashTransaction->jumlah,
+                'status' => 'posted',
+                'sumber_transaksi' => 'cash_transaction',
+                'referensi_id' => $cashTransaction->id,
+            ]);
+
+            // Create detail jurnal for kas account
+            DetailJurnal::create([
+                'jurnal_id' => $jurnal->id,
+                'daftar_akun_id' => $cashTransaction->akun_kas_id,
+                'keterangan' => $cashTransaction->keterangan,
+                'jumlah_debit' => $cashTransaction->jenis_transaksi === 'masuk' ? $cashTransaction->jumlah : 0,
+                'jumlah_kredit' => $cashTransaction->jenis_transaksi === 'keluar' ? $cashTransaction->jumlah : 0,
+            ]);
+
+            // Create detail jurnal for lawan account
+            DetailJurnal::create([
+                'jurnal_id' => $jurnal->id,
+                'daftar_akun_id' => $cashTransaction->akun_lawan_id,
+                'keterangan' => $cashTransaction->keterangan,
+                'jumlah_debit' => $cashTransaction->jenis_transaksi === 'keluar' ? $cashTransaction->jumlah : 0,
+                'jumlah_kredit' => $cashTransaction->jenis_transaksi === 'masuk' ? $cashTransaction->jumlah : 0,
+            ]);
+
+            // Update transaction status
+            $cashTransaction->update([
+                'status' => 'posted',
+                'jurnal_id' => $jurnal->id,
+            ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Transaksi berhasil di-posting ke jurnal dengan nomor: ' . $nomorJurnal);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Gagal mem-posting transaksi: ' . $e->getMessage());
+        }
     }
 }

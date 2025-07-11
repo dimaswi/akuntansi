@@ -34,7 +34,7 @@ interface CashTransaction {
     jenis_transaksi: string;
     jumlah: number;
     keterangan: string;
-    status: 'draft' | 'posted';
+    status: 'draft' | 'pending_approval' | 'posted';
     daftar_akun_kas: {
         kode_akun: string;
         nama_akun: string;
@@ -55,7 +55,7 @@ interface BankTransaction {
     jenis_transaksi: string;
     jumlah: number;
     keterangan: string;
-    status: 'draft' | 'posted';
+    status: 'draft' | 'pending_approval' | 'posted';
     bank_account: {
         nama_bank: string;
         nomor_rekening: string;
@@ -71,6 +71,14 @@ interface BankTransaction {
 
 interface StatusSummary {
     draft: {
+        penerimaan?: number;
+        pengeluaran?: number;
+        setoran?: number;
+        penarikan?: number;
+        saldo: number;
+        count: number;
+    };
+    pending_approval: {
         penerimaan?: number;
         pengeluaran?: number;
         setoran?: number;
@@ -98,6 +106,12 @@ interface StatusSummary {
 
 interface CombinedSummary {
     draft: {
+        total_masuk: number;
+        total_keluar: number;
+        saldo_bersih: number;
+        count: number;
+    };
+    pending_approval: {
         total_masuk: number;
         total_keluar: number;
         saldo_bersih: number;
@@ -180,6 +194,8 @@ const getStatusBadge = (status: string) => {
     switch (status) {
         case 'posted':
             return <Badge className="bg-green-100 text-green-800">Diposting</Badge>;
+        case 'pending_approval':
+            return <Badge className="bg-yellow-100 text-yellow-800">Menunggu Approval</Badge>;
         case 'draft':
             return <Badge variant="outline">Draft</Badge>;
         default:
@@ -270,6 +286,7 @@ export default function CashFlowReport() {
                                         <SelectContent>
                                             <SelectItem value="all">Semua</SelectItem>
                                             <SelectItem value="draft">Draft</SelectItem>
+                                            <SelectItem value="pending_approval">Menunggu Approval</SelectItem>
                                             <SelectItem value="posted">Posted</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -296,8 +313,9 @@ export default function CashFlowReport() {
                         <Alert className="border-blue-200 bg-blue-50">
                             <AlertCircle className="h-4 w-4 text-blue-600" />
                             <AlertDescription className="text-blue-800">
-                                <strong>Workflow Baru:</strong> Laporan ini menampilkan transaksi dengan status "Draft" (belum masuk jurnal) 
-                                dan "Posted" (sudah masuk jurnal). Transaksi draft tidak mempengaruhi laporan akuntansi/jurnal.
+                                <strong>Workflow Baru:</strong> Laporan ini menampilkan transaksi dengan status "Draft" (belum masuk jurnal), 
+                                "Menunggu Approval" (memerlukan persetujuan), dan "Posted" (sudah masuk jurnal). 
+                                Transaksi draft dan pending approval tidak mempengaruhi laporan akuntansi/jurnal.
                             </AlertDescription>
                         </Alert>
 
@@ -357,7 +375,7 @@ export default function CashFlowReport() {
                         <div className="mt-6">
                             {activeTab === 'summary' && (
                                 <div className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                         <Card>
                                             <CardHeader className="pb-2">
                                                 <CardTitle className="text-sm font-medium">Draft (Belum Diposting)</CardTitle>
@@ -382,6 +400,35 @@ export default function CashFlowReport() {
                                                     </div>
                                                     <div className="text-xs text-gray-500">
                                                         {combinedSummary.draft.count} transaksi
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+
+                                        <Card>
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-sm font-medium">Menunggu Approval</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-sm text-green-600">Total Masuk:</span>
+                                                        <span className="font-mono text-sm">{formatCurrency(combinedSummary.pending_approval.total_masuk)}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-sm text-red-600">Total Keluar:</span>
+                                                        <span className="font-mono text-sm">{formatCurrency(combinedSummary.pending_approval.total_keluar)}</span>
+                                                    </div>
+                                                    <div className="flex justify-between border-t pt-2">
+                                                        <span className="text-sm font-medium">Saldo Bersih:</span>
+                                                        <span className={`font-mono text-sm font-bold ${
+                                                            combinedSummary.pending_approval.saldo_bersih >= 0 ? 'text-green-600' : 'text-red-600'
+                                                        }`}>
+                                                            {formatCurrency(combinedSummary.pending_approval.saldo_bersih)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {combinedSummary.pending_approval.count} transaksi
                                                     </div>
                                                 </div>
                                             </CardContent>
@@ -471,6 +518,19 @@ export default function CashFlowReport() {
                                                         </div>
                                                     </div>
                                                     <div>
+                                                        <h4 className="text-sm font-medium mb-2">Menunggu Approval</h4>
+                                                        <div className="text-sm space-y-1">
+                                                            <div className="flex justify-between">
+                                                                <span>Penerimaan:</span>
+                                                                <span className="font-mono">{formatCurrency(cashSummary.pending_approval.penerimaan || 0)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span>Pengeluaran:</span>
+                                                                <span className="font-mono">{formatCurrency(cashSummary.pending_approval.pengeluaran || 0)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
                                                         <h4 className="text-sm font-medium mb-2">Posted</h4>
                                                         <div className="text-sm space-y-1">
                                                             <div className="flex justify-between">
@@ -510,6 +570,19 @@ export default function CashFlowReport() {
                                                         </div>
                                                     </div>
                                                     <div>
+                                                        <h4 className="text-sm font-medium mb-2">Menunggu Approval</h4>
+                                                        <div className="text-sm space-y-1">
+                                                            <div className="flex justify-between">
+                                                                <span>Setoran:</span>
+                                                                <span className="font-mono">{formatCurrency(bankSummary.pending_approval.setoran || 0)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span>Penarikan:</span>
+                                                                <span className="font-mono">{formatCurrency(bankSummary.pending_approval.penarikan || 0)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
                                                         <h4 className="text-sm font-medium mb-2">Posted</h4>
                                                         <div className="text-sm space-y-1">
                                                             <div className="flex justify-between">
@@ -535,6 +608,7 @@ export default function CashFlowReport() {
                                         <CardTitle>Detail Transaksi Kas</CardTitle>
                                         <CardDescription>
                                             {filters.status === 'draft' && 'Transaksi kas yang belum diposting ke jurnal'}
+                                            {filters.status === 'pending_approval' && 'Transaksi kas yang menunggu persetujuan'}
                                             {filters.status === 'posted' && 'Transaksi kas yang sudah diposting ke jurnal'}
                                             {filters.status === 'all' && 'Semua transaksi kas'}
                                         </CardDescription>
@@ -615,6 +689,7 @@ export default function CashFlowReport() {
                                         <CardTitle>Detail Transaksi Bank</CardTitle>
                                         <CardDescription>
                                             {filters.status === 'draft' && 'Transaksi bank yang belum diposting ke jurnal'}
+                                            {filters.status === 'pending_approval' && 'Transaksi bank yang menunggu persetujuan'}
                                             {filters.status === 'posted' && 'Transaksi bank yang sudah diposting ke jurnal'}
                                             {filters.status === 'all' && 'Semua transaksi bank'}
                                         </CardDescription>
