@@ -32,12 +32,26 @@ trait Approvable
 
     public function requiresApproval(string $approvalType = 'transaction'): bool
     {
+        // SIMPLIFIED LOGIC: Hanya untuk transaksi keluar
+        if (!$this->isOutgoingTransaction()) {
+            return false;
+        }
+
         $entityType = $this->getApprovalEntityType();
         $amount = $this->getApprovalAmount();
         
         $rule = ApprovalRule::findApplicableRule($entityType, $approvalType, $amount);
         
         return $rule && $rule->requiresApproval($amount);
+    }
+
+    /**
+     * Check if this is an outgoing (keluar) transaction
+     */
+    public function isOutgoingTransaction(): bool
+    {
+        // Default implementation - should be overridden by models
+        return false;
     }
 
     public function requestApproval(

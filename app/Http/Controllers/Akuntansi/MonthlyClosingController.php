@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Akuntansi\MonthlyClosing;
 use App\Models\Kas\CashTransaction;
 use App\Models\Kas\BankTransaction;
+use App\Models\Kas\GiroTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,9 @@ class MonthlyClosingController extends Controller
     public function index(Request $request)
     {
         // Check permission
-        if (!auth()->user()->can('monthly-closing.view')) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasPermission('monthly-closing.view')) {
             abort(403, 'Unauthorized access to monthly closing.');
         }
 
@@ -63,7 +66,9 @@ class MonthlyClosingController extends Controller
     public function create(Request $request)
     {
         // Check permission
-        if (!auth()->user()->can('monthly-closing.create')) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasPermission('monthly-closing.create')) {
             abort(403, 'Unauthorized to initiate monthly closing.');
         }
 
@@ -86,6 +91,7 @@ class MonthlyClosingController extends Controller
         // Get validation checks and pending transactions
         $validationChecks = $this->getValidationChecks($year, $month);
         $pendingTransactions = $this->getPendingTransactions($year, $month);
+        $cashOnlyValidation = $this->getCashOnlyValidation($year, $month);
 
         $monthNames = [
             'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -97,7 +103,8 @@ class MonthlyClosingController extends Controller
             'month' => $month,
             'monthName' => $monthNames[$month - 1] ?? 'Unknown',
             'validationChecks' => $validationChecks,
-            'pendingTransactions' => $pendingTransactions
+            'pendingTransactions' => $pendingTransactions,
+            'cashOnlyValidation' => $cashOnlyValidation
         ]);
     }
 
@@ -111,7 +118,9 @@ class MonthlyClosingController extends Controller
         ]);
 
         // Check permission
-        if (!auth()->user()->can('monthly-closing.create')) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasPermission('monthly-closing.create')) {
             abort(403, 'Unauthorized to create monthly closing.');
         }
 
@@ -169,7 +178,9 @@ class MonthlyClosingController extends Controller
     public function show(MonthlyClosing $monthlyClosing)
     {
         // Check permission
-        if (!auth()->user()->can('monthly-closing.view')) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasPermission('monthly-closing.view')) {
             abort(403, 'Unauthorized access to monthly closing.');
         }
 
@@ -187,6 +198,10 @@ class MonthlyClosingController extends Controller
             ->where('status', 'posted')
             ->count();
 
+        $giroTransactions = GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->where('status', 'posted')
+            ->count();
+
         $totalAmount = CashTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
             ->where('status', 'posted')
             ->sum('jumlah');
@@ -195,16 +210,20 @@ class MonthlyClosingController extends Controller
             ->where('status', 'posted')
             ->sum('jumlah');
 
+        $totalAmount += GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->where('status', 'posted')
+            ->sum('jumlah');
+
         return Inertia::render('akuntansi/monthly-closing/show', [
             'monthlyClosing' => $monthlyClosing,
-            'canApprove' => auth()->user()->can('monthly-closing.approve') && $monthlyClosing->status === 'pending_approval',
-            'canClose' => auth()->user()->can('monthly-closing.close') && $monthlyClosing->status === 'approved',
-            'canReopen' => auth()->user()->can('monthly-closing.reopen') && $monthlyClosing->status === 'closed',
+            'canApprove' => $user->hasPermission('monthly-closing.approve') && $monthlyClosing->status === 'pending_approval',
+            'canClose' => $user->hasPermission('monthly-closing.close') && $monthlyClosing->status === 'approved',
+            'canReopen' => $user->hasPermission('monthly-closing.reopen') && $monthlyClosing->status === 'closed',
             'transactionSummary' => [
                 'cash_transactions' => $cashTransactions,
                 'bank_transactions' => $bankTransactions,
-                'giro_transactions' => 0, // Add when implemented
-                'total_transactions' => $cashTransactions + $bankTransactions,
+                'giro_transactions' => $giroTransactions,
+                'total_transactions' => $cashTransactions + $bankTransactions + $giroTransactions,
                 'total_amount' => $totalAmount
             ]
         ]);
@@ -213,7 +232,9 @@ class MonthlyClosingController extends Controller
     public function close(MonthlyClosing $monthlyClosing)
     {
         // Check permission
-        if (!auth()->user()->can('monthly-closing.close')) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasPermission('monthly-closing.close')) {
             abort(403, 'Unauthorized to close monthly period.');
         }
 
@@ -261,7 +282,9 @@ class MonthlyClosingController extends Controller
         ]);
 
         // Check permission
-        if (!auth()->user()->can('monthly-closing.reopen')) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasPermission('monthly-closing.reopen')) {
             abort(403, 'Unauthorized to reopen monthly period.');
         }
 
@@ -284,7 +307,9 @@ class MonthlyClosingController extends Controller
     public function approve(MonthlyClosing $monthlyClosing)
     {
         // Check permission
-        if (!auth()->user()->can('monthly-closing.approve')) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasPermission('monthly-closing.approve')) {
             abort(403, 'Unauthorized to approve monthly closing.');
         }
 
@@ -364,6 +389,18 @@ class MonthlyClosingController extends Controller
             ->get()
             ->keyBy('status');
 
+        // Summary transaksi giro
+        $giroSummary = GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->selectRaw('
+                status,
+                COUNT(*) as count,
+                SUM(CASE WHEN jenis_giro = "masuk" THEN jumlah ELSE 0 END) as giro_masuk,
+                SUM(CASE WHEN jenis_giro = "keluar" THEN jumlah ELSE 0 END) as giro_keluar
+            ')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
         // Count pending transactions
         $pendingCash = CashTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
             ->whereIn('status', ['draft', 'pending_approval'])
@@ -373,16 +410,22 @@ class MonthlyClosingController extends Controller
             ->whereIn('status', ['draft', 'pending_approval'])
             ->count();
 
+        $pendingGiro = GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->whereIn('status', ['draft', 'pending_approval'])
+            ->count();
+
         return [
             'periode' => $startDate->format('F Y'),
             'start_date' => $startDate->format('Y-m-d'),
             'end_date' => $endDate->format('Y-m-d'),
             'cash_summary' => $cashSummary,
             'bank_summary' => $bankSummary,
-            'total_pending' => $pendingCash + $pendingBank,
+            'giro_summary' => $giroSummary,
+            'total_pending' => $pendingCash + $pendingBank + $pendingGiro,
             'pending_cash' => $pendingCash,
             'pending_bank' => $pendingBank,
-            'can_close' => ($pendingCash + $pendingBank) === 0
+            'pending_giro' => $pendingGiro,
+            'can_close' => ($pendingCash + $pendingBank + $pendingGiro) === 0
         ];
     }
 
@@ -416,13 +459,42 @@ class MonthlyClosingController extends Controller
         $endDate = $startDate->copy()->endOfMonth();
 
         // Check all transactions posted
-        $pendingTransactions = CashTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
-            ->whereIn('status', ['draft', 'pending_approval'])
+        // Untuk cut-off, yang menghalangi hanya draft yang akan masuk jurnal
+        // Draft untuk laporan kas saja tidak menghalangi cut-off
+        $pendingCashForJournal = CashTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->where('status', 'draft')
+            ->where('will_post_to_journal', true) // Hanya yang akan masuk jurnal yang menghalangi cut-off
             ->count();
         
-        $pendingTransactions += BankTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
-            ->whereIn('status', ['draft', 'pending_approval'])
+        $pendingBankForJournal = BankTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->where('status', 'draft')
+            ->where('will_post_to_journal', true) // Hanya yang akan masuk jurnal yang menghalangi cut-off
             ->count();
+        
+        $pendingGiroForJournal = GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->where('status', 'draft')
+            ->where('will_post_to_journal', true) // Hanya yang akan masuk jurnal yang menghalangi cut-off
+            ->count();
+        
+        $pendingTransactions = $pendingCashForJournal + $pendingBankForJournal + $pendingGiroForJournal;
+        
+        // Transaksi dengan status 'pending_approval' tetap menghalangi cut-off
+        $pendingApprovalTransactions = CashTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->where('status', 'pending_approval')
+            ->count();
+            
+        $pendingApprovalTransactions += BankTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->where('status', 'pending_approval')
+            ->count();
+
+        $pendingApprovalTransactions += GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->where('status', 'pending_approval')
+            ->count();
+            
+        $pendingTransactions += $pendingApprovalTransactions;
+            
+        // Note: Transaksi dengan status 'approved' atau 'completed' tidak menghalangi cut-off
+        // karena sudah final untuk laporan kas, meskipun belum masuk jurnal
 
         // Check no pending approvals
         $pendingApprovals = \App\Models\Approval::where('status', 'pending')
@@ -439,11 +511,22 @@ class MonthlyClosingController extends Controller
             $previousYear--;
         }
 
+        // Default true untuk sistem baru atau bulan pertama
         $previousMonthClosed = true;
-        if ($month > 1 || $year > now()->year - 1) {
+        
+        // Cek jika bukan bulan pertama operasi sistem
+        // Untuk sistem baru, bulan pertama selalu bisa proceed
+        $firstMonthEver = MonthlyClosing::orderBy('periode_tahun')
+            ->orderBy('periode_bulan')
+            ->first();
+            
+        if ($firstMonthEver) {
+            // Sudah ada data monthly closing sebelumnya
+            // Cek apakah bulan sebelumnya sudah closed
             $previousClosing = MonthlyClosing::forPeriod($previousYear, $previousMonth)->first();
             $previousMonthClosed = $previousClosing && $previousClosing->status === 'closed';
         }
+        // Jika belum ada data monthly closing sama sekali, biarkan true (sistem baru)
 
         $allTransactionsPosted = $pendingTransactions === 0;
         $noPendingApprovals = $pendingApprovals === 0;
@@ -469,14 +552,115 @@ class MonthlyClosingController extends Controller
             ->whereIn('status', ['draft', 'pending_approval'])
             ->count();
 
+        $giroCount = GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->whereIn('status', ['draft', 'pending_approval'])
+            ->count();
+
         // Assuming giro transactions exist
-        $giroCount = 0; // You can add this when giro transactions are implemented
+        $giroCount = $giroCount; // You can add this when giro transactions are implemented
 
         return [
             'cash_count' => $cashCount,
             'bank_count' => $bankCount,
             'giro_count' => $giroCount,
             'total_count' => $cashCount + $bankCount + $giroCount
+        ];
+    }
+
+    private function getCashReportingValidation($year, $month)
+    {
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+
+        // Check cash transactions yang belum ready untuk laporan
+        $pendingCashReporting = CashTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->whereIn('status', ['draft']) // Hanya draft yang menghalangi
+            ->count();
+        
+        $pendingBankReporting = BankTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->whereIn('status', ['draft']) // Hanya draft yang menghalangi
+            ->count();
+
+        $pendingGiroReporting = GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->whereIn('status', ['draft']) // Hanya draft yang menghalangi
+            ->count();
+            
+        // Check final transactions untuk laporan kas
+        $finalCashTransactions = CashTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->whereIn('status', ['approved', 'posted', 'completed'])
+            ->count();
+            
+        $finalBankTransactions = BankTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->whereIn('status', ['approved', 'posted', 'completed'])
+            ->count();
+
+        $finalGiroTransactions = GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->whereIn('status', ['approved', 'posted', 'completed'])
+            ->count();
+
+        return [
+            'pending_cash_reporting' => $pendingCashReporting,
+            'pending_bank_reporting' => $pendingBankReporting,
+            'pending_giro_reporting' => $pendingGiroReporting,
+            'final_cash_transactions' => $finalCashTransactions,
+            'final_bank_transactions' => $finalBankTransactions,
+            'final_giro_transactions' => $finalGiroTransactions,
+            'total_pending_reporting' => $pendingCashReporting + $pendingBankReporting + $pendingGiroReporting,
+            'can_close_for_cash_reporting' => ($pendingCashReporting + $pendingBankReporting + $pendingGiroReporting) === 0
+        ];
+    }
+
+    /**
+     * Get validation specifically for cash reporting (non-journal)
+     */
+    private function getCashOnlyValidation($year, $month)
+    {
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+
+        // Cash transactions yang hanya untuk laporan (tidak masuk jurnal)
+        $cashReportingOnly = CashTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->where('status', 'draft')
+            ->where('will_post_to_journal', false)
+            ->count();
+        
+        $bankReportingOnly = BankTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->where('status', 'draft')
+            ->where('will_post_to_journal', false)
+            ->count();
+
+        $giroReportingOnly = GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->where('status', 'draft')
+            ->where('will_post_to_journal', false)
+            ->count();
+
+        // Cash transactions yang akan masuk jurnal (masih draft)
+        $cashPendingJournal = CashTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->where('status', 'draft')
+            ->where('will_post_to_journal', true)
+            ->count();
+            
+        $bankPendingJournal = BankTransaction::whereBetween('tanggal_transaksi', [$startDate, $endDate])
+            ->where('status', 'draft')
+            ->where('will_post_to_journal', true)
+            ->count();
+
+        $giroPendingJournal = GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->where('status', 'draft')
+            ->where('will_post_to_journal', true)
+            ->count();
+
+        return [
+            'cash_reporting_only' => $cashReportingOnly,
+            'bank_reporting_only' => $bankReportingOnly,
+            'giro_reporting_only' => $giroReportingOnly,
+            'cash_pending_journal' => $cashPendingJournal,
+            'bank_pending_journal' => $bankPendingJournal,
+            'giro_pending_journal' => $giroPendingJournal,
+            'total_reporting_only' => $cashReportingOnly + $bankReportingOnly + $giroReportingOnly,
+            'total_pending_journal' => $cashPendingJournal + $bankPendingJournal + $giroPendingJournal,
+            'can_close_cash_reporting' => true, // Cash reporting selalu bisa di-close
+            'blocks_journal_posting' => ($cashPendingJournal + $bankPendingJournal + $giroPendingJournal) > 0
         ];
     }
 }

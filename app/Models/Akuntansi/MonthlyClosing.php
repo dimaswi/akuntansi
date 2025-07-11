@@ -122,7 +122,11 @@ class MonthlyClosing extends Model
             ->whereIn('status', ['draft', 'pending_approval'])
             ->count();
 
-        return $cashPending + $bankPending;
+        $giroPending = \App\Models\Kas\GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->whereIn('status', ['draft', 'pending_approval'])
+            ->count();
+
+        return $cashPending + $bankPending + $giroPending;
     }
 
     public function generateClosingSummary()
@@ -152,11 +156,23 @@ class MonthlyClosing extends Model
             ->groupBy('status')
             ->get();
 
+        // Summary transaksi giro
+        $giroSummary = \App\Models\Kas\GiroTransaction::whereBetween('tanggal_giro', [$startDate, $endDate])
+            ->selectRaw('
+                status,
+                COUNT(*) as count,
+                SUM(CASE WHEN jenis_giro = "masuk" THEN jumlah ELSE 0 END) as giro_masuk,
+                SUM(CASE WHEN jenis_giro = "keluar" THEN jumlah ELSE 0 END) as giro_keluar
+            ')
+            ->groupBy('status')
+            ->get();
+
         return [
             'periode' => $this->periode,
             'cash_summary' => $cashSummary,
             'bank_summary' => $bankSummary,
-            'total_transactions' => $cashSummary->sum('count') + $bankSummary->sum('count'),
+            'giro_summary' => $giroSummary,
+            'total_transactions' => $cashSummary->sum('count') + $bankSummary->sum('count') + $giroSummary->sum('count'),
             'pending_count' => $this->getPendingTransactionsCount(),
             'generated_at' => now()
         ];

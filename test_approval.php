@@ -1,88 +1,45 @@
 <?php
 
-require_once 'vendor/autoload.php';
-
-$app = require_once 'bootstrap/app.php';
-$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
-
-use App\Models\User;
 use App\Models\Kas\CashTransaction;
-use App\Models\Akuntansi\DaftarAkun;
-use App\Models\ApprovalRule;
-use Illuminate\Support\Facades\Auth;
 
-echo "=== Testing Approval System ===\n\n";
-
-// 1. Check if we have users
-$user = User::first();
-echo "1. User check: " . ($user ? $user->name : 'NO USERS FOUND') . "\n";
-
-// 2. Check if we have kas akun
-$kasAkun = DaftarAkun::where('nama_akun', 'like', '%kas%')->first();
-echo "2. Kas Akun: " . ($kasAkun ? $kasAkun->nama_akun : 'NO KAS ACCOUNT FOUND') . "\n";
-
-// 3. Check approval rules
-$rules = ApprovalRule::where('entity_type', 'cash_transaction')->get();
-echo "3. Approval Rules for cash_transaction: " . $rules->count() . "\n";
-foreach ($rules as $rule) {
-    echo "   - " . $rule->approval_type . " threshold: " . number_format((float)$rule->min_amount) . "\n";
-}
-
-if (!$user || !$kasAkun) {
-    echo "\nCannot proceed with test - missing required data\n";
-    exit;
-}
-
-// 4. Test creating a transaction that should require approval
-echo "\n4. Creating test transaction...\n";
-
-// Set authenticated user
-Auth::loginUsingId($user->id);
-
-$transaction = new CashTransaction([
-    'tanggal_transaksi' => today(),
+// Test outgoing transaction
+$outgoingTransaction = CashTransaction::create([
+    'nomor_transaksi' => 'TK-KELUAR-TEST-001',
+    'tanggal_transaksi' => now(),
     'jenis_transaksi' => 'pengeluaran',
-    'kategori_transaksi' => 'Operasional',
-    'jumlah' => 1500000, // 1.5 million - should require approval
-    'keterangan' => 'Test pengeluaran kas untuk approval system',
+    'kategori_transaksi' => 'operasional',
+    'jumlah' => 10000000,
+    'keterangan' => 'Test pengeluaran kas - should require approval',
     'pihak_terkait' => 'Test Vendor',
-    'daftar_akun_kas_id' => $kasAkun->id
+    'daftar_akun_kas_id' => 1,
+    'daftar_akun_lawan_id' => 2,
+    'status' => 'draft',
+    'user_id' => 1
 ]);
 
-$transaction->user_id = $user->id;
-$transaction->status = 'draft';
-$transaction->nomor_transaksi = 'TEST-' . time();
-$transaction->save();
+echo "OUTGOING TRANSACTION TEST:\n";
+echo "Transaction created: " . $outgoingTransaction->nomor_transaksi . "\n";
+echo "Transaction type: " . $outgoingTransaction->jenis_transaksi . "\n";
+echo "Is outgoing: " . ($outgoingTransaction->isOutgoingTransaction() ? 'YES' : 'NO') . "\n";
+echo "Requires approval: " . ($outgoingTransaction->requiresApproval() ? 'YES' : 'NO') . "\n\n";
 
-echo "   Transaction created with ID: " . $transaction->id . "\n";
+// Test incoming transaction
+$incomingTransaction = CashTransaction::create([
+    'nomor_transaksi' => 'TK-MASUK-TEST-001',
+    'tanggal_transaksi' => now(),
+    'jenis_transaksi' => 'penerimaan',
+    'kategori_transaksi' => 'operasional',
+    'jumlah' => 10000000,
+    'keterangan' => 'Test penerimaan kas - should NOT require approval',
+    'pihak_terkait' => 'Test Customer',
+    'daftar_akun_kas_id' => 1,
+    'daftar_akun_lawan_id' => 2,
+    'status' => 'draft',
+    'user_id' => 1
+]);
 
-// 5. Test if it requires approval
-$requiresApproval = $transaction->requiresApproval();
-echo "5. Requires approval: " . ($requiresApproval ? 'YES' : 'NO') . "\n";
-
-if ($requiresApproval) {
-    // 6. Request approval
-    echo "6. Requesting approval...\n";
-    $approval = $transaction->requestApproval($user, 'transaction', 'Test approval request');
-    
-    if ($approval) {
-        echo "   Approval created with ID: " . $approval->id . "\n";
-        
-        // Update transaction status
-        $transaction->update(['status' => 'pending_approval']);
-        echo "   Transaction status updated to: " . $transaction->status . "\n";
-        
-        // Check if approval exists in database
-        $approvalCount = \App\Models\Approval::where('approvable_id', $transaction->id)
-            ->where('approvable_type', 'App\Models\Kas\CashTransaction')
-            ->count();
-        echo "   Approvals in database: " . $approvalCount . "\n";
-        
-    } else {
-        echo "   ERROR: Failed to create approval\n";
-    }
-} else {
-    echo "6. No approval needed for this transaction\n";
-}
-
-echo "\n=== Test Complete ===\n";
+echo "INCOMING TRANSACTION TEST:\n";
+echo "Transaction created: " . $incomingTransaction->nomor_transaksi . "\n";
+echo "Transaction type: " . $incomingTransaction->jenis_transaksi . "\n";
+echo "Is outgoing: " . ($incomingTransaction->isOutgoingTransaction() ? 'YES' : 'NO') . "\n";
+echo "Requires approval: " . ($incomingTransaction->requiresApproval() ? 'YES' : 'NO') . "\n";

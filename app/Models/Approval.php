@@ -118,16 +118,12 @@ class Approval extends Model
 
     public function canBeApprovedBy(User $user): bool
     {
-        // Check if user has permission to approve this type
-        $permissionMap = [
-            'transaction' => 'approval.cash-transactions.approve',
-            'journal_posting' => 'approval.journal-posting.approve',
-            'monthly_closing' => 'approval.monthly-closing.approve',
-        ];
+        // SIMPLIFIED: Hanya check permission untuk outgoing transactions
+        if ($this->approval_type === 'transaction') {
+            return $user->can('approval.outgoing-transactions.approve');
+        }
 
-        $permission = $permissionMap[$this->approval_type] ?? null;
-        
-        return $permission && $user->can($permission);
+        return false; // Hanya transaction approvals yang didukung
     }
 
     public function approve(User $user, string $notes = null): bool

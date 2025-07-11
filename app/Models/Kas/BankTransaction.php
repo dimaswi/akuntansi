@@ -27,6 +27,7 @@ class BankTransaction extends Model
         'daftar_akun_lawan_id',
         'jurnal_id',
         'status',
+        'will_post_to_journal',
         'is_reconciled',
         'tanggal_rekonsiliasi',
         'user_id',
@@ -128,6 +129,17 @@ class BankTransaction extends Model
     protected function getApprovalEntityType(): string
     {
         return 'bank_transaction';
+    }
+
+    /**
+     * Check if this is an outgoing transaction (pengeluaran)
+     */
+    public function isOutgoingTransaction(): bool
+    {
+        return in_array($this->jenis_transaksi, [
+            'pengeluaran',
+            'transfer_keluar'
+        ]);
     }
 
     protected function getApprovalAmount(): float

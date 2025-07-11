@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Approval;
 use App\Models\User;
+use Carbon\Month;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -19,6 +21,8 @@ class DatabaseSeeder extends Seeder
             DaftarAkunSeeder::class,
             KasBankAkunSeeder::class,
             BankAccountSeeder::class,
+            MonthlyClosingSeeder::class,
+            ApprovalRuleSeeder::class,
             CashManagementWorkflowPermissionSeeder::class,
             JurnalSeeder::class,
         ]);

@@ -7,6 +7,7 @@ use App\Models\ApprovalRule;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ApprovalController extends Controller
 {
@@ -15,22 +16,17 @@ class ApprovalController extends Controller
      */
     public function index(Request $request)
     {
-        $user = auth()->user();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
         
         // Get approvals that current user can approve
         $query = Approval::with(['approvable', 'requestedBy'])
             ->where('status', 'pending');
 
-        // Filter by approval types user can approve
+        // SIMPLIFIED: Hanya check permission untuk outgoing transactions
         $approvalTypes = [];
-        if ($user->can('approval.cash-transactions.approve')) {
-            $approvalTypes[] = 'transaction';
-        }
-        if ($user->can('approval.journal-posting.approve')) {
-            $approvalTypes[] = 'journal_posting';
-        }
-        if ($user->can('approval.monthly-closing.approve')) {
-            $approvalTypes[] = 'monthly_closing';
+        if ($user && $user->can('approval.outgoing-transactions.approve')) {
+            $approvalTypes[] = 'transaction'; // Hanya transaction approval
         }
 
         if (!empty($approvalTypes)) {
@@ -59,10 +55,10 @@ class ApprovalController extends Controller
 
         // Get summary statistics
         $summary = [
-            'pending_count' => Approval::pending()->whereIn('approval_type', $approvalTypes)->count(),
-            'expired_count' => Approval::expired()->whereIn('approval_type', $approvalTypes)->count(),
-            'my_approvals_today' => Approval::whereIn('approval_type', $approvalTypes)
-                ->where('approved_by', $user->id)
+            'pending_count' => empty($approvalTypes) ? 0 : Approval::pending()->whereIn('approval_type', $approvalTypes)->count(),
+            'expired_count' => empty($approvalTypes) ? 0 : Approval::expired()->whereIn('approval_type', $approvalTypes)->count(),
+            'my_approvals_today' => empty($approvalTypes) ? 0 : Approval::whereIn('approval_type', $approvalTypes)
+                ->where('approved_by', $user?->id)
                 ->whereDate('approved_at', today())
                 ->count(),
         ];
@@ -82,7 +78,7 @@ class ApprovalController extends Controller
         $approval->load(['approvable', 'requestedBy', 'approvedBy']);
         
         // Check if user can view this approval
-        if (!$approval->canBeApprovedBy(auth()->user())) {
+        if (!$approval->canBeApprovedBy(Auth::user())) {
             abort(403, 'You do not have permission to view this approval.');
         }
 
@@ -100,7 +96,7 @@ class ApprovalController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         
         if (!$approval->canBeApprovedBy($user)) {
             return back()->withErrors(['error' => 'You do not have permission to approve this request.']);
@@ -140,7 +136,7 @@ class ApprovalController extends Controller
             'reason' => 'required|string|max:1000',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         
         if (!$approval->canBeApprovedBy($user)) {
             return back()->withErrors(['error' => 'You do not have permission to reject this request.']);
@@ -176,7 +172,7 @@ class ApprovalController extends Controller
      */
     public function notifications()
     {
-        $user = auth()->user();
+        $user = Auth::user();
         
         $approvals = Approval::pending()
             ->with(['approvable', 'requestedBy'])

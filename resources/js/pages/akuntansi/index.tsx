@@ -65,7 +65,15 @@ export default function AkuntansiIndex({ statistics }: Props) {
     return (
         <AppLayout>
             <Head title="Akuntansi" />
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
+            <div className="flex h-full flex-1 flex-col space-y-8 p-8">
+                <div className="flex items-center justify-between space-y-2">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Akuntansi</h2>
+                        <p className="text-muted-foreground">
+                            Kelola keuangan perusahaan Anda dengan mudah dan efisien. Akses semua fitur akuntansi di sini.
+                        </p>
+                    </div>
+                </div>
                 <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div className="p-6 text-gray-900 dark:text-gray-100">
                         <div className="mb-8">

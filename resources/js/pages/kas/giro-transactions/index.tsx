@@ -392,7 +392,7 @@ export default function GiroTransactionIndex() {
                 </Card>
 
                 {/* Data Table */}
-                <Card>
+                <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Daftar Transaksi Giro</CardTitle>
                         <CardDescription>

@@ -174,20 +174,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('permission:kas.giro-transaction.delete');
         
     // Individual Giro Transaction Posting
-    Route::post('kas/giro-transactions/{giroTransaction}/post', [GiroTransactionController::class, 'postIndividual'])
-        ->name('kas.giro-transactions.post-individual')
+    Route::post('kas/giro-transactions/{giroTransaction}/post', [GiroTransactionController::class, 'post'])
+        ->name('kas.giro-transactions.post')
         ->middleware('permission:kas.giro-transaction.post');
         
-    Route::post('kas/giro-transactions/{giroTransaction}/submit-to-bank', [GiroTransactionController::class, 'submitToBank'])
-        ->name('kas.giro-transactions.submit-to-bank')
-        ->middleware('permission:kas.giro-transaction.post');
-        
-    Route::post('kas/giro-transactions/{giroTransaction}/cash', [GiroTransactionController::class, 'cash'])
-        ->name('kas.giro-transactions.cash')
+    Route::post('kas/giro-transactions/{giroTransaction}/clear', [GiroTransactionController::class, 'clear'])
+        ->name('kas.giro-transactions.clear')
         ->middleware('permission:kas.giro-transaction.clear');
         
-    Route::post('kas/giro-transactions/{giroTransaction}/bounce', [GiroTransactionController::class, 'bounce'])
-        ->name('kas.giro-transactions.bounce')
+    Route::post('kas/giro-transactions/{giroTransaction}/reject', [GiroTransactionController::class, 'reject'])
+        ->name('kas.giro-transactions.reject')
         ->middleware('permission:kas.giro-transaction.reject');
 
     // Cash Flow Reports

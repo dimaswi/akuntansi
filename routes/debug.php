@@ -20,14 +20,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ],
             'permissions' => $user->getAllPermissions(),
             'approval_permissions_check' => [
-                'approval.cash-transactions.approve' => in_array('approval.cash-transactions.approve', $user->getAllPermissions()),
-                'approval.journal-posting.approve' => in_array('approval.journal-posting.approve', $user->getAllPermissions()),
-                'approval.monthly-closing.approve' => in_array('approval.monthly-closing.approve', $user->getAllPermissions()),
+                'approval.outgoing-transactions.approve' => in_array('approval.outgoing-transactions.approve', $user->getAllPermissions()),
             ],
             'has_any_approval' => !empty(array_intersect([
-                'approval.cash-transactions.approve',
-                'approval.journal-posting.approve', 
-                'approval.monthly-closing.approve'
+                'approval.outgoing-transactions.approve'
             ], $user->getAllPermissions())),
         ]);
     });

@@ -142,12 +142,19 @@ export default function ApprovalIndex({
     };
 
     return (
-        <AppLayout
-            breadcrumbs={breadcrumbItems}
-        >
+        <AppLayout>
             <Head title="Approval Queue" />
 
-            <div className="space-y-6">
+            <div className="flex h-full flex-1 flex-col space-y-8 p-8">
+                <div className="flex items-center justify-between space-y-2">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Approvals</h2>
+                        <p className="text-muted-foreground">
+                            Kelola semua permintaan persetujuan dengan mudah
+                        </p>
+                    </div>
+                </div>
+                
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <Card>

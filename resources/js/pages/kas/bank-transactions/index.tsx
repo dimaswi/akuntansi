@@ -370,7 +370,7 @@ export default function BankTransactionIndex() {
                 </Card>
 
                 {/* Data Table */}
-                <Card>
+                <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Daftar Transaksi Bank</CardTitle>
                         <CardDescription>

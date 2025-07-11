@@ -62,7 +62,24 @@ class ApprovalRule extends Model
 
     public function requiresApproval(float $amount): bool
     {
-        return $this->is_active && $this->appliesToAmount($amount);
+        if (!$this->is_active) {
+            return false;
+        }
+
+        // Check amount threshold
+        if (!$this->appliesToAmount($amount)) {
+            return false;
+        }
+
+        // Check if this rule is for outgoing transactions only
+        $conditions = $this->conditions ?? [];
+        if (isset($conditions['only_outgoing']) && $conditions['only_outgoing']) {
+            // This rule is specifically for outgoing transactions
+            // The isOutgoingTransaction() check is done in the trait
+            return true;
+        }
+
+        return true;
     }
 
     public static function findApplicableRule(string $entityType, string $approvalType, float $amount): ?self

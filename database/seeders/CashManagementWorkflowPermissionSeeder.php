@@ -47,10 +47,8 @@ class CashManagementWorkflowPermissionSeeder extends Seeder
             ['name' => 'laporan.financial-statements.view', 'display_name' => 'Laporan Keuangan', 'description' => 'Dapat melihat laporan keuangan formal dari jurnal', 'module' => 'reports'],
             ['name' => 'laporan.variance-analysis.view', 'display_name' => 'Analisis Varians', 'description' => 'Dapat melihat analisis perbedaan kas vs akuntansi', 'module' => 'reports'],
             
-            // Approval & Control (Supervisor level)
-            ['name' => 'approval.cash-transactions.approve', 'display_name' => 'Approve Transaksi Kas', 'description' => 'Dapat menyetujui transaksi kas besar', 'module' => 'approval'],
-            ['name' => 'approval.journal-posting.approve', 'display_name' => 'Approve Posting Jurnal', 'description' => 'Dapat menyetujui posting jurnal', 'module' => 'approval'],
-            ['name' => 'approval.monthly-closing.approve', 'display_name' => 'Approve Closing Bulanan', 'description' => 'Dapat menyetujui penutupan bulanan', 'module' => 'approval'],
+            // Approval & Control (Supervisor level) - SIMPLIFIED
+            ['name' => 'approval.outgoing-transactions.approve', 'display_name' => 'Approve Transaksi Keluar', 'description' => 'Dapat menyetujui transaksi keluar kas/bank/giro', 'module' => 'approval'],
             
             // Legacy permissions still used by routes/components
             ['name' => 'kas.cash-transaction.delete', 'display_name' => 'Delete Cash Transaction', 'description' => 'Dapat menghapus transaksi kas', 'module' => 'cash_management'],
@@ -240,9 +238,8 @@ class CashManagementWorkflowPermissionSeeder extends Seeder
                 'laporan.giro-report.view',
                 'laporan.financial-statements.view',
                 'laporan.variance-analysis.view',
-                // Approval permissions
-                'approval.cash-transactions.approve',
-                'approval.journal-posting.approve',
+                // Simplified approval permissions
+                'approval.outgoing-transactions.approve',
             ])->get();
             
             $supervisorRole->permissions()->detach();

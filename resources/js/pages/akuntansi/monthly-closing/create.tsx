@@ -33,6 +33,18 @@ interface CreateMonthlyClosingProps {
         previous_month_closed: boolean;
         can_proceed: boolean;
     };
+    cashOnlyValidation: {
+        cash_reporting_only: number;
+        bank_reporting_only: number;
+        giro_reporting_only: number;
+        cash_pending_journal: number;
+        bank_pending_journal: number;
+        giro_pending_journal: number;
+        total_reporting_only: number;
+        total_pending_journal: number;
+        can_close_cash_reporting: boolean;
+        blocks_journal_posting: boolean;
+    };
 }
 
 const monthNames = [
@@ -45,7 +57,8 @@ export default function CreateMonthlyClosing({
     month, 
     monthName,
     pendingTransactions,
-    validationChecks
+    validationChecks,
+    cashOnlyValidation
 }: CreateMonthlyClosingProps) {
     
     const { data, setData, post, processing, errors } = useForm({
@@ -154,6 +167,13 @@ export default function CreateMonthlyClosing({
                                         <AlertTriangle className="h-4 w-4 text-red-600" />
                                     )}
                                 </div>
+                                
+                                {!validationChecks.previous_month_closed && (
+                                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                                        <strong>Info:</strong> Periode sebelumnya harus di-close terlebih dahulu 
+                                        untuk menjaga urutan dan konsistensi data akuntansi.
+                                    </div>
+                                )}
                             </div>
 
                             {!validationChecks.can_proceed && (
@@ -172,7 +192,63 @@ export default function CreateMonthlyClosing({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Clock className="h-5 w-5" />
-                                Pending Transactions
+                                Transaction Status Breakdown
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                                    <h4 className="font-medium text-blue-800 mb-2">Cash Reporting Only (Not Blocking)</h4>
+                                    <div className="space-y-1 text-sm text-blue-700">
+                                        <div className="flex justify-between">
+                                            <span>Cash (Laporan Only)</span>
+                                            <span className="font-mono">{cashOnlyValidation.cash_reporting_only}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Bank (Laporan Only)</span>
+                                            <span className="font-mono">{cashOnlyValidation.bank_reporting_only}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Giro (Laporan Only)</span>
+                                            <span className="font-mono">{cashOnlyValidation.giro_reporting_only}</span>
+                                        </div>
+                                        <div className="flex justify-between border-t pt-1">
+                                            <span className="font-medium">Total (OK untuk cut-off)</span>
+                                            <span className="font-mono font-bold">{cashOnlyValidation.total_reporting_only}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-3 bg-amber-50 rounded border border-amber-200">
+                                    <h4 className="font-medium text-amber-800 mb-2">Pending Journal Posting (Blocking)</h4>
+                                    <div className="space-y-1 text-sm text-amber-700">
+                                        <div className="flex justify-between">
+                                            <span>Cash (Pending Journal)</span>
+                                            <span className="font-mono">{cashOnlyValidation.cash_pending_journal}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Bank (Pending Journal)</span>
+                                            <span className="font-mono">{cashOnlyValidation.bank_pending_journal}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Giro (Pending Journal)</span>
+                                            <span className="font-mono">{cashOnlyValidation.giro_pending_journal}</span>
+                                        </div>
+                                        <div className="flex justify-between border-t pt-1">
+                                            <span className="font-medium">Total (Blocks cut-off)</span>
+                                            <span className="font-mono font-bold">{cashOnlyValidation.total_pending_journal}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Clock className="h-5 w-5" />
+                                Legacy Pending Transactions
                             </CardTitle>
                         </CardHeader>
                         <CardContent>

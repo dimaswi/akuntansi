@@ -26,6 +26,7 @@ class CashTransaction extends Model
         'daftar_akun_lawan_id',
         'jurnal_id',
         'status',
+        'will_post_to_journal',
         'user_id',
         'posted_at',
         'posted_by',
@@ -114,6 +115,18 @@ class CashTransaction extends Model
     protected function getApprovalEntityType(): string
     {
         return 'cash_transaction';
+    }
+
+    /**
+     * Check if this is an outgoing transaction (pengeluaran)
+     */
+    public function isOutgoingTransaction(): bool
+    {
+        return in_array($this->jenis_transaksi, [
+            'pengeluaran',
+            'uang_muka_pengeluaran', 
+            'transfer_keluar'
+        ]);
     }
 
     protected function getApprovalAmount(): float

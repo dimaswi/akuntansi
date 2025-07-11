@@ -8,6 +8,7 @@ use App\Models\Kas\BankAccount;
 use App\Models\Akuntansi\DaftarAkun;
 use App\Models\Akuntansi\Jurnal;
 use App\Models\Akuntansi\DetailJurnal;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -380,8 +381,10 @@ class GiroTransactionController extends Controller
      */
     public function showPostToJournal(Request $request)
     {
-        // Check permission
-        if (!auth()->user()->can('akuntansi.journal-posting.view')) {
+        // Additional permission check (middleware already handles this, but double check for security)
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasPermission('akuntansi.journal-posting.view')) {
             abort(403, 'Unauthorized. You do not have permission to view journal posting.');
         }
 
@@ -436,8 +439,10 @@ class GiroTransactionController extends Controller
      */
     public function postToJournal(Request $request)
     {
-        // Check permission
-        if (!auth()->user()->can('akuntansi.journal-posting.post')) {
+        // Additional permission check (middleware already handles this, but double check for security)
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasPermission('akuntansi.journal-posting.post')) {
             abort(403, 'Unauthorized. You do not have permission to post to journal.');
         }
 
@@ -452,7 +457,7 @@ class GiroTransactionController extends Controller
 
             $selectedIds = $request->selected_transactions;
             $keteranganPosting = $request->keterangan_posting ?? 'Posting batch giro transactions';
-            $userId = auth()->id();
+            $userId = Auth::id();
             $now = now();
             
             $postedCount = 0;
@@ -473,11 +478,14 @@ class GiroTransactionController extends Controller
                     // Create journal entry
                     $jurnal = Jurnal::create([
                         'nomor_jurnal' => $this->generateNomorJurnal('JU'),
-                        'tanggal_jurnal' => $giro->tanggal_terima,
+                        'tanggal_transaksi' => $giro->tanggal_terima,
                         'keterangan' => "Penerimaan Giro - {$giro->nomor_giro} - {$giro->nama_penerbit}",
                         'total_debit' => $giro->jumlah,
                         'total_kredit' => $giro->jumlah,
-                        'user_id' => $userId,
+                        'dibuat_oleh' => $userId,
+                        'status' => 'posted',
+                        'diposting_oleh' => $userId,
+                        'tanggal_posting' => $now,
                     ]);
 
                     // Create journal details
@@ -485,8 +493,8 @@ class GiroTransactionController extends Controller
                     DetailJurnal::create([
                         'jurnal_id' => $jurnal->id,
                         'daftar_akun_id' => $giro->daftar_akun_giro_id,
-                        'debit' => $giro->jumlah,
-                        'kredit' => 0,
+                        'jumlah_debit' => $giro->jumlah,
+                        'jumlah_kredit' => 0,
                         'keterangan' => "Penerimaan Giro {$giro->nomor_giro}",
                     ]);
 
@@ -494,8 +502,8 @@ class GiroTransactionController extends Controller
                     DetailJurnal::create([
                         'jurnal_id' => $jurnal->id,
                         'daftar_akun_id' => $giro->daftar_akun_lawan_id,
-                        'debit' => 0,
-                        'kredit' => $giro->jumlah,
+                        'jumlah_debit' => 0,
+                        'jumlah_kredit' => $giro->jumlah,
                         'keterangan' => "Penerimaan Giro {$giro->nomor_giro}",
                     ]);
 

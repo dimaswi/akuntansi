@@ -38,6 +38,7 @@ interface CashTransaction {
     daftar_akun_kas_id: number;
     daftar_akun_lawan_id: number;
     status: string;
+    will_post_to_journal?: boolean;
 }
 
 interface Props extends SharedData {
@@ -78,6 +79,7 @@ export default function CashTransactionEdit() {
         referensi: cashTransaction.referensi || '',
         daftar_akun_kas_id: cashTransaction.daftar_akun_kas_id.toString(),
         daftar_akun_lawan_id: cashTransaction.daftar_akun_lawan_id ? cashTransaction.daftar_akun_lawan_id.toString() : '',
+        will_post_to_journal: cashTransaction.will_post_to_journal ?? false,
     });
 
     const handleSubmit: FormEventHandler = (e) => {
@@ -326,6 +328,28 @@ export default function CashTransactionEdit() {
                                     {errors.keterangan && (
                                         <p className="text-sm text-red-500">{errors.keterangan}</p>
                                     )}
+                                </div>
+
+                                {/* Will Post to Journal */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            id="will_post_to_journal"
+                                            checked={data.will_post_to_journal}
+                                            onChange={(e) => setData('will_post_to_journal', e.target.checked)}
+                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <Label htmlFor="will_post_to_journal" className="text-sm font-medium">
+                                            Akan masuk jurnal
+                                        </Label>
+                                    </div>
+                                    <p className="text-xs text-gray-600">
+                                        {data.will_post_to_journal 
+                                            ? "Transaksi ini akan memerlukan posting ke jurnal dan dapat menghalangi monthly closing jika masih draft"
+                                            : "Transaksi ini hanya untuk laporan kas dan tidak akan menghalangi monthly closing"
+                                        }
+                                    </p>
                                 </div>
 
                                 {/* Submit Button */}

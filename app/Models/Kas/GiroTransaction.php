@@ -21,6 +21,7 @@ class GiroTransaction extends Model
         'jenis_giro',
         'status_giro',
         'status', // New field for draft/posted workflow
+        'will_post_to_journal',
         'bank_account_id',
         'jumlah',
         'nama_penerbit',
@@ -138,6 +139,14 @@ class GiroTransaction extends Model
     protected function getApprovalEntityType(): string
     {
         return 'giro_transaction';
+    }
+
+    /**
+     * Check if this is an outgoing transaction (keluar)
+     */
+    public function isOutgoingTransaction(): bool
+    {
+        return $this->jenis_giro === 'keluar';
     }
 
     protected function getApprovalAmount(): float
