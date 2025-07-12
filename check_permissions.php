@@ -2,6 +2,7 @@
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 use App\Models\Permission;
 use App\Models\Role;
 
@@ -40,6 +41,8 @@ foreach ($reportPermissions as $perm) {
 =======
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 require 'vendor/autoload.php';
 
 $app = require_once 'bootstrap/app.php';
@@ -70,6 +73,9 @@ $patterns = [
 foreach ($patterns as $pattern => $count) {
     echo "Permissions starting with '{$pattern}': {$count}\n";
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

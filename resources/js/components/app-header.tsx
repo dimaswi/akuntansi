@@ -13,7 +13,11 @@ import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart } from 'lucide-react';
+=======
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Calendar, Package, Archive, ClipboardList, Activity, Building } from 'lucide-react';
+>>>>>>> Stashed changes
 =======
 import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Calendar, Package, Archive, ClipboardList, Activity, Building } from 'lucide-react';
 >>>>>>> Stashed changes
