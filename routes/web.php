@@ -22,13 +22,3 @@ require __DIR__.'/master.php';
 require __DIR__.'/akuntansi.php';
 require __DIR__.'/kas.php';
 require __DIR__.'/auth.php';
-<<<<<<< Updated upstream
-=======
-require __DIR__.'/approval.php';
-require __DIR__.'/monthly-closing.php';
-require __DIR__.'/inventory.php';
-require __DIR__.'/department.php';
-require __DIR__.'/department-stock.php';
-require __DIR__.'/inventory-transfers.php';
-require __DIR__.'/debug.php';
->>>>>>> Stashed changes

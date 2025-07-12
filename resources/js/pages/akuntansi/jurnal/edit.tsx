@@ -376,7 +376,7 @@ export default function EditJurnal() {
                                                     <Input
                                                         type="number"
                                                         min="0"
-                                                        
+                                                        step="0.01"
                                                         value={detail.jumlah_debit || ''}
                                                         onChange={(e) => updateDetail(index, 'jumlah_debit', parseFloat(e.target.value) || 0)}
                                                         placeholder="0"
@@ -386,7 +386,7 @@ export default function EditJurnal() {
                                                     <Input
                                                         type="number"
                                                         min="0"
-                                                        
+                                                        step="0.01"
                                                         value={detail.jumlah_kredit || ''}
                                                         onChange={(e) => updateDetail(index, 'jumlah_kredit', parseFloat(e.target.value) || 0)}
                                                         placeholder="0"
