@@ -22,6 +22,7 @@ export interface NavItem {
     icon?: LucideIcon | null;
     isActive?: boolean;
     children?: NavItem[];
+    items?: NavItem[]; // Support for submenu items
     permission?: string;
 }
 
@@ -197,4 +198,75 @@ export interface BukuBesarDetailPageProps extends PageProps {
         periode_dari: string;
         periode_sampai: string;
     };
+}
+
+export interface InventoryItem {
+    id: number;
+    name: string;
+    code: string;
+    barcode?: string;
+    sku?: string;
+    category_id: number;
+    type: 'general' | 'pharmacy';
+    unit: string;
+    description?: string;
+    manufacturer?: string;
+    supplier?: string;
+    minimum_stock: number;
+    maximum_stock?: number;
+    status: 'active' | 'inactive';
+    created_at: string;
+    updated_at: string;
+    category?: InventoryCategory;
+    stocks?: InventoryStock[];
+    current_stock?: number;
+    available_stock?: number;
+    reserved_stock?: number;
+}
+
+export interface InventoryCategory {
+    id: number;
+    name: string;
+    code: string;
+    description?: string;
+    parent_id?: number;
+    status: 'active' | 'inactive';
+    created_at: string;
+    updated_at: string;
+    parent?: InventoryCategory;
+    children?: InventoryCategory[];
+    items?: InventoryItem[];
+    items_count?: number;
+}
+
+export interface InventoryLocation {
+    id: number;
+    name: string;
+    code: string;
+    type: 'warehouse' | 'store' | 'clinic' | 'pharmacy';
+    address?: string;
+    description?: string;
+    capacity?: number;
+    status: 'active' | 'inactive';
+    created_at: string;
+    updated_at: string;
+    stocks?: InventoryStock[];
+}
+
+export interface InventoryStock {
+    id: number;
+    item_id: number;
+    location_id: number;
+    current_quantity: number;
+    available_quantity: number;
+    reserved_quantity: number;
+    reorder_level: number;
+    max_stock_level?: number;
+    unit_cost: number;
+    total_value: number;
+    last_updated: string;
+    created_at: string;
+    updated_at: string;
+    item?: InventoryItem;
+    location?: InventoryLocation;
 }

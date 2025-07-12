@@ -242,7 +242,7 @@ export default function EditGiroTransaction() {
                                                 id="jumlah"
                                                 type="number"
                                                 min="0"
-                                                step="0.01"
+                                                
                                                 value={data.jumlah}
                                                 onChange={(e) => setData("jumlah", e.target.value)}
                                                 placeholder="0.00"

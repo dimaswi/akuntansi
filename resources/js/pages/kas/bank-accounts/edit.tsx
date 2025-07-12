@@ -201,7 +201,7 @@ export default function EditBankAccount() {
                                         id="saldo_awal"
                                         type="number"
                                         min="0"
-                                        step="0.01"
+                                        
                                         value={data.saldo_awal}
                                         onChange={(e) => setData('saldo_awal', e.target.value)}
                                         placeholder="0.00"

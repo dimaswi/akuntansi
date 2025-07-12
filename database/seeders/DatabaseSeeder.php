@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             KasBankAkunSeeder::class,
             BankAccountSeeder::class,
             CashManagementWorkflowPermissionSeeder::class,
+            DepartmentRequestPermissionSeeder::class,
+            DepartmentInventoryPermissionSeeder::class,
             JurnalSeeder::class,
         ]);
     }

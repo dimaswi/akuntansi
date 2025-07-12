@@ -11,7 +11,11 @@ import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
+<<<<<<< Updated upstream
 import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart } from 'lucide-react';
+=======
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Calendar, Package, Archive, ClipboardList, Activity, Building } from 'lucide-react';
+>>>>>>> Stashed changes
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -108,6 +112,74 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
+        title: 'Inventory',
+        href: '/inventory',
+        icon: Package,
+        children: [
+            {
+                title: 'Dashboard',
+                href: '/inventory',
+                icon: LayoutGrid,
+                permission: 'inventory.view',
+            },
+            {
+                title: 'Items',
+                href: '/inventory/items',
+                icon: ClipboardList,
+                permission: 'inventory.item.view',
+            },
+            {
+                title: 'Locations',
+                href: '/inventory/locations',
+                icon: Archive,
+                permission: 'inventory.location.view',
+            },
+            {
+                title: 'Stock Movement',
+                href: '/inventory/stock-movements',
+                icon: Activity,
+                permission: 'inventory.movement.view',
+            },
+            {
+                title: 'Reports',
+                href: '/inventory/reports',
+                icon: BarChart,
+                permission: 'inventory.report.view',
+            },
+        ],
+    },
+    {
+        title: 'Department',
+        href: '/departments',
+        icon: Building,
+        children: [
+            {
+                title: 'Manajemen Departemen',
+                href: '/departments',
+                icon: Building2,
+                permission: 'department.view',
+            },
+            {
+                title: 'Permintaan Departemen',
+                href: '/department-requests',
+                icon: FileText,
+                permission: 'department_requests.view',
+            },
+            {
+                title: 'Stok Departemen',
+                href: '/departments/stock',
+                icon: Package,
+                permission: 'department.stock.view',
+            },
+            {
+                title: 'Stock Opname',
+                href: '/departments/stock/opname',
+                icon: Calculator,
+                permission: 'department.stock.opname',
+            },
+        ],
+    },
+    {
         title: 'Settings',
         href: '/master',
         icon: Cog,
@@ -159,6 +231,20 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const { hasPermission } = usePermission();
     const getInitials = useInitials();
 
+<<<<<<< Updated upstream
+=======
+    // Debug permissions in development
+    React.useEffect(() => {
+        
+        const approvalPermissions = ['approval.cash-transactions.approve', 'approval.journal-posting.approve', 'approval.monthly-closing.approve'];
+        const hasAnyApproval = hasAnyPermission(approvalPermissions);
+        
+        approvalPermissions.forEach(perm => {
+            const hasPerm = hasPermission(perm);
+        });
+    }, [auth.permissions, auth.user, hasPermission, hasAnyPermission]);
+
+>>>>>>> Stashed changes
     // Filter navigation items based on permissions
     const filteredNavItems = mainNavItems.map(item => {
         if (item.children) {
@@ -182,8 +268,21 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
             return null;
         }
         
+<<<<<<< Updated upstream
         return item;
     }).filter(Boolean) as NavItem[];
+=======
+        if (item.permissions && !hasAnyPermission(item.permissions)) {
+            return null;
+        }
+        
+        return item;
+    }).filter(Boolean) as NavItem[];
+
+    // Debug filtered navigation items
+    React.useEffect(() => {
+    }, [filteredNavItems]);
+>>>>>>> Stashed changes
     return (
         <>
             <div className="border-b border-sidebar-border/80">

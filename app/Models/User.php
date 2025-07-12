@@ -23,6 +23,7 @@ class User extends Authenticatable
         'nip',
         'password',
         'role_id',
+        'department_id',
     ];
 
     /**
@@ -51,6 +52,11 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Department::class);
     }
 
     public function hasPermission($permission): bool
