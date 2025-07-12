@@ -1,6 +1,7 @@
 <?php
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 use App\Models\Permission;
 use App\Models\Role;
 
@@ -37,6 +38,8 @@ $reportPermissions = Permission::where('name', 'like', 'laporan.%')->get();
 foreach ($reportPermissions as $perm) {
     echo "- {$perm->name}: {$perm->display_name}\n";
 =======
+=======
+>>>>>>> Stashed changes
 require 'vendor/autoload.php';
 
 $app = require_once 'bootstrap/app.php';
@@ -66,5 +69,8 @@ $patterns = [
 
 foreach ($patterns as $pattern => $count) {
     echo "Permissions starting with '{$pattern}': {$count}\n";
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 }
