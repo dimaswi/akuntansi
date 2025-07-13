@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Inventory\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -39,9 +40,11 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::all();
+        $departments = Department::orderBy('name')->get();
         
         return Inertia::render('master/user/create', [
             'roles' => $roles,
+            'departments' => $departments,
         ]);
     }
 
@@ -52,6 +55,7 @@ class UserController extends Controller
             'nip' => 'required|string|max:20|unique:users',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role_id' => 'nullable|exists:roles,id',
+            'department_id' => 'nullable|exists:departments,id',
         ], [
             'name.required' => 'Nama wajib diisi',
             'name.string' => 'Nama harus berupa teks',
@@ -63,13 +67,15 @@ class UserController extends Controller
             'password.required' => 'Password wajib diisi',
             'password.confirmed' => 'Konfirmasi password tidak cocok',
             'role_id.exists' => 'Role tidak valid',
+            'department_id.exists' => 'Department tidak valid',
         ]);
 
         User::create([
             'name' => $request->name,
             'nip' => $request->nip,
             'password' => Hash::make($request->password),
-            'role_id' => $request->role_id === '0' ? null : $request->role_id,
+            'role_id' => ($request->role_id === '0' || $request->role_id === 'none') ? null : $request->role_id,
+            'department_id' => ($request->department_id === '0' || $request->department_id === 'none') ? null : $request->department_id,
         ]);
 
         return redirect()->route('users.index');
@@ -78,10 +84,12 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = Role::all();
+        $departments = Department::orderBy('name')->get();
         
         return Inertia::render('master/user/edit', [
-            'user' => $user->load('role'),
+            'user' => $user->load('role', 'department'),
             'roles' => $roles,
+            'departments' => $departments,
         ]);
     }
 
@@ -92,6 +100,7 @@ class UserController extends Controller
             'nip' => 'required|string|max:20|unique:users,nip,' . $user->id,
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'role_id' => 'nullable|exists:roles,id',
+            'department_id' => 'nullable|exists:departments,id',
         ], [
             'name.required' => 'Nama wajib diisi',
             'name.string' => 'Nama harus berupa teks',
@@ -102,13 +111,15 @@ class UserController extends Controller
             'nip.unique' => 'NIP sudah digunakan',
             'password.confirmed' => 'Konfirmasi password tidak cocok',
             'role_id.exists' => 'Role tidak valid',
+            'department_id.exists' => 'Department tidak valid',
         ]);
 
         $user->update([
             'name' => $request->name,
             'nip' => $request->nip,
             'password' => $request->filled('password') ? Hash::make($request->password) : $user->password,
-            'role_id' => $request->role_id === '0' ? null : $request->role_id,
+            'role_id' => ($request->role_id === '0' || $request->role_id === 'none') ? null : $request->role_id,
+            'department_id' => ($request->department_id === '0' || $request->department_id === 'none') ? null : $request->department_id,
         ]);
 
         return redirect()->route('users.index');

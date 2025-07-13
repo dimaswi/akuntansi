@@ -23,6 +23,7 @@ class User extends Authenticatable
         'nip',
         'password',
         'role_id',
+        'department_id',
     ];
 
     /**
@@ -53,6 +54,11 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Inventory\Department::class);
+    }
+
     public function hasPermission($permission): bool
     {
         return $this->role?->hasPermission($permission) ?? false;
@@ -75,5 +81,10 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->hasRole('admin');
+    }
+
+    public function isLogistics(): bool
+    {
+        return $this->hasRole('Logistik') || $this->hasRole('admin');
     }
 }

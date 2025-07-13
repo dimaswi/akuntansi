@@ -3,12 +3,21 @@
 use App\Http\Controllers\Master\RoleController;
 use App\Http\Controllers\Master\UserController;
 use App\Http\Controllers\Master\PermissionController;
+use App\Http\Controllers\UserDepartmentController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
     // User Management
     Route::get('master/users', [UserController::class, 'index'])->name('users.index')->middleware('permission:user.view');
     Route::get('master/users/create', [UserController::class, 'create'])->name('users.create')->middleware('permission:user.create');
+    
+    // User Department Assignment - HARUS SEBELUM {user} route
+    Route::get('master/users/departments', [UserDepartmentController::class, 'index'])->name('users.departments.index')->middleware('permission:user.department.manage');
+    Route::post('master/users/departments/bulk', [UserDepartmentController::class, 'bulkUpdate'])->name('users.departments.bulk')->middleware('permission:user.department.manage');
+    Route::get('master/users/{user}/department', [UserDepartmentController::class, 'edit'])->name('users.departments.edit')->middleware('permission:user.department.manage');
+    Route::put('master/users/{user}/department', [UserDepartmentController::class, 'update'])->name('users.departments.update')->middleware('permission:user.department.manage');
+    
+    // User CRUD - {user} route harus setelah route yang lebih spesifik
     Route::post('master/users', [UserController::class, 'store'])->name('users.store')->middleware('permission:user.create');
     Route::get('master/users/{user}', [UserController::class,'edit'])->name('users.edit')->middleware('permission:user.edit');
     Route::put('master/users/{user}', [UserController::class,'update'])->name('users.update')->middleware('permission:user.edit');

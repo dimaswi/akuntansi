@@ -18,12 +18,20 @@ interface Role {
     description: string;
 }
 
+interface Department {
+    id: number;
+    name: string;
+    description?: string;
+}
+
 interface User {
     id: number;
     name: string;
     nip: string;
     role_id: number | null;
+    department_id: number | null;
     role?: Role;
+    department?: Department;
     created_at: string;
     updated_at: string;
 }
@@ -31,17 +39,19 @@ interface User {
 interface Props extends SharedData {
     user: User;
     roles: Role[];
+    departments: Department[];
 }
 
 export default function EditUser() {
-    const { user, roles } = usePage<Props>().props;
+    const { user, roles, departments } = usePage<Props>().props;
     
     const { data, setData, put, processing, errors, reset } = useForm({
         name: user.name || '',
         nip: user.nip || '',
         password: '',
         password_confirmation: '',
-        role_id: user.role_id ? user.role_id.toString() : '0',
+        role_id: user.role_id ? user.role_id.toString() : 'none',
+        department_id: user.department_id ? user.department_id.toString() : 'none',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -173,12 +183,12 @@ export default function EditUser() {
                             {/* Role Field */}
                             <div className="space-y-2">
                                 <Label htmlFor="role_id">Role</Label>
-                                <Select value={data.role_id || '0'} onValueChange={(value) => setData('role_id', value)}>
+                                <Select value={data.role_id || 'none'} onValueChange={(value) => setData('role_id', value === 'none' ? '0' : value)}>
                                     <SelectTrigger className={errors.role_id ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Pilih role" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="0">Tidak ada role</SelectItem>
+                                        <SelectItem value="none">Tidak ada role</SelectItem>
                                         {roles.map((role) => (
                                             <SelectItem key={role.id} value={role.id.toString()}>
                                                 {role.display_name}
@@ -189,6 +199,29 @@ export default function EditUser() {
                                 {errors.role_id && (
                                     <Alert variant="destructive">
                                         <AlertDescription>{errors.role_id}</AlertDescription>
+                                    </Alert>
+                                )}
+                            </div>
+
+                            {/* Department Field */}
+                            <div className="space-y-2">
+                                <Label htmlFor="department_id">Department</Label>
+                                <Select value={data.department_id || 'none'} onValueChange={(value) => setData('department_id', value === 'none' ? '0' : value)}>
+                                    <SelectTrigger className={errors.department_id ? 'border-red-500' : ''}>
+                                        <SelectValue placeholder="Pilih department" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Tidak ada department</SelectItem>
+                                        {departments.map((department) => (
+                                            <SelectItem key={department.id} value={department.id.toString()}>
+                                                {department.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.department_id && (
+                                    <Alert variant="destructive">
+                                        <AlertDescription>{errors.department_id}</AlertDescription>
                                     </Alert>
                                 )}
                             </div>

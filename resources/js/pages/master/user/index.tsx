@@ -26,12 +26,20 @@ interface Role {
     description: string;
 }
 
+interface Department {
+    id: number;
+    name: string;
+    description?: string;
+}
+
 interface User {
     id: number;
     name: string;
     nip: string;
     role_id: number | null;
+    department_id: number | null;
     role?: Role;
+    department?: Department;
     created_at: string;
     updated_at: string;
 }

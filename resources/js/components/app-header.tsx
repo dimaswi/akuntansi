@@ -11,7 +11,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart } from 'lucide-react';
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Box, Tag } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -108,6 +108,49 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
+        title: 'Inventory',
+        href: '/inventory',
+        icon: FileText,
+        children: [
+            {
+                title: 'Kategori Barang',
+                href: '/item-categories',
+                icon: Tag,
+                permission: 'inventory.categories.view',
+            },
+            {
+                title: 'Supplier',
+                href: '/suppliers',
+                icon: Users,
+                permission: 'inventory.suppliers.view',
+            },
+            {
+                title: 'Barang',
+                href: '/items',
+                icon: Box,
+                permission: 'inventory.view',
+            },
+            {
+                title: 'Pembelian',
+                href: '/purchases',
+                icon: FileText,
+                permission: 'inventory.purchases.view',
+            },
+            {
+                title: 'Permintaan',
+                href: '/requisitions',
+                icon: FileText,
+                permission: 'inventory.requisitions.view',
+            },
+            {
+                title: 'Departemen',
+                href: '/departments',
+                icon: Users,
+                permission: 'inventory.departments.view',
+            },
+        ],
+    },
+    {
         title: 'Settings',
         href: '/master',
         icon: Cog,
@@ -117,6 +160,12 @@ const mainNavItems: NavItem[] = [
                 href: '/master/users',
                 icon: Users,
                 permission: 'user.view',
+            },
+            {
+                title: 'User Department',
+                href: '/master/users/departments',
+                icon: Building2,
+                permission: 'user.department.manage',
             },
             {
                 title: 'Daftar Role',

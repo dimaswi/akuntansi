@@ -13,7 +13,36 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Repository bindings
+        $this->app->bind(
+            \App\Repositories\Inventory\ItemCategoryRepositoryInterface::class,
+            \App\Repositories\Inventory\ItemCategoryRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Repositories\Inventory\DepartmentRepositoryInterface::class,
+            \App\Repositories\Inventory\DepartmentRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Repositories\Inventory\ItemRepositoryInterface::class,
+            \App\Repositories\Inventory\ItemRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Repositories\Inventory\SupplierRepositoryInterface::class,
+            \App\Repositories\Inventory\SupplierRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Repositories\Inventory\PurchaseRepositoryInterface::class,
+            \App\Repositories\Inventory\PurchaseRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Repositories\Inventory\RequisitionRepositoryInterface::class,
+            \App\Repositories\Inventory\RequisitionRepository::class
+        );
     }
 
     /**

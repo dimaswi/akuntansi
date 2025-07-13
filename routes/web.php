@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Inventory\ItemController;
 
 // Route::get('/', function () {
 //     return Inertia::render('welcome');
@@ -17,6 +18,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 });
 
+
+require __DIR__.'/inventory.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/master.php';
 require __DIR__.'/akuntansi.php';
