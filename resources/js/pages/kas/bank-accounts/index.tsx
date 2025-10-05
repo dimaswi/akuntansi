@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import FilterForm, { FilterField } from '@/components/filter-form';
 import {
     Select,
     SelectContent,
@@ -21,8 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
-import { Head, router, usePage } from "@inertiajs/react";
-import { Edit3, PlusCircle, Search, Trash, X, Loader2, Building2, Eye, RefreshCw } from "lucide-react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
+import { Edit3, PlusCircle, Search, Trash, X, Loader2, Building2, Eye, RefreshCw, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { route } from "ziggy-js";
@@ -66,6 +67,7 @@ interface Props extends SharedData {
         search: string;
         perPage: number;
         status: string;
+        jenis_rekening?: string;
     };
 }
 
@@ -122,6 +124,35 @@ export default function BankAccountIndex() {
         account: null,
         loading: false,
     });
+
+    // Filter fields configuration
+    const filterFields: FilterField[] = [
+        {
+            name: 'jenis_rekening',
+            label: 'Jenis Rekening',
+            type: 'select',
+            placeholder: 'Semua Jenis',
+            options: [
+                { value: '', label: 'Semua Jenis' },
+                { value: 'giro', label: 'Giro' },
+                { value: 'tabungan', label: 'Tabungan' },
+                { value: 'deposito', label: 'Deposito' },
+            ],
+            value: filters.jenis_rekening || '',
+        },
+        {
+            name: 'status',
+            label: 'Status',
+            type: 'select',
+            placeholder: 'Semua Status',
+            options: [
+                { value: '', label: 'Semua Status' },
+                { value: '1', label: 'Aktif' },
+                { value: '0', label: 'Tidak Aktif' },
+            ],
+            value: filters.status || '',
+        },
+    ];
 
     const handleSearch = (searchValue: string) => {
         router.get('/kas/bank-accounts', {
@@ -212,18 +243,65 @@ export default function BankAccountIndex() {
     const handleUpdateSaldo = (account: BankAccount) => {
         router.post(route('kas.bank-accounts.update-saldo', account.id), {}, {
             onSuccess: () => {
-                toast.success(`Saldo rekening ${account.nama_bank} berhasil diperbarui`);
+                toast.success('Saldo berhasil diperbarui');
             },
             onError: () => {
-                toast.error('Gagal memperbarui saldo rekening');
+                toast.error('Gagal memperbarui saldo');
             }
         });
+    };
+
+    const handleFilter = (filterValues: Record<string, any>) => {
+        router.get('/kas/bank-accounts', {
+            search: search,
+            perPage: filters.perPage,
+            status: filterValues.status || '',
+            jenis_rekening: filterValues.jenis_rekening || '',
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const handleResetFilter = () => {
+        router.get('/kas/bank-accounts', {
+            search: '',
+            perPage: filters.perPage,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+        setSearch('');
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Rekening Bank" />
-            <div className="p-4">
+            <div className="p-4 space-y-4">
+                {/* Header */}
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold">Rekening Bank</h1>
+                        <p className="text-muted-foreground">Kelola daftar rekening bank perusahaan</p>
+                    </div>
+                    <Button asChild>
+                        <Link href="/kas/bank-accounts/create">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Tambah Rekening
+                        </Link>
+                    </Button>
+                </div>
+
+                {/* Filter Form */}
+                <FilterForm
+                    fields={filterFields}
+                    onFilter={handleFilter}
+                    onReset={handleResetFilter}
+                    searchValue={search}
+                    onSearchChange={setSearch}
+                    onSearchSubmit={() => handleSearch(search)}
+                />
+
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">

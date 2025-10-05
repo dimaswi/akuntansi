@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -116,95 +116,87 @@ export default function LabaRugi({
                         </div>
 
                         {/* Period Filter */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
+                        <div className="mb-6 p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                            <div className="mb-4">
+                                <h3 className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                                     <Calendar className="h-5 w-5 mr-2" />
                                     Filter Periode
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <Label htmlFor="periode_dari">Periode Dari</Label>
-                                        <Input
-                                            id="periode_dari"
-                                            type="date"
-                                            value={periodeDari}
-                                            onChange={(e) => setPeriodeDari(e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="periode_sampai">Periode Sampai</Label>
-                                        <Input
-                                            id="periode_sampai"
-                                            type="date"
-                                            value={periodeSampai}
-                                            onChange={(e) => setPeriodeSampai(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="flex items-end">
-                                        <Button onClick={handleFilter} className="w-full">
-                                            Refresh Laporan
-                                        </Button>
-                                    </div>
+                                </h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <Label htmlFor="periode_dari">Periode Dari</Label>
+                                    <Input
+                                        id="periode_dari"
+                                        type="date"
+                                        value={periodeDari}
+                                        onChange={(e) => setPeriodeDari(e.target.value)}
+                                    />
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <div>
+                                    <Label htmlFor="periode_sampai">Periode Sampai</Label>
+                                    <Input
+                                        id="periode_sampai"
+                                        type="date"
+                                        value={periodeSampai}
+                                        onChange={(e) => setPeriodeSampai(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex items-end">
+                                    <Button onClick={handleFilter} className="w-full">
+                                        Refresh Laporan
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
 
-                        {/* Summary Cards */}
+                        {/* Summary Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Total Pendapatan
-                                            </p>
-                                            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalPendapatan)}</p>
-                                        </div>
-                                        <TrendingUp className="h-8 w-8 text-green-500" />
+                            <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            Total Pendapatan
+                                        </p>
+                                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalPendapatan)}</p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <TrendingUp className="h-8 w-8 text-green-500" />
+                                </div>
+                            </div>
 
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Total Beban
-                                            </p>
-                                            <p className="text-2xl font-bold text-red-600">{formatCurrency(totalBeban)}</p>
-                                        </div>
-                                        <TrendingDown className="h-8 w-8 text-red-500" />
+                            <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            Total Beban
+                                        </p>
+                                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalBeban)}</p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <TrendingDown className="h-8 w-8 text-red-500" />
+                                </div>
+                            </div>
 
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                {isProfit ? 'Laba Bersih' : 'Rugi Bersih'}
-                                            </p>
-                                            <p className={`text-2xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
-                                                {formatCurrency(Math.abs(labaRugi))}
-                                            </p>
-                                        </div>
-                                        <DollarSign className={`h-8 w-8 ${isProfit ? 'text-green-500' : 'text-red-500'}`} />
+                            <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            {isProfit ? 'Laba Bersih' : 'Rugi Bersih'}
+                                        </p>
+                                        <p className={`text-2xl font-bold ${isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                            {formatCurrency(Math.abs(labaRugi))}
+                                        </p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <DollarSign className={`h-8 w-8 ${isProfit ? 'text-green-500' : 'text-red-500'}`} />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Laba Rugi Table */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Laporan Laba Rugi</CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                        <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Laporan Laba Rugi</h3>
+                            </div>
+                            <div className="p-6">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -215,7 +207,7 @@ export default function LabaRugi({
                                     </TableHeader>
                                     <TableBody>
                                         {/* PENDAPATAN */}
-                                        <TableRow className="bg-green-50 dark:bg-green-900/20">
+                                        <TableRow className="bg-gray-50 dark:bg-gray-700">
                                             <TableCell colSpan={3} className="font-bold text-lg">
                                                 PENDAPATAN
                                             </TableCell>
@@ -233,23 +225,23 @@ export default function LabaRugi({
                                                         {item.akun.kode_akun}
                                                     </TableCell>
                                                     <TableCell>{item.akun.nama_akun}</TableCell>
-                                                    <TableCell className="text-right font-mono">
+                                                    <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                         {formatCurrency(item.saldo)}
                                                     </TableCell>
                                                 </TableRow>
                                             ))
                                         )}
-                                        <TableRow className="bg-green-100 dark:bg-green-800/30">
+                                        <TableRow className="border-t border-gray-200 dark:border-gray-600">
                                             <TableCell colSpan={2} className="font-bold">
                                                 TOTAL PENDAPATAN
                                             </TableCell>
-                                            <TableCell className="text-right font-bold font-mono">
+                                            <TableCell className={`text-right font-bold font-mono ${totalPendapatan >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                 {formatCurrency(totalPendapatan)}
                                             </TableCell>
                                         </TableRow>
 
                                         {/* BEBAN */}
-                                        <TableRow className="bg-red-50 dark:bg-red-900/20">
+                                        <TableRow className="bg-gray-50 dark:bg-gray-700">
                                             <TableCell colSpan={3} className="font-bold text-lg pt-6">
                                                 BEBAN
                                             </TableCell>
@@ -267,63 +259,61 @@ export default function LabaRugi({
                                                         {item.akun.kode_akun}
                                                     </TableCell>
                                                     <TableCell>{item.akun.nama_akun}</TableCell>
-                                                    <TableCell className="text-right font-mono">
+                                                    <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                         {formatCurrency(item.saldo)}
                                                     </TableCell>
                                                 </TableRow>
                                             ))
                                         )}
-                                        <TableRow className="bg-red-100 dark:bg-red-800/30">
+                                        <TableRow className="border-t border-gray-200 dark:border-gray-600">
                                             <TableCell colSpan={2} className="font-bold">
                                                 TOTAL BEBAN
                                             </TableCell>
-                                            <TableCell className="text-right font-bold font-mono">
+                                            <TableCell className={`text-right font-bold font-mono ${totalBeban >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                 {formatCurrency(totalBeban)}
                                             </TableCell>
                                         </TableRow>
 
                                         {/* LABA/RUGI BERSIH */}
-                                        <TableRow className={`${isProfit ? 'bg-green-200 dark:bg-green-700/40' : 'bg-red-200 dark:bg-red-700/40'}`}>
+                                        <TableRow className="border-t-2 border-gray-300 dark:border-gray-600">
                                             <TableCell colSpan={2} className="font-bold text-lg pt-4">
                                                 {isProfit ? 'LABA BERSIH' : 'RUGI BERSIH'}
                                             </TableCell>
-                                            <TableCell className={`text-right font-bold font-mono text-lg pt-4 ${isProfit ? 'text-green-700' : 'text-red-700'}`}>
+                                            <TableCell className={`text-right font-bold font-mono text-lg pt-4 ${isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                 {formatCurrency(Math.abs(labaRugi))}
                                             </TableCell>
                                         </TableRow>
                                     </TableBody>
                                 </Table>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
                         {/* Performance Indicator */}
-                        <Card className="mt-6">
-                            <CardHeader>
-                                <CardTitle>Analisis Kinerja</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <h3 className="font-semibold mb-2">Margin Laba</h3>
-                                        <p className="text-2xl font-bold">
-                                            {totalPendapatan > 0 ? ((labaRugi / totalPendapatan) * 100).toFixed(2) : '0'}%
-                                        </p>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Persentase laba terhadap pendapatan
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-2">Status Keuangan</h3>
-                                        <Badge variant={isProfit ? "default" : "destructive"} className="text-sm px-3 py-1">
-                                            {isProfit ? "PROFITABLE" : "LOSS"}
-                                        </Badge>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                            Kondisi keuangan periode ini
-                                        </p>
-                                    </div>
+                        <div className="mt-6 p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Analisis Kinerja</h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Margin Laba</h4>
+                                    <p className={`text-2xl font-bold ${isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                        {totalPendapatan > 0 ? ((labaRugi / totalPendapatan) * 100).toFixed(2) : '0'}%
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        Persentase laba terhadap pendapatan
+                                    </p>
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <div>
+                                    <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Status Keuangan</h4>
+                                    <Badge variant={isProfit ? "default" : "destructive"} className="text-sm px-3 py-1">
+                                        {isProfit ? "PROFITABLE" : "LOSS"}
+                                    </Badge>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        Kondisi keuangan periode ini
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

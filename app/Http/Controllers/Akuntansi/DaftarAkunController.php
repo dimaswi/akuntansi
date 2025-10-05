@@ -15,7 +15,9 @@ class DaftarAkunController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search', '');
-        $perPage = $request->get('perPage', 10);
+        $perPage = $request->get('perPage', 15);
+        $jenisAkun = $request->get('jenis_akun', '');
+        $status = $request->get('status', '');
 
         $query = DaftarAkun::with('indukAkun')
             ->orderBy('kode_akun');
@@ -27,6 +29,14 @@ class DaftarAkunController extends Controller
             });
         }
 
+        if ($jenisAkun) {
+            $query->where('jenis_akun', $jenisAkun);
+        }
+
+        if ($status !== '' && $status !== null) {
+            $query->where('is_aktif', (bool) $status);
+        }
+
         $daftarAkun = $query->paginate($perPage);
 
         return Inertia::render('akuntansi/daftar-akun/index', [
@@ -34,6 +44,8 @@ class DaftarAkunController extends Controller
             'filters' => [
                 'search' => $search,
                 'perPage' => (int) $perPage,
+                'jenis_akun' => $jenisAkun,
+                'status' => $status,
             ],
         ]);
     }

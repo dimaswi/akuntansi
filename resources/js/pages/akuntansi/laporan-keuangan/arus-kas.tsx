@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -128,95 +128,87 @@ export default function ArusKas({
                         </div>
 
                         {/* Period Filter */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
+                        <div className="mb-6 p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                            <div className="mb-4">
+                                <h3 className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                                     <Calendar className="h-5 w-5 mr-2" />
                                     Filter Periode
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <Label htmlFor="periode_dari">Periode Dari</Label>
-                                        <Input
-                                            id="periode_dari"
-                                            type="date"
-                                            value={periodeDari}
-                                            onChange={(e) => setPeriodeDari(e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="periode_sampai">Periode Sampai</Label>
-                                        <Input
-                                            id="periode_sampai"
-                                            type="date"
-                                            value={periodeSampai}
-                                            onChange={(e) => setPeriodeSampai(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="flex items-end">
-                                        <Button onClick={handleFilter} className="w-full">
-                                            Refresh Laporan
-                                        </Button>
-                                    </div>
+                                </h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <Label htmlFor="periode_dari">Periode Dari</Label>
+                                    <Input
+                                        id="periode_dari"
+                                        type="date"
+                                        value={periodeDari}
+                                        onChange={(e) => setPeriodeDari(e.target.value)}
+                                    />
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <div>
+                                    <Label htmlFor="periode_sampai">Periode Sampai</Label>
+                                    <Input
+                                        id="periode_sampai"
+                                        type="date"
+                                        value={periodeSampai}
+                                        onChange={(e) => setPeriodeSampai(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex items-end">
+                                    <Button onClick={handleFilter} className="w-full">
+                                        Refresh Laporan
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
 
-                        {/* Summary Cards */}
+                        {/* Summary Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Total Kas Masuk
-                                            </p>
-                                            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalKasMasuk)}</p>
-                                        </div>
-                                        <TrendingUp className="h-8 w-8 text-green-500" />
+                            <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            Total Kas Masuk
+                                        </p>
+                                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalKasMasuk)}</p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <TrendingUp className="h-8 w-8 text-green-500" />
+                                </div>
+                            </div>
 
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Total Kas Keluar
-                                            </p>
-                                            <p className="text-2xl font-bold text-red-600">{formatCurrency(totalKasKeluar)}</p>
-                                        </div>
-                                        <TrendingDown className="h-8 w-8 text-red-500" />
+                            <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            Total Kas Keluar
+                                        </p>
+                                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalKasKeluar)}</p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <TrendingDown className="h-8 w-8 text-red-500" />
+                                </div>
+                            </div>
 
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Net Arus Kas
-                                            </p>
-                                            <p className={`text-2xl font-bold ${isPositiveFlow ? 'text-green-600' : 'text-red-600'}`}>
-                                                {formatCurrency(netArusKas)}
-                                            </p>
-                                        </div>
-                                        <Activity className={`h-8 w-8 ${isPositiveFlow ? 'text-green-500' : 'text-red-500'}`} />
+                            <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            Net Arus Kas
+                                        </p>
+                                        <p className={`text-2xl font-bold ${isPositiveFlow ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                            {formatCurrency(netArusKas)}
+                                        </p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <Activity className={`h-8 w-8 ${isPositiveFlow ? 'text-green-500' : 'text-red-500'}`} />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Arus Kas Summary */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle>Ringkasan Arus Kas per Akun</CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                        <div className="mb-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Ringkasan Arus Kas per Akun</h3>
+                            </div>
+                            <div className="p-6">
                                 {dataArusKas.length === 0 ? (
                                     <div className="text-center py-8">
                                         <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-2" />
@@ -244,13 +236,13 @@ export default function ArusKas({
                                                         <TableCell className="font-medium">
                                                             {item.akun.nama_akun}
                                                         </TableCell>
-                                                        <TableCell className="text-right font-mono text-green-600">
+                                                        <TableCell className="text-right font-mono text-green-600 dark:text-green-400">
                                                             {formatCurrency(item.total_masuk)}
                                                         </TableCell>
-                                                        <TableCell className="text-right font-mono text-red-600">
+                                                        <TableCell className="text-right font-mono text-red-600 dark:text-red-400">
                                                             {formatCurrency(item.total_keluar)}
                                                         </TableCell>
-                                                        <TableCell className={`text-right font-mono font-semibold ${item.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                        <TableCell className={`text-right font-mono font-semibold ${item.net >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                             {formatCurrency(item.net)}
                                                         </TableCell>
                                                         <TableCell>
@@ -269,7 +261,7 @@ export default function ArusKas({
                                                         <TableRow>
                                                             <TableCell colSpan={6} className="bg-gray-50 dark:bg-gray-700">
                                                                 <div className="py-4">
-                                                                    <h4 className="font-semibold mb-3">Detail Transaksi {item.akun.nama_akun}</h4>
+                                                                    <h4 className="font-semibold mb-3 text-gray-900 dark:text-gray-100">Detail Transaksi {item.akun.nama_akun}</h4>
                                                                     <Table>
                                                                         <TableHeader>
                                                                             <TableRow>
@@ -293,13 +285,13 @@ export default function ArusKas({
                                                                                     <TableCell className="font-mono text-sm">
                                                                                         {transaksi.referensi}
                                                                                     </TableCell>
-                                                                                    <TableCell className="text-right font-mono text-sm text-green-600">
+                                                                                    <TableCell className="text-right font-mono text-sm text-green-600 dark:text-green-400">
                                                                                         {transaksi.kas_masuk > 0 ? formatCurrency(transaksi.kas_masuk) : '-'}
                                                                                     </TableCell>
-                                                                                    <TableCell className="text-right font-mono text-sm text-red-600">
+                                                                                    <TableCell className="text-right font-mono text-sm text-red-600 dark:text-red-400">
                                                                                         {transaksi.kas_keluar > 0 ? formatCurrency(transaksi.kas_keluar) : '-'}
                                                                                     </TableCell>
-                                                                                    <TableCell className={`text-right font-mono text-sm ${transaksi.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                                    <TableCell className={`text-right font-mono text-sm ${transaksi.net >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                                                         {formatCurrency(transaksi.net)}
                                                                                     </TableCell>
                                                                                 </TableRow>
@@ -314,17 +306,17 @@ export default function ArusKas({
                                             ))}
                                             
                                             {/* Total Row */}
-                                            <TableRow className="bg-gray-100 dark:bg-gray-600">
+                                            <TableRow className="border-t-2 border-gray-300 dark:border-gray-600">
                                                 <TableCell colSpan={2} className="font-bold">
                                                     TOTAL
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold font-mono text-green-600">
+                                                <TableCell className="text-right font-bold font-mono text-green-600 dark:text-green-400">
                                                     {formatCurrency(totalKasMasuk)}
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold font-mono text-red-600">
+                                                <TableCell className="text-right font-bold font-mono text-red-600 dark:text-red-400">
                                                     {formatCurrency(totalKasKeluar)}
                                                 </TableCell>
-                                                <TableCell className={`text-right font-bold font-mono ${isPositiveFlow ? 'text-green-600' : 'text-red-600'}`}>
+                                                <TableCell className={`text-right font-bold font-mono ${isPositiveFlow ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                     {formatCurrency(netArusKas)}
                                                 </TableCell>
                                                 <TableCell></TableCell>
@@ -332,18 +324,18 @@ export default function ArusKas({
                                         </TableBody>
                                     </Table>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
                         {/* Cash Flow Analysis */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Analisis Arus Kas</CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                        <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Analisis Arus Kas</h3>
+                            </div>
+                            <div className="p-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <h3 className="font-semibold mb-2">Status Arus Kas</h3>
+                                        <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Status Arus Kas</h4>
                                         <Badge variant={isPositiveFlow ? "default" : "destructive"} className="text-sm px-3 py-1">
                                             {isPositiveFlow ? "POSITIVE CASH FLOW" : "NEGATIVE CASH FLOW"}
                                         </Badge>
@@ -355,8 +347,8 @@ export default function ArusKas({
                                         </p>
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold mb-2">Rasio Kas</h3>
-                                        <p className="text-2xl font-bold">
+                                        <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Rasio Kas</h4>
+                                        <p className={`text-2xl font-bold ${isPositiveFlow ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                             {totalKasKeluar > 0 ? (totalKasMasuk / totalKasKeluar).toFixed(2) : '∞'}
                                         </p>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -364,8 +356,8 @@ export default function ArusKas({
                                         </p>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

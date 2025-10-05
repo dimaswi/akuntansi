@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import FilterForm, { FilterField } from '@/components/filter-form';
 import {
     Select,
     SelectContent,
@@ -22,8 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
-import { Head, router, usePage } from "@inertiajs/react";
-import { Edit3, PlusCircle, Search, Trash, X, Loader2, Wallet, Eye, CheckCircle } from "lucide-react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
+import { Edit3, PlusCircle, Search, Trash, X, Loader2, Wallet, Eye, CheckCircle, Send } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { route } from "ziggy-js";
@@ -76,6 +77,8 @@ interface Props extends SharedData {
         perPage: number;
         status: string;
         jenis_transaksi: string;
+        tanggal_dari?: string;
+        tanggal_sampai?: string;
     };
     jenisTransaksi: Record<string, string>;
 }
@@ -148,6 +151,48 @@ export default function CashTransactionIndex() {
         transaction: null,
         loading: false,
     });
+
+    // Filter fields configuration
+    const filterFields: FilterField[] = [
+        {
+            name: 'jenis_transaksi',
+            label: 'Jenis Transaksi',
+            type: 'select',
+            placeholder: 'Semua Jenis',
+            options: [
+                { value: '', label: 'Semua Jenis' },
+                ...Object.entries(jenisTransaksi).map(([value, label]) => ({
+                    value,
+                    label: label as string,
+                })),
+            ],
+            value: filters.jenis_transaksi || '',
+        },
+        {
+            name: 'status',
+            label: 'Status',
+            type: 'select',
+            placeholder: 'Semua Status',
+            options: [
+                { value: '', label: 'Semua Status' },
+                { value: 'draft', label: 'Draft' },
+                { value: 'posted', label: 'Posted' },
+            ],
+            value: filters.status || '',
+        },
+        {
+            name: 'tanggal_dari',
+            label: 'Tanggal Dari',
+            type: 'date',
+            value: filters.tanggal_dari || '',
+        },
+        {
+            name: 'tanggal_sampai',
+            label: 'Tanggal Sampai',
+            type: 'date',
+            value: filters.tanggal_sampai || '',
+        },
+    ];
 
     const handleSearch = (searchValue: string) => {
         router.get('/kas/cash-transactions', {
@@ -279,18 +324,80 @@ export default function CashTransactionIndex() {
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
             const draftTransactionIds = cashTransactions.data
-                .filter(t => t.status === 'draft')
-                .map(t => t.id);
+                .filter(transaction => transaction.status === 'draft')
+                .map(transaction => transaction.id);
             setSelectedTransactions(draftTransactionIds);
         } else {
             setSelectedTransactions([]);
         }
     };
 
+    const handleFilter = (filterValues: Record<string, any>) => {
+        router.get('/kas/cash-transactions', {
+            search: search,
+            perPage: filters.perPage,
+            status: filterValues.status || '',
+            jenis_transaksi: filterValues.jenis_transaksi || '',
+            tanggal_dari: filterValues.tanggal_dari || '',
+            tanggal_sampai: filterValues.tanggal_sampai || '',
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const handleResetFilter = () => {
+        router.get('/kas/cash-transactions', {
+            search: '',
+            perPage: filters.perPage,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+        setSearch('');
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Transaksi Kas" />
-            <div className="p-4">
+            <div className="p-4 space-y-4">
+                {/* Header */}
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold flex items-center gap-2">
+                            <Wallet className="h-6 w-6" />
+                            Transaksi Kas
+                        </h1>
+                        <p className="text-muted-foreground">Kelola transaksi penerimaan dan pengeluaran kas</p>
+                    </div>
+                    <div className="flex space-x-2">
+                        {hasPermission('kas.cash-management.daily-entry') && (
+                            <Button asChild>
+                                <Link href="/kas/cash-transactions/create">
+                                    <PlusCircle className="h-4 w-4 mr-2" />
+                                    Tambah Transaksi
+                                </Link>
+                            </Button>
+                        )}
+                        {selectedTransactions.length > 0 && (
+                            <Button onClick={handleBatchPost} variant="outline">
+                                <Send className="h-4 w-4 mr-2" />
+                                Post Terpilih ({selectedTransactions.length})
+                            </Button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Filter Form */}
+                <FilterForm
+                    fields={filterFields}
+                    onFilter={handleFilter}
+                    onReset={handleResetFilter}
+                    searchValue={search}
+                    onSearchChange={setSearch}
+                    onSearchSubmit={() => handleSearch(search)}
+                />
+
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">

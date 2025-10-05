@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -17,10 +18,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, usePage } from "@inertiajs/react";
-import { Edit3, PlusCircle, Search, Trash, X, Loader2, BookOpen, Eye, Calculator } from "lucide-react";
+import { Edit3, PlusCircle, Search, Trash, X, Loader2, Eye, Calculator } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { route } from "ziggy-js";
@@ -59,6 +61,8 @@ interface Props extends SharedData {
         search: string;
         perPage: number;
         status: string;
+        tanggal_dari?: string;
+        tanggal_sampai?: string;
     };
 }
 
@@ -113,51 +117,72 @@ export default function JurnalIndex() {
         loading: false,
     });
     
-    const handleSearch = (value: string) => {
-        router.get('/akuntansi/jurnal', {
-            search: value,
-            perPage: initialFilters.perPage,
-            status: initialFilters.status,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+    const handleSearch = (searchValue: string) => {
+        router.get(
+            '/akuntansi/jurnal',
+            {
+                search: searchValue,
+                perPage: initialFilters.perPage,
+                status: initialFilters.status || '',
+                tanggal_dari: initialFilters.tanggal_dari || '',
+                tanggal_sampai: initialFilters.tanggal_sampai || '',
+                page: 1,
+            },
+            {
+                preserveState: false,
+                replace: true,
+            },
+        );
     };
 
-    const handleStatusFilter = (status: string) => {
-        const filterValue = status === "all" ? "" : status;
-        router.get('/akuntansi/jurnal', {
-            search: initialFilters.search,
-            perPage: initialFilters.perPage,
-            status: filterValue,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
+    // Check if any filter is active
+    const hasActiveFilters = (initialFilters.status && initialFilters.status !== '') || 
+                            (initialFilters.tanggal_dari && initialFilters.tanggal_dari !== '') ||
+                            (initialFilters.tanggal_sampai && initialFilters.tanggal_sampai !== '') ||
+                            (initialFilters.search && initialFilters.search !== '');
+
+    const activeFilterCount = [
+        initialFilters.status && initialFilters.status !== '',
+        initialFilters.tanggal_dari && initialFilters.tanggal_dari !== '',
+        initialFilters.tanggal_sampai && initialFilters.tanggal_sampai !== ''
+    ].filter(Boolean).length;
 
     const handlePerPageChange = (perPage: number) => {
-        router.get('/akuntansi/jurnal', {
-            search: initialFilters.search,
-            perPage,
-            status: initialFilters.status,
-            page: 1,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/akuntansi/jurnal',
+            {
+                search: initialFilters.search || '',
+                perPage,
+                status: initialFilters.status || '',
+                tanggal_dari: initialFilters.tanggal_dari || '',
+                tanggal_sampai: initialFilters.tanggal_sampai || '',
+                page: 1,
+            },
+            {
+                preserveState: false,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
     };
 
     const handlePageChange = (page: number) => {
-        router.get('/akuntansi/jurnal', {
-            search: initialFilters.search,
-            perPage: initialFilters.perPage,
-            status: initialFilters.status,
-            page,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/akuntansi/jurnal',
+            {
+                search: initialFilters.search || '',
+                perPage: initialFilters.perPage,
+                status: initialFilters.status || '',
+                tanggal_dari: initialFilters.tanggal_dari || '',
+                tanggal_sampai: initialFilters.tanggal_sampai || '',
+                page,
+            },
+            {
+                preserveState: false,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
@@ -180,133 +205,222 @@ export default function JurnalIndex() {
 
     const handleDeleteConfirm = async () => {
         if (!deleteDialog.jurnal) return;
-        
-        setDeleteDialog(prev => ({ ...prev, loading: true }));
-        
+
+        setDeleteDialog((prev) => ({ ...prev, loading: true }));
+
         try {
-            await router.delete(route('akuntansi.jurnal.destroy', deleteDialog.jurnal.id), {
+            router.delete(`/akuntansi/jurnal/${deleteDialog.jurnal.id}`, {
                 onSuccess: () => {
-                    toast.success(`Jurnal ${deleteDialog.jurnal?.nomor_jurnal} berhasil dihapus`);
+                    toast.success('Jurnal berhasil dihapus');
                     setDeleteDialog({ open: false, jurnal: null, loading: false });
                 },
                 onError: () => {
                     toast.error('Gagal menghapus jurnal');
-                    setDeleteDialog(prev => ({ ...prev, loading: false }));
-                }
+                    setDeleteDialog((prev) => ({ ...prev, loading: false }));
+                },
             });
         } catch (error) {
-            toast.error('Terjadi kesalahan saat menghapus jurnal');
-            setDeleteDialog(prev => ({ ...prev, loading: false }));
+            toast.error('Terjadi kesalahan');
+            setDeleteDialog((prev) => ({ ...prev, loading: false }));
         }
     };
 
-    const handleDeleteCancel = () => {
-        setDeleteDialog({ open: false, jurnal: null, loading: false });
+    const handleStatusChange = (status: string) => {
+        router.get(
+            '/akuntansi/jurnal',
+            {
+                search: initialFilters.search || '',
+                perPage: initialFilters.perPage,
+                status: status === 'all' ? '' : status,
+                tanggal_dari: initialFilters.tanggal_dari || '',
+                tanggal_sampai: initialFilters.tanggal_sampai || '',
+                page: 1,
+            },
+            {
+                preserveState: false,
+                replace: true,
+            },
+        );
+    };
+
+    const handleDateFromChange = (tanggalDari: string) => {
+        router.get(
+            '/akuntansi/jurnal',
+            {
+                search: initialFilters.search || '',
+                perPage: initialFilters.perPage,
+                status: initialFilters.status || '',
+                tanggal_dari: tanggalDari,
+                tanggal_sampai: initialFilters.tanggal_sampai || '',
+                page: 1,
+            },
+            {
+                preserveState: false,
+                replace: true,
+            },
+        );
+    };
+
+    const handleDateToChange = (tanggalSampai: string) => {
+        router.get(
+            '/akuntansi/jurnal',
+            {
+                search: initialFilters.search || '',
+                perPage: initialFilters.perPage,
+                status: initialFilters.status || '',
+                tanggal_dari: initialFilters.tanggal_dari || '',
+                tanggal_sampai: tanggalSampai,
+                page: 1,
+            },
+            {
+                preserveState: false,
+                replace: true,
+            },
+        );
+    };
+
+    const handleResetFilters = () => {
+        setSearch('');
+        router.get('/akuntansi/jurnal', {
+            search: '',
+            perPage: initialFilters.perPage,
+            status: '',
+            tanggal_dari: '',
+            tanggal_sampai: '',
+            page: 1,
+        }, {
+            preserveState: false,
+            replace: true,
+        });
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Jurnal" />
-            <div className="max-w-7xl mx-auto p-4 sm:px-6 lg:px-8">
-                {/* Filters and Actions */}
-                <div className="mb-6 space-y-4">
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                        {/* Search and Filter */}
-                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        type="text"
-                                        placeholder="Cari nomor jurnal atau keterangan..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="pl-10 pr-10 w-64"
-                                    />
-                                    {search && (
-                                        <button
-                                            type="button"
-                                            onClick={handleClearSearch}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    )}
-                                </div>
-                                <Button type="submit" variant="outline" size="sm">
-                                    Cari
+
+            <Card className="mt-4">
+                <CardHeader>
+                    <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <Calculator className="h-5 w-5" />
+                                Jurnal
+                            </CardTitle>
+                            <CardDescription>Kelola jurnal akuntansi dan transaksi keuangan</CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button onClick={() => router.visit(route('akuntansi.jurnal.create'))} className="gap-2">
+                                <PlusCircle className="h-4 w-4" />
+                                Tambah Jurnal
+                            </Button>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {/* Search */}
+                    <div className="flex-1">
+                        <Label htmlFor="search">Cari</Label>
+                        <form onSubmit={handleSearchSubmit} className="flex gap-2">
+                            <Input
+                                id="search"
+                                placeholder="Cari nomor jurnal atau keterangan..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="flex-1"
+                            />
+                            <Button type="submit" variant="outline" size="icon">
+                                <Search className="h-4 w-4" />
+                            </Button>
+                            {search && (
+                                <Button type="button" variant="outline" size="icon" onClick={handleClearSearch}>
+                                    <X className="h-4 w-4" />
                                 </Button>
-                            </form>
-                            
-                            <Select value={initialFilters.status || "all"} onValueChange={handleStatusFilter}>
-                                <SelectTrigger className="w-32">
-                                    <SelectValue placeholder="Status" />
+                            )}
+                        </form>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Status</Label>
+                            <Select value={initialFilters.status || 'all'} onValueChange={handleStatusChange}>
+                                <SelectTrigger className="w-48">
+                                    <SelectValue placeholder="Pilih Status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Semua</SelectItem>
+                                    <SelectItem value="all">Semua Status</SelectItem>
                                     <SelectItem value="draft">Draft</SelectItem>
                                     <SelectItem value="posted">Posted</SelectItem>
                                     <SelectItem value="reversed">Reversed</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
-                        
-                        {/* Add Button */}
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex items-center gap-2 hover:bg-green-200"
-                            onClick={() => router.visit(route('akuntansi.jurnal.create'))}
-                        >
-                            <PlusCircle className="h-4 w-4 text-green-500" />
-                            Tambah Jurnal
-                        </Button>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Tanggal Dari</Label>
+                            <Input
+                                type="date"
+                                value={initialFilters.tanggal_dari || ''}
+                                onChange={(e) => handleDateFromChange(e.target.value)}
+                                className="w-48"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Tanggal Sampai</Label>
+                            <Input
+                                type="date"
+                                value={initialFilters.tanggal_sampai || ''}
+                                onChange={(e) => handleDateToChange(e.target.value)}
+                                className="w-48"
+                            />
+                        </div>
+                        {hasActiveFilters && (
+                            <Button variant="outline" onClick={handleResetFilters} className="flex items-center gap-2">
+                                <X className="h-4 w-4" />
+                                Reset Filter
+                            </Button>
+                        )}
                     </div>
-                </div>
 
-                {/* Table */}
-                <div className="bg-white rounded-lg border shadow-sm">
-                    <div className="overflow-x-auto">
+                    {/* Table */}
+                    <div className="rounded-md border">
                         <Table>
-                            <TableHeader className="bg-gray-50">
+                            <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[50px]">No.</TableHead>
+                                    <TableHead className="w-[60px]">No</TableHead>
                                     <TableHead>Nomor Jurnal</TableHead>
                                     <TableHead>Tanggal</TableHead>
                                     <TableHead>Keterangan</TableHead>
-                                    <TableHead>Total Debit</TableHead>
-                                    <TableHead>Total Kredit</TableHead>
+                                    <TableHead className="text-right">Total Debit</TableHead>
+                                    <TableHead className="text-right">Total Kredit</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Dibuat Oleh</TableHead>
-                                    <TableHead className="text-center">Aksi</TableHead>
+                                    <TableHead className="w-[100px] text-center">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {jurnal.data.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                                        <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                                             Tidak ada data jurnal
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     jurnal.data.map((item, index) => (
-                                        <TableRow key={item.id} className="hover:bg-gray-50">
-                                            <TableCell>
-                                                {(jurnal.current_page - 1) * jurnal.per_page + index + 1}
-                                            </TableCell>
+                                        <TableRow key={item.id}>
+                                            <TableCell>{(jurnal.current_page - 1) * jurnal.per_page + index + 1}</TableCell>
                                             <TableCell className="font-medium">
                                                 {item.nomor_jurnal}
                                             </TableCell>
                                             <TableCell>
                                                 {formatDate(item.tanggal_transaksi)}
                                             </TableCell>
-                                            <TableCell className="max-w-xs truncate">
+                                            <TableCell className="max-w-[300px] truncate">
                                                 {item.keterangan}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="text-right font-mono">
                                                 {formatCurrency(item.total_debit)}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="text-right font-mono">
                                                 {formatCurrency(item.total_kredit)}
                                             </TableCell>
                                             <TableCell>
@@ -342,7 +456,7 @@ export default function JurnalIndex() {
                                                             variant="ghost"
                                                             size="sm"
                                                             onClick={() => handleDeleteClick(item)}
-                                                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                                            className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
                                                             title="Hapus"
                                                         >
                                                             <Trash className="h-4 w-4" />
@@ -358,11 +472,27 @@ export default function JurnalIndex() {
                     </div>
 
                     {/* Pagination */}
-                    {jurnal.last_page > 1 && (
-                        <div className="flex items-center justify-between px-6 py-4 border-t">
-                            <div className="text-sm text-muted-foreground">
-                                Menampilkan {jurnal.from} sampai {jurnal.to} dari {jurnal.total} data
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <Label className="text-sm">Per halaman</Label>
+                                <Select value={(initialFilters?.perPage || 10).toString()} onValueChange={(value) => handlePerPageChange(parseInt(value))}>
+                                    <SelectTrigger className="w-20">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="10">10</SelectItem>
+                                        <SelectItem value="20">20</SelectItem>
+                                        <SelectItem value="30">30</SelectItem>
+                                        <SelectItem value="50">50</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
+                            <div className="text-sm text-muted-foreground">
+                                Menampilkan {jurnal.from} sampai {jurnal.to} dari {jurnal.total} jurnal
+                            </div>
+                        </div>
+                        {jurnal.last_page > 1 && (
                             <div className="flex items-center gap-2">
                                 <Button
                                     variant="outline"
@@ -374,14 +504,15 @@ export default function JurnalIndex() {
                                 </Button>
                                 <div className="flex items-center gap-1">
                                     {Array.from({ length: Math.min(5, jurnal.last_page) }, (_, i) => {
-                                        const page = Math.max(1, Math.min(jurnal.last_page - 4, jurnal.current_page - 2)) + i;
+                                        const page = Math.max(1, jurnal.current_page - 2) + i;
+                                        if (page > jurnal.last_page) return null;
                                         return (
                                             <Button
                                                 key={page}
-                                                variant={page === jurnal.current_page ? "default" : "outline"}
+                                                variant={page === jurnal.current_page ? 'default' : 'outline'}
                                                 size="sm"
                                                 onClick={() => handlePageChange(page)}
-                                                className="w-8 h-8 p-0"
+                                                className="w-8"
                                             >
                                                 {page}
                                             </Button>
@@ -397,32 +528,42 @@ export default function JurnalIndex() {
                                     Selanjutnya
                                 </Button>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
 
-                {/* Delete Confirmation Dialog */}
-                <Dialog open={deleteDialog.open} onOpenChange={(open) => !open && handleDeleteCancel()}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Konfirmasi Hapus</DialogTitle>
-                            <DialogDescription>
-                                Apakah Anda yakin ingin menghapus jurnal <strong>{deleteDialog.jurnal?.nomor_jurnal}</strong>? 
-                                Tindakan ini tidak dapat dibatalkan.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={handleDeleteCancel} disabled={deleteDialog.loading}>
-                                Batal
-                            </Button>
-                            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteDialog.loading}>
-                                {deleteDialog.loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Hapus
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </div>
+            {/* Delete Dialog */}
+            <Dialog
+                open={deleteDialog.open}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleteDialog({ open: false, jurnal: null, loading: false });
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Hapus Jurnal</DialogTitle>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin menghapus jurnal "{deleteDialog.jurnal?.nomor_jurnal}"? Tindakan ini tidak dapat dibatalkan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteDialog({ open: false, jurnal: null, loading: false })}
+                            disabled={deleteDialog.loading}
+                        >
+                            Batal
+                        </Button>
+                        <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteDialog.loading}>
+                            {deleteDialog.loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Hapus
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

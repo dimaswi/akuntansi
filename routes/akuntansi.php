@@ -111,8 +111,8 @@ Route::middleware('auth')->group(function () {
         ->name('akuntansi.laporan.arus-kas')
         ->middleware('permission:akuntansi.laporan.view');
     
-    Route::get('akuntansi/laporan/perubahan-ekuitas', [LaporanKeuanganController::class, 'perubahanEkuitas'])
-        ->name('akuntansi.laporan.perubahan-ekuitas')
+    Route::get('akuntansi/laporan/perubahan-modal', [LaporanKeuanganController::class, 'perubahanModal'])
+        ->name('akuntansi.laporan.perubahan-modal')
         ->middleware('permission:akuntansi.laporan.view');
     
     Route::get('akuntansi/laporan/export', [LaporanKeuanganController::class, 'export'])

@@ -21,6 +21,8 @@ class JurnalController extends Controller
         $search = $request->get('search', '');
         $perPage = $request->get('perPage', 10);
         $status = $request->get('status', '');
+        $tanggalDari = $request->get('tanggal_dari', '');
+        $tanggalSampai = $request->get('tanggal_sampai', '');
 
         $query = Jurnal::with(['dibuatOleh'])
             ->orderBy('tanggal_transaksi', 'desc')
@@ -37,6 +39,14 @@ class JurnalController extends Controller
             $query->where('status', $status);
         }
 
+        if ($tanggalDari) {
+            $query->whereDate('tanggal_transaksi', '>=', $tanggalDari);
+        }
+
+        if ($tanggalSampai) {
+            $query->whereDate('tanggal_transaksi', '<=', $tanggalSampai);
+        }
+
         $jurnal = $query->paginate($perPage);
 
         return Inertia::render('akuntansi/jurnal/index', [
@@ -45,6 +55,8 @@ class JurnalController extends Controller
                 'search' => $search,
                 'perPage' => (int) $perPage,
                 'status' => $status,
+                'tanggal_dari' => $tanggalDari,
+                'tanggal_sampai' => $tanggalSampai,
             ],
         ]);
     }

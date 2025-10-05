@@ -11,11 +11,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, usePage } from "@inertiajs/react";
 import { Edit3, PlusCircle, Search, Trash, X, Loader2, Calculator } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { route } from "ziggy-js";
 
@@ -49,6 +57,8 @@ interface Props extends SharedData {
     filters: {
         search: string;
         perPage: number;
+        jenis_akun?: string;
+        status?: string;
     };
 }
 
@@ -79,9 +89,10 @@ const jenisAkunColors = {
     beban: 'bg-purple-100 text-purple-800'
 };
 
+
 export default function DaftarAkunIndex() {
-    const { daftarAkun, filters: initialFilters } = usePage<Props>().props;
-    const [search, setSearch] = useState(initialFilters.search);
+    const { daftarAkun, filters } = usePage<Props>().props;
+    const [search, setSearch] = useState(filters.search);
     const [deleteDialog, setDeleteDialog] = useState<{
         open: boolean;
         akun: DaftarAkun | null;
@@ -91,37 +102,22 @@ export default function DaftarAkunIndex() {
         akun: null,
         loading: false,
     });
-    
-    const handleSearch = (value: string) => {
-        router.get('/akuntansi/daftar-akun', {
-            search: value,
-            perPage: initialFilters.perPage,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
 
-    const handlePerPageChange = (perPage: number) => {
-        router.get('/akuntansi/daftar-akun', {
-            search: initialFilters.search,
-            perPage,
-            page: 1,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const handlePageChange = (page: number) => {
-        router.get('/akuntansi/daftar-akun', {
-            search: initialFilters.search,
-            perPage: initialFilters.perPage,
-            page,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+    const handleSearch = (searchValue: string) => {
+        router.get(
+            '/akuntansi/daftar-akun',
+            {
+                search: searchValue,
+                perPage: filters.perPage,
+                jenis_akun: filters.jenis_akun || '',
+                status: filters.status || '',
+                page: 1,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
@@ -134,14 +130,99 @@ export default function DaftarAkunIndex() {
         handleSearch('');
     };
 
-    useEffect(() => {
-        setSearch(initialFilters.search);
-    }, [initialFilters.search]);
+    const handleJenisAkunChange = (jenis: string) => {
+        router.get(
+            '/akuntansi/daftar-akun',
+            {
+                search: filters.search || '',
+                perPage: filters.perPage,
+                jenis_akun: jenis === 'all' ? '' : jenis,
+                status: filters.status || '',
+                page: 1,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
-    const handleDeleteConfirm = async () => {
+    const handleStatusChange = (status: string) => {
+        router.get(
+            '/akuntansi/daftar-akun',
+            {
+                search: filters.search || '',
+                perPage: filters.perPage,
+                jenis_akun: filters.jenis_akun || '',
+                status: status === 'all' ? '' : status,
+                page: 1,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    // Check if any filter is active
+    const hasActiveFilters = (filters.jenis_akun && filters.jenis_akun !== '') || 
+                            (filters.status && filters.status !== '') ||
+                            (filters.search && filters.search !== '');
+
+    const handleResetFilters = () => {
+        setSearch('');
+        router.get('/akuntansi/daftar-akun', {
+            search: '',
+            perPage: filters.perPage,
+            jenis_akun: '',
+            status: '',
+            page: 1,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const handlePerPageChange = (perPage: number) => {
+        router.get(
+            '/akuntansi/daftar-akun',
+            {
+                search: filters.search || '',
+                perPage,
+                jenis_akun: filters.jenis_akun || '',
+                status: filters.status || '',
+                page: 1,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handlePageChange = (page: number) => {
+        router.get(
+            '/akuntansi/daftar-akun',
+            {
+                search: filters.search || '',
+                perPage: filters.perPage,
+                jenis_akun: filters.jenis_akun || '',
+                status: filters.status || '',
+                page,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handleDelete = async () => {
         if (!deleteDialog.akun) return;
 
-        setDeleteDialog(prev => ({ ...prev, loading: true }));
+        setDeleteDialog((prev) => ({ ...prev, loading: true }));
 
         try {
             router.delete(`/akuntansi/daftar-akun/${deleteDialog.akun.id}`, {
@@ -151,213 +232,284 @@ export default function DaftarAkunIndex() {
                 },
                 onError: () => {
                     toast.error('Gagal menghapus akun');
-                    setDeleteDialog(prev => ({ ...prev, loading: false }));
+                    setDeleteDialog((prev) => ({ ...prev, loading: false }));
                 },
             });
         } catch (error) {
             toast.error('Terjadi kesalahan');
-            setDeleteDialog(prev => ({ ...prev, loading: false }));
+            setDeleteDialog((prev) => ({ ...prev, loading: false }));
         }
-    };
-
-    const handleDeleteCancel = () => {
-        setDeleteDialog({ open: false, akun: null, loading: false });
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Daftar Akun" />
-            <div className="p-4">
-                <div className="mb-4 flex items-center justify-between">
-                    <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="text"
-                                placeholder="Cari kode atau nama akun..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-10 pr-10 w-64"
-                            />
-                            {search && (
-                                <button
-                                    type="button"
-                                    onClick={handleClearSearch}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                            )}
-                        </div>
-                        <Button type="submit" variant="outline" size="sm">
-                            Cari
-                        </Button>
-                    </form>
-                    
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex items-center gap-2 hover:bg-green-200"
-                        onClick={() => router.visit('/akuntansi/daftar-akun/create')}
-                    >
-                        <PlusCircle className="h-4 w-4 text-green-500" />
-                        Tambah
-                    </Button>
-                </div>
-                
-                <div className="w-full overflow-x-auto rounded-md border">
-                    <Table>
-                        <TableHeader className="bg-gray-100">
-                            <TableRow>
-                                <TableHead>Kode Akun</TableHead>
-                                <TableHead>Nama Akun</TableHead>
-                                <TableHead>Jenis Akun</TableHead>
-                                <TableHead>Saldo Normal</TableHead>
-                                <TableHead>Level</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="w-[100px]">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {daftarAkun.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                        Tidak ada data ditemukan
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                daftarAkun.data.map((akun, index) => (
-                                    <TableRow key={akun.id}>
-                                        <TableCell className="font-mono font-medium">
-                                            {akun.kode_akun}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div 
-                                                className="flex items-center"
-                                                style={{ 
-                                                    marginLeft: akun.level > 1 ? `${(akun.level - 1) * 16}px` : '0px' 
-                                                }}
-                                            >
-                                                {akun.level > 1 && (
-                                                    <span className="text-gray-400 mr-2">
-                                                        {'└'.repeat(1)} 
-                                                    </span>
-                                                )}
-                                                {akun.nama_akun}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge className={jenisAkunColors[akun.jenis_akun]}>
-                                                {jenisAkunLabels[akun.jenis_akun]}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={akun.saldo_normal === 'debit' ? 'default' : 'secondary'}>
-                                                {akun.saldo_normal.toUpperCase()}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>{akun.level}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={akun.is_aktif ? 'default' : 'secondary'}>
-                                                {akun.is_aktif ? 'Aktif' : 'Tidak Aktif'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => router.visit(`/akuntansi/daftar-akun/${akun.id}/edit`)}
-                                                    className="h-8 w-8 p-0"
-                                                >
-                                                    <Edit3 className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => setDeleteDialog({ open: true, akun, loading: false })}
-                                                    className="h-8 w-8 p-0 hover:bg-red-50 hover:border-red-200"
-                                                >
-                                                    <Trash className="h-4 w-4 text-red-500" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
 
-                {/* Pagination */}
-                {daftarAkun.last_page > 1 && (
-                    <div className="mt-4 flex items-center justify-between">
-                        <div className="text-sm text-muted-foreground">
-                            Menampilkan {daftarAkun.from} sampai {daftarAkun.to} dari {daftarAkun.total} entri
+            <Card className="mt-4">
+                <CardHeader>
+                    <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <Calculator className="h-5 w-5" />
+                                Daftar Akun
+                            </CardTitle>
+                            <CardDescription>Kelola chart of accounts dan akun-akun keuangan</CardDescription>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(daftarAkun.current_page - 1)}
-                                disabled={daftarAkun.current_page === 1}
-                            >
-                                Sebelumnya
-                            </Button>
-                            <span className="text-sm">
-                                Halaman {daftarAkun.current_page} dari {daftarAkun.last_page}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(daftarAkun.current_page + 1)}
-                                disabled={daftarAkun.current_page === daftarAkun.last_page}
-                            >
-                                Selanjutnya
+                        <div className="flex gap-2">
+                            <Button onClick={() => router.visit('/akuntansi/daftar-akun/create')} className="gap-2">
+                                <PlusCircle className="h-4 w-4" />
+                                Tambah Akun
                             </Button>
                         </div>
                     </div>
-                )}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {/* Search */}
+                    <div className="flex-1">
+                        <Label htmlFor="search">Cari</Label>
+                        <form onSubmit={handleSearchSubmit} className="flex gap-2">
+                            <Input
+                                id="search"
+                                placeholder="Cari kode atau nama akun..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="flex-1"
+                            />
+                            <Button type="submit" variant="outline" size="icon">
+                                <Search className="h-4 w-4" />
+                            </Button>
+                            {search && (
+                                <Button type="button" variant="outline" size="icon" onClick={handleClearSearch}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </form>
+                    </div>
 
-                {/* Per Page Selector */}
-                <div className="mt-4 flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Tampilkan per halaman:</span>
-                    <select
-                        value={initialFilters.perPage}
-                        onChange={(e) => handlePerPageChange(Number(e.target.value))}
-                        className="border rounded px-2 py-1 text-sm"
-                    >
-                        <option value={10}>10</option>
-                        <option value={25}>25</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                    </select>
-                </div>
-            </div>
+                    {/* Filters */}
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Jenis Akun</Label>
+                            <Select value={filters.jenis_akun || 'all'} onValueChange={handleJenisAkunChange}>
+                                <SelectTrigger className="w-48">
+                                    <SelectValue placeholder="Pilih Jenis Akun" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Jenis</SelectItem>
+                                    <SelectItem value="aset">Aset</SelectItem>
+                                    <SelectItem value="kewajiban">Kewajiban</SelectItem>
+                                    <SelectItem value="modal">Modal</SelectItem>
+                                    <SelectItem value="pendapatan">Pendapatan</SelectItem>
+                                    <SelectItem value="beban">Beban</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-sm font-medium">Status</Label>
+                            <Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
+                                <SelectTrigger className="w-36">
+                                    <SelectValue placeholder="Pilih Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Status</SelectItem>
+                                    <SelectItem value="1">Aktif</SelectItem>
+                                    <SelectItem value="0">Nonaktif</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {hasActiveFilters && (
+                            <Button variant="outline" onClick={handleResetFilters} className="flex items-center gap-2">
+                                <X className="h-4 w-4" />
+                                Reset Filter
+                            </Button>
+                        )}
+                    </div>
+                    {/* Table */}
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[60px]">No</TableHead>
+                                    <TableHead>Kode</TableHead>
+                                    <TableHead>Nama</TableHead>
+                                    <TableHead>Jenis</TableHead>
+                                    <TableHead>Parent</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Saldo Normal</TableHead>
+                                    <TableHead>Level</TableHead>
+                                    <TableHead className="w-[100px] text-center">Aksi</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {daftarAkun.data.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
+                                            Tidak ada akun ditemukan
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    daftarAkun.data.map((akun: DaftarAkun, index: number) => (
+                                        <TableRow key={akun.id}>
+                                            <TableCell>{(daftarAkun.current_page - 1) * daftarAkun.per_page + index + 1}</TableCell>
+                                            <TableCell className="font-medium">{akun.kode_akun}</TableCell>
+                                            <TableCell>
+                                                <div 
+                                                    className="flex items-center"
+                                                    style={{ 
+                                                        marginLeft: akun.level > 1 ? `${(akun.level - 1) * 16}px` : '0px' 
+                                                    }}
+                                                >
+                                                    {akun.level > 1 && (
+                                                        <span className="text-gray-400 mr-2">
+                                                            {'└'.repeat(1)} 
+                                                        </span>
+                                                    )}
+                                                    {akun.nama_akun}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge className={jenisAkunColors[akun.jenis_akun]}>
+                                                    {jenisAkunLabels[akun.jenis_akun]}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>{akun.induk_akun?.nama_akun || '-'}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={akun.is_aktif ? 'default' : 'secondary'}>
+                                                    {akun.is_aktif ? 'Aktif' : 'Nonaktif'}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className={akun.saldo_normal === 'debit' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'}>
+                                                    {akun.saldo_normal === 'debit' ? 'Debit' : 'Kredit'}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">
+                                                    Level {akun.level}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => router.visit(`/akuntansi/daftar-akun/${akun.id}/edit`)}
+                                                        className="h-8 w-8 p-0"
+                                                        title="Edit"
+                                                    >
+                                                        <Edit3 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            setDeleteDialog({
+                                                                open: true,
+                                                                akun,
+                                                                loading: false,
+                                                            })
+                                                        }
+                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                                                        title="Hapus"
+                                                    >
+                                                        <Trash className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
 
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={deleteDialog.open} onOpenChange={() => !deleteDialog.loading && handleDeleteCancel()}>
+                    {/* Pagination */}
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <Label className="text-sm">Per halaman</Label>
+                                <Select value={(filters?.perPage || 15).toString()} onValueChange={(value) => handlePerPageChange(parseInt(value))}>
+                                    <SelectTrigger className="w-20">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="15">15</SelectItem>
+                                        <SelectItem value="25">25</SelectItem>
+                                        <SelectItem value="50">50</SelectItem>
+                                        <SelectItem value="100">100</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                                Menampilkan {daftarAkun.from} sampai {daftarAkun.to} dari {daftarAkun.total} akun
+                            </div>
+                        </div>
+                        {daftarAkun.last_page > 1 && (
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handlePageChange(daftarAkun.current_page - 1)}
+                                    disabled={daftarAkun.current_page === 1}
+                                >
+                                    Sebelumnya
+                                </Button>
+                                <div className="flex items-center gap-1">
+                                    {Array.from({ length: Math.min(5, daftarAkun.last_page) }, (_, i) => {
+                                        const page = Math.max(1, daftarAkun.current_page - 2) + i;
+                                        if (page > daftarAkun.last_page) return null;
+                                        return (
+                                            <Button
+                                                key={page}
+                                                variant={page === daftarAkun.current_page ? 'default' : 'outline'}
+                                                size="sm"
+                                                onClick={() => handlePageChange(page)}
+                                                className="w-8"
+                                            >
+                                                {page}
+                                            </Button>
+                                        );
+                                    })}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handlePageChange(daftarAkun.current_page + 1)}
+                                    disabled={daftarAkun.current_page === daftarAkun.last_page}
+                                >
+                                    Selanjutnya
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Delete Dialog */}
+            <Dialog
+                open={deleteDialog.open}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleteDialog({ open: false, akun: null, loading: false });
+                    }
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
+                        <DialogTitle>Hapus Akun</DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin menghapus akun <strong>{deleteDialog.akun?.nama_akun}</strong>?
-                            Tindakan ini tidak dapat dibatalkan.
+                            Apakah Anda yakin ingin menghapus akun "{deleteDialog.akun?.nama_akun}"? Tindakan ini tidak dapat dibatalkan.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button 
-                            variant="outline" 
-                            onClick={handleDeleteCancel}
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteDialog({ open: false, akun: null, loading: false })}
                             disabled={deleteDialog.loading}
                         >
                             Batal
                         </Button>
-                        <Button 
-                            variant="destructive" 
-                            onClick={handleDeleteConfirm}
-                            disabled={deleteDialog.loading}
-                        >
+                        <Button variant="destructive" onClick={handleDelete} disabled={deleteDialog.loading}>
                             {deleteDialog.loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Hapus
                         </Button>

@@ -20,7 +20,7 @@ class LaporanKeuanganController extends Controller
                 [
                     'id' => 'neraca',
                     'name' => 'Neraca',
-                    'description' => 'Laporan posisi keuangan (Aset, Kewajiban, Ekuitas)',
+                    'description' => 'Laporan posisi keuangan (Aset, Kewajiban, Modal)',
                     'icon' => 'BarChart3',
                     'color' => 'bg-blue-500'
                 ],
@@ -39,8 +39,8 @@ class LaporanKeuanganController extends Controller
                     'color' => 'bg-purple-500'
                 ],
                 [
-                    'id' => 'perubahan-ekuitas',
-                    'name' => 'Perubahan Ekuitas',
+                    'id' => 'perubahan-modal',
+                    'name' => 'Perubahan Modal',
                     'description' => 'Laporan perubahan modal pemilik',
                     'icon' => 'Activity',
                     'color' => 'bg-orange-500'
@@ -57,10 +57,10 @@ class LaporanKeuanganController extends Controller
 
         $tanggal = $request->tanggal ? Carbon::parse($request->tanggal) : Carbon::now();
 
-        // Ambil semua akun aset, kewajiban, dan ekuitas
+        // Ambil semua akun aset, kewajiban, dan modal
         $akunAset = DaftarAkun::where('jenis_akun', 'aset')->aktif()->orderBy('kode_akun')->get();
         $akunKewajiban = DaftarAkun::where('jenis_akun', 'kewajiban')->aktif()->orderBy('kode_akun')->get();
-        $akunEkuitas = DaftarAkun::where('jenis_akun', 'ekuitas')->aktif()->orderBy('kode_akun')->get();
+        $akunEkuitas = DaftarAkun::where('jenis_akun', 'modal')->aktif()->orderBy('kode_akun')->get();
 
         // Hitung saldo masing-masing akun
         $dataAset = $this->hitungSaldoAkun($akunAset, $tanggal);
@@ -190,7 +190,7 @@ class LaporanKeuanganController extends Controller
         ]);
     }
 
-    public function perubahanEkuitas(Request $request)
+    public function perubahanModal(Request $request)
     {
         $request->validate([
             'periode_dari' => 'nullable|date',
@@ -200,11 +200,11 @@ class LaporanKeuanganController extends Controller
         $periodeAwal = $request->periode_dari ? Carbon::parse($request->periode_dari) : Carbon::now()->startOfYear();
         $periodeAkhir = $request->periode_sampai ? Carbon::parse($request->periode_sampai) : Carbon::now()->endOfYear();
 
-        // Ambil akun ekuitas
-        $akunEkuitas = DaftarAkun::where('jenis_akun', 'ekuitas')->aktif()->orderBy('kode_akun')->get();
+        // Ambil akun modal
+        $akunEkuitas = DaftarAkun::where('jenis_akun', 'modal')->aktif()->orderBy('kode_akun')->get();
 
-        // Hitung saldo awal ekuitas (sebelum periode)
-        $saldoAwalEkuitas = 0;
+        // Hitung saldo awal modal (sebelum periode)
+        $saldoAwalModal = 0;
         foreach ($akunEkuitas as $akun) {
             $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
                 ->whereHas('jurnal', function($query) use ($periodeAwal) {
@@ -212,7 +212,7 @@ class LaporanKeuanganController extends Controller
                           ->where('status', 'posted');
                 })
                 ->get();
-            $saldoAwalEkuitas += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
+            $saldoAwalModal += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
         }
 
         // Hitung laba rugi periode berjalan
@@ -251,17 +251,17 @@ class LaporanKeuanganController extends Controller
             }
         }
 
-        $saldoAkhirEkuitas = $saldoAwalEkuitas + $labaRugiPeriode + $tambahanInvestasi - $penarikan;
+        $saldoAkhirModal = $saldoAwalModal + $labaRugiPeriode + $tambahanInvestasi - $penarikan;
 
-        return Inertia::render('akuntansi/laporan-keuangan/perubahan-ekuitas', [
+        return Inertia::render('akuntansi/laporan-keuangan/perubahan-modal', [
             'periode_dari' => $periodeAwal->format('Y-m-d'),
             'periode_sampai' => $periodeAkhir->format('Y-m-d'),
-            'saldoAwalEkuitas' => $saldoAwalEkuitas,
+            'saldoAwalModal' => $saldoAwalModal,
             'labaRugiPeriode' => $labaRugiPeriode,
             'tambahanInvestasi' => $tambahanInvestasi,
             'penarikan' => $penarikan,
-            'saldoAkhirEkuitas' => $saldoAkhirEkuitas,
-            'detailEkuitas' => $this->getDetailEkuitas($akunEkuitas, $periodeAwal, $periodeAkhir)
+            'saldoAkhirModal' => $saldoAkhirModal,
+            'detailModal' => $this->getDetailModal($akunEkuitas, $periodeAwal, $periodeAkhir)
         ]);
     }
 
@@ -391,7 +391,7 @@ class LaporanKeuanganController extends Controller
         return $totalPendapatan - $totalBeban;
     }
 
-    private function getDetailEkuitas($akunEkuitas, $periodeAwal, $periodeAkhir)
+    private function getDetailModal($akunEkuitas, $periodeAwal, $periodeAkhir)
     {
         $detail = [];
         foreach ($akunEkuitas as $akun) {

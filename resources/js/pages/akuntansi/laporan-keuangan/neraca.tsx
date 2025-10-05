@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -115,108 +115,124 @@ export default function Neraca({
                         </div>
 
                         {/* Date Filter */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
+                        <div className="mb-6 p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                            <div className="mb-4">
+                                <h3 className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                                     <Calendar className="h-5 w-5 mr-2" />
                                     Pilih Tanggal Neraca
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex items-end space-x-4">
-                                    <div>
-                                        <Label htmlFor="tanggal">Tanggal</Label>
-                                        <Input
-                                            id="tanggal"
-                                            type="date"
-                                            value={selectedDate}
-                                            onChange={(e) => setSelectedDate(e.target.value)}
-                                            className="w-48"
-                                        />
-                                    </div>
-                                    <Button onClick={handleDateChange}>
-                                        Refresh Neraca
-                                    </Button>
+                                </h3>
+                            </div>
+                            <div className="flex items-end space-x-4">
+                                <div>
+                                    <Label htmlFor="tanggal">Tanggal</Label>
+                                    <Input
+                                        id="tanggal"
+                                        type="date"
+                                        value={selectedDate}
+                                        onChange={(e) => setSelectedDate(e.target.value)}
+                                        className="w-48"
+                                    />
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <Button onClick={handleDateChange}>
+                                    Refresh Neraca
+                                </Button>
+                            </div>
+                        </div>
 
-                        {/* Balance Alert */}
-                        <Alert className={`mb-6 ${balanced ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                        {/* Balance Status */}
+                        <div className={`mb-6 p-4 border rounded-lg ${
+                            balanced 
+                                ? 'border-green-200 bg-green-50 dark:border-green-700 dark:bg-green-900/20' 
+                                : 'border-red-200 bg-red-50 dark:border-red-700 dark:bg-red-900/20'
+                        }`}>
                             <div className="flex items-center">
                                 {balanced ? (
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                                 ) : (
-                                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
                                 )}
-                                <AlertDescription className={`ml-2 ${balanced ? 'text-green-800' : 'text-red-800'}`}>
+                                <p className={`ml-2 text-sm font-medium ${
+                                    balanced 
+                                        ? 'text-green-800 dark:text-green-200' 
+                                        : 'text-red-800 dark:text-red-200'
+                                }`}>
                                     {balanced 
-                                        ? 'Neraca Balance: Aset = Kewajiban + Ekuitas' 
+                                        ? 'Neraca Balance: Aset = Kewajiban + Modal' 
                                         : `Neraca Tidak Balance! Selisih: ${formatCurrency(totalAset - (totalKewajiban + totalEkuitas))}`
                                     }
-                                </AlertDescription>
+                                </p>
                             </div>
-                        </Alert>
+                        </div>
 
-                        {/* Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Total Aset
-                                            </p>
-                                            <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalAset)}</p>
-                                        </div>
-                                        <BarChart3 className="h-8 w-8 text-blue-500" />
+                        {/* Summary */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                            Total Aset
+                                        </p>
+                                        <p className={`text-xl font-bold ${
+                                            totalAset >= 0 
+                                                ? 'text-green-600 dark:text-green-400' 
+                                                : 'text-red-600 dark:text-red-400'
+                                        }`}>
+                                            {formatCurrency(totalAset)}
+                                        </p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <BarChart3 className="h-6 w-6 text-gray-400" />
+                                </div>
+                            </div>
 
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Total Kewajiban
-                                            </p>
-                                            <p className="text-2xl font-bold text-red-600">{formatCurrency(totalKewajiban)}</p>
-                                        </div>
-                                        <BarChart3 className="h-8 w-8 text-red-500" />
+                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                            Total Kewajiban
+                                        </p>
+                                        <p className={`text-xl font-bold ${
+                                            totalKewajiban >= 0 
+                                                ? 'text-green-600 dark:text-green-400' 
+                                                : 'text-red-600 dark:text-red-400'
+                                        }`}>
+                                            {formatCurrency(totalKewajiban)}
+                                        </p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <BarChart3 className="h-6 w-6 text-gray-400" />
+                                </div>
+                            </div>
 
-                            <Card>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Total Ekuitas
-                                            </p>
-                                            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalEkuitas)}</p>
-                                        </div>
-                                        <BarChart3 className="h-8 w-8 text-green-500" />
+                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                            Total Modal
+                                        </p>
+                                        <p className={`text-xl font-bold ${
+                                            totalEkuitas >= 0 
+                                                ? 'text-green-600 dark:text-green-400' 
+                                                : 'text-red-600 dark:text-red-400'
+                                        }`}>
+                                            {formatCurrency(totalEkuitas)}
+                                        </p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                    <BarChart3 className="h-6 w-6 text-gray-400" />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Neraca Table */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="space-y-8">
                             {/* ASET */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg font-bold">ASET</CardTitle>
-                                </CardHeader>
-                                <CardContent>
+                            <div>
+                                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">ASET</h2>
+                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>Kode</TableHead>
+                                                <TableHead className="w-32">Kode Akun</TableHead>
                                                 <TableHead>Nama Akun</TableHead>
-                                                <TableHead className="text-right">Saldo</TableHead>
+                                                <TableHead className="text-right w-48">Saldo</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -226,30 +242,38 @@ export default function Neraca({
                                                         {item.akun.kode_akun}
                                                     </TableCell>
                                                     <TableCell>{item.akun.nama_akun}</TableCell>
-                                                    <TableCell className="text-right font-mono">
+                                                    <TableCell className={`text-right font-mono ${
+                                                        item.saldo >= 0 
+                                                            ? 'text-green-600 dark:text-green-400' 
+                                                            : 'text-red-600 dark:text-red-400'
+                                                    }`}>
                                                         {formatCurrency(item.saldo)}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
-                                            <TableRow className="bg-blue-50 dark:bg-blue-900/20">
+                                            <TableRow className="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                                                 <TableCell colSpan={2} className="font-bold">
                                                     TOTAL ASET
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold font-mono">
+                                                <TableCell className={`text-right font-bold font-mono ${
+                                                    totalAset >= 0 
+                                                        ? 'text-green-600 dark:text-green-400' 
+                                                        : 'text-red-600 dark:text-red-400'
+                                                }`}>
                                                     {formatCurrency(totalAset)}
                                                 </TableCell>
                                             </TableRow>
                                         </TableBody>
                                     </Table>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
 
-                            {/* KEWAJIBAN & EKUITAS */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg font-bold">KEWAJIBAN & EKUITAS</CardTitle>
-                                </CardHeader>
-                                <CardContent>
+                            {/* KEWAJIBAN & MODAL */}
+                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+                                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">KEWAJIBAN & MODAL</h3>
+                                </div>
+                                <div className="p-6">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
@@ -273,26 +297,26 @@ export default function Neraca({
                                                                 {item.akun.kode_akun}
                                                             </TableCell>
                                                             <TableCell>{item.akun.nama_akun}</TableCell>
-                                                            <TableCell className="text-right font-mono">
+                                                            <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                                 {formatCurrency(item.saldo)}
                                                             </TableCell>
                                                         </TableRow>
                                                     ))}
-                                                    <TableRow className="bg-red-50 dark:bg-red-900/20">
+                                                    <TableRow className="border-t border-gray-200 dark:border-gray-600">
                                                         <TableCell colSpan={2} className="font-semibold">
                                                             Total Kewajiban
                                                         </TableCell>
-                                                        <TableCell className="text-right font-semibold font-mono">
+                                                        <TableCell className={`text-right font-semibold font-mono ${totalKewajiban >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                             {formatCurrency(totalKewajiban)}
                                                         </TableCell>
                                                     </TableRow>
                                                 </>
                                             )}
 
-                                            {/* Ekuitas */}
+                                            {/* Modal */}
                                             <TableRow className="bg-gray-50 dark:bg-gray-700">
                                                 <TableCell colSpan={3} className="font-semibold">
-                                                    EKUITAS
+                                                    MODAL
                                                 </TableCell>
                                             </TableRow>
                                             {dataEkuitas.map((item) => (
@@ -301,7 +325,7 @@ export default function Neraca({
                                                         {item.akun.kode_akun}
                                                     </TableCell>
                                                     <TableCell>{item.akun.nama_akun}</TableCell>
-                                                    <TableCell className="text-right font-mono">
+                                                    <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                         {formatCurrency(item.saldo)}
                                                     </TableCell>
                                                 </TableRow>
@@ -310,33 +334,33 @@ export default function Neraca({
                                                 <TableRow>
                                                     <TableCell className="font-mono text-sm">-</TableCell>
                                                     <TableCell>Laba/Rugi Berjalan</TableCell>
-                                                    <TableCell className="text-right font-mono">
+                                                    <TableCell className={`text-right font-mono ${labaRugiBerjalan >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                         {formatCurrency(labaRugiBerjalan)}
                                                     </TableCell>
                                                 </TableRow>
                                             )}
-                                            <TableRow className="bg-green-50 dark:bg-green-900/20">
+                                            <TableRow className="border-t border-gray-200 dark:border-gray-600">
                                                 <TableCell colSpan={2} className="font-semibold">
-                                                    Total Ekuitas
+                                                    Total Modal
                                                 </TableCell>
-                                                <TableCell className="text-right font-semibold font-mono">
+                                                <TableCell className={`text-right font-semibold font-mono ${totalEkuitas >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                     {formatCurrency(totalEkuitas)}
                                                 </TableCell>
                                             </TableRow>
                                             
-                                            {/* Total Kewajiban + Ekuitas */}
-                                            <TableRow className="bg-gray-100 dark:bg-gray-600">
+                                            {/* Total Kewajiban + Modal */}
+                                            <TableRow className="border-t-2 border-gray-300 dark:border-gray-600">
                                                 <TableCell colSpan={2} className="font-bold">
-                                                    TOTAL KEWAJIBAN + EKUITAS
+                                                    TOTAL KEWAJIBAN + MODAL
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold font-mono">
+                                                <TableCell className={`text-right font-bold font-mono ${(totalKewajiban + totalEkuitas) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                     {formatCurrency(totalKewajiban + totalEkuitas)}
                                                 </TableCell>
                                             </TableRow>
                                         </TableBody>
                                     </Table>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

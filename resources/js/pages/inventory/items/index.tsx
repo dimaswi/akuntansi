@@ -23,6 +23,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Package, Plus, Edit, Trash2, Eye, Search, Filter } from 'lucide-react';
+import FilterForm, { FilterField } from '@/components/filter-form';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
@@ -142,6 +143,76 @@ export default function ItemsIndex() {
     const { items, filters, categories = [], departments = [], suppliers = [], isLogistics = false }: Props = usePage().props as any;
     const [searchValue, setSearchValue] = useState(filters?.search || '');
 
+    // Filter fields configuration
+    const filterFields: FilterField[] = [
+        {
+            name: 'inventory_type',
+            label: 'Tipe Inventory',
+            type: 'select',
+            placeholder: 'Semua Tipe',
+            options: [
+                { value: '', label: 'Semua Tipe' },
+                { value: 'pharmacy', label: 'Farmasi' },
+                { value: 'general', label: 'Umum' },
+            ],
+            value: filters?.inventory_type || '',
+        },
+        {
+            name: 'category_id',
+            label: 'Kategori',
+            type: 'select',
+            placeholder: 'Semua Kategori',
+            options: [
+                { value: '', label: 'Semua Kategori' },
+                ...categories.map(cat => ({
+                    value: cat.id.toString(),
+                    label: cat.name,
+                })),
+            ],
+            value: filters?.category_id || '',
+        },
+        ...(isLogistics ? [{
+            name: 'department_id',
+            label: 'Departemen',
+            type: 'select' as const,
+            placeholder: 'Semua Departemen',
+            options: [
+                { value: '', label: 'Semua Departemen' },
+                ...departments.map(dept => ({
+                    value: dept.id.toString(),
+                    label: dept.name,
+                })),
+            ],
+            value: filters?.department_id || '',
+        }] : []),
+        {
+            name: 'supplier_id',
+            label: 'Supplier',
+            type: 'select',
+            placeholder: 'Semua Supplier',
+            options: [
+                { value: '', label: 'Semua Supplier' },
+                ...suppliers.map(supplier => ({
+                    value: supplier.id.toString(),
+                    label: supplier.name,
+                })),
+            ],
+            value: filters?.supplier_id || '',
+        },
+        {
+            name: 'is_active',
+            label: 'Status',
+            type: 'select',
+            placeholder: 'Semua Status',
+            options: [
+                { value: '', label: 'Semua Status' },
+                { value: '1', label: 'Aktif' },
+                { value: '0', label: 'Tidak Aktif' },
+            ],
+            value: filters?.is_active || '',
+        },
+    ];
+
     const handleSearch = (value: string) => {
         router.get('/items', {
             search: value || '',
@@ -248,6 +319,32 @@ export default function ItemsIndex() {
         });
     };
 
+    const handleFilter = (filterValues: Record<string, any>) => {
+        router.get('/items', {
+            search: searchValue,
+            inventory_type: filterValues.inventory_type || '',
+            category_id: filterValues.category_id || '',
+            department_id: filterValues.department_id || '',
+            supplier_id: filterValues.supplier_id || '',
+            is_active: filterValues.is_active || '',
+            perPage: filters?.perPage,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const handleResetFilter = () => {
+        router.get('/items', {
+            search: '',
+            perPage: filters?.perPage,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+        setSearchValue('');
+    };
+
     const handleDelete = async (id: number) => {
         if (!confirm('Apakah Anda yakin ingin menghapus item ini?')) {
             return;
@@ -316,8 +413,18 @@ export default function ItemsIndex() {
                     </div>
                 </div>
 
-                {/* Filters Card */}
-                <Card className="mb-6">
+                {/* Filter Form */}
+                <FilterForm
+                    fields={filterFields}
+                    onFilter={handleFilter}
+                    onReset={handleResetFilter}
+                    searchValue={searchValue}
+                    onSearchChange={setSearchValue}
+                    onSearchSubmit={() => handleSearch(searchValue)}
+                />
+
+                {/* Old Card - Will be removed manually */}
+                <Card className="mb-6" style={{ display: 'none' }}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Filter className="h-5 w-5" />

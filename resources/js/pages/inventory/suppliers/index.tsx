@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
+import FilterForm, { FilterField } from '@/components/filter-form';
 import { 
     Truck, Plus, Edit, Trash2, Eye, Search, Filter, Phone, Mail, MapPin, 
     Power, PowerOff 
@@ -69,6 +70,22 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function SuppliersIndex() {
     const { suppliers, filters, isLogistics = false }: Props = usePage().props as any;
     const [searchValue, setSearchValue] = useState(filters?.search || '');
+
+    // Filter fields configuration
+    const filterFields: FilterField[] = [
+        {
+            name: 'is_active',
+            label: 'Status',
+            type: 'select',
+            placeholder: 'Semua Status',
+            options: [
+                { value: '', label: 'Semua Status' },
+                { value: '1', label: 'Aktif' },
+                { value: '0', label: 'Tidak Aktif' },
+            ],
+            value: filters?.is_active || '',
+        },
+    ];
 
     const handleSearch = (value: string) => {
         router.get('/suppliers', {
@@ -168,6 +185,28 @@ export default function SuppliersIndex() {
         );
     };
 
+    const handleFilter = (filterValues: Record<string, any>) => {
+        router.get('/suppliers', {
+            search: searchValue,
+            is_active: filterValues.is_active || '',
+            perPage: filters?.perPage,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const handleResetFilter = () => {
+        router.get('/suppliers', {
+            search: '',
+            perPage: filters?.perPage,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+        setSearchValue('');
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Manajemen Suppliers" />
@@ -205,68 +244,17 @@ export default function SuppliersIndex() {
                             Filter dan cari suppliers berdasarkan kriteria tertentu
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="search">Pencarian</Label>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        id="search"
-                                        placeholder="Cari nama, email, telepon..."
-                                        value={searchValue}
-                                        onChange={(e) => setSearchValue(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                handleSearch(searchValue);
-                                            }
-                                        }}
-                                        className="pl-9"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Status</Label>
-                                <Select value={filters?.is_active || 'all'} onValueChange={handleStatusChange}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Semua Status</SelectItem>
-                                        <SelectItem value="1">Aktif</SelectItem>
-                                        <SelectItem value="0">Nonaktif</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <Label htmlFor="perPage">Suppliers per halaman:</Label>
-                                <Select value={filters?.perPage?.toString() || '15'} onValueChange={handlePerPageChange}>
-                                    <SelectTrigger className="w-20">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="10">10</SelectItem>
-                                        <SelectItem value="15">15</SelectItem>
-                                        <SelectItem value="25">25</SelectItem>
-                                        <SelectItem value="50">50</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <Button 
-                                variant="outline" 
-                                onClick={() => handleSearch(searchValue)}
-                                className="flex items-center gap-2"
-                            >
-                                <Search className="h-4 w-4" />
-                                Cari
-                            </Button>
-                        </div>
-                    </CardContent>
                 </Card>
+
+                {/* Filter Form */}
+                <FilterForm
+                    fields={filterFields}
+                    onFilter={handleFilter}
+                    onReset={handleResetFilter}
+                    searchValue={searchValue}
+                    onSearchChange={setSearchValue}
+                    onSearchSubmit={() => handleSearch(searchValue)}
+                />
 
                 {/* Data Table Card */}
                 <Card>
