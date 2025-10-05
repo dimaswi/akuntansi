@@ -22,8 +22,8 @@ import { Label } from "@/components/ui/label";
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, usePage } from "@inertiajs/react";
-import { Edit3, PlusCircle, Search, Trash, X, Loader2, Eye, Calculator } from "lucide-react";
-import { useState } from "react";
+import { Edit3, PlusCircle, Search, Trash, X, Loader2, Eye, Calculator, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { route } from "ziggy-js";
 
@@ -107,6 +107,7 @@ const getStatusBadge = (status: string) => {
 export default function JurnalIndex() {
     const { jurnal, filters: initialFilters } = usePage<Props>().props;
     const [search, setSearch] = useState(initialFilters.search);
+    const [isFilterExpanded, setIsFilterExpanded] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState<{
         open: boolean;
         jurnal: Jurnal | null;
@@ -129,7 +130,7 @@ export default function JurnalIndex() {
                 page: 1,
             },
             {
-                preserveState: false,
+                preserveState: true,
                 replace: true,
             },
         );
@@ -147,6 +148,13 @@ export default function JurnalIndex() {
         initialFilters.tanggal_sampai && initialFilters.tanggal_sampai !== ''
     ].filter(Boolean).length;
 
+    // Keep filter expanded if there are active filters
+    useEffect(() => {
+        if (hasActiveFilters) {
+            setIsFilterExpanded(true);
+        }
+    }, [hasActiveFilters]);
+
     const handlePerPageChange = (perPage: number) => {
         router.get(
             '/akuntansi/jurnal',
@@ -159,7 +167,7 @@ export default function JurnalIndex() {
                 page: 1,
             },
             {
-                preserveState: false,
+                preserveState: true,
                 preserveScroll: true,
                 replace: true,
             },
@@ -178,7 +186,7 @@ export default function JurnalIndex() {
                 page,
             },
             {
-                preserveState: false,
+                preserveState: true,
                 preserveScroll: true,
                 replace: true,
             },
@@ -237,7 +245,7 @@ export default function JurnalIndex() {
                 page: 1,
             },
             {
-                preserveState: false,
+                preserveState: true,
                 replace: true,
             },
         );
@@ -255,7 +263,7 @@ export default function JurnalIndex() {
                 page: 1,
             },
             {
-                preserveState: false,
+                preserveState: true,
                 replace: true,
             },
         );
@@ -273,7 +281,7 @@ export default function JurnalIndex() {
                 page: 1,
             },
             {
-                preserveState: false,
+                preserveState: true,
                 replace: true,
             },
         );
@@ -289,7 +297,7 @@ export default function JurnalIndex() {
             tanggal_sampai: '',
             page: 1,
         }, {
-            preserveState: false,
+            preserveState: true,
             replace: true,
         });
     };
@@ -309,6 +317,14 @@ export default function JurnalIndex() {
                             <CardDescription>Kelola jurnal akuntansi dan transaksi keuangan</CardDescription>
                         </div>
                         <div className="flex gap-2">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                                className="gap-2"
+                            >
+                                <Filter className="h-4 w-4" />
+                                {isFilterExpanded ? 'Tutup Filter' : 'Filter'}
+                            </Button>
                             <Button onClick={() => router.visit(route('akuntansi.jurnal.create'))} className="gap-2">
                                 <PlusCircle className="h-4 w-4" />
                                 Tambah Jurnal
@@ -340,46 +356,50 @@ export default function JurnalIndex() {
                     </div>
 
                     {/* Filters */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                        <div className="grid gap-2">
-                            <Label className="text-sm font-medium">Status</Label>
-                            <Select value={initialFilters.status || 'all'} onValueChange={handleStatusChange}>
-                                <SelectTrigger className="w-48">
-                                    <SelectValue placeholder="Pilih Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Semua Status</SelectItem>
-                                    <SelectItem value="draft">Draft</SelectItem>
-                                    <SelectItem value="posted">Posted</SelectItem>
-                                    <SelectItem value="reversed">Reversed</SelectItem>
-                                </SelectContent>
-                            </Select>
+                    {isFilterExpanded && (
+                        <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-medium">Status</Label>
+                                    <Select value={initialFilters.status || 'all'} onValueChange={handleStatusChange}>
+                                        <SelectTrigger className="w-48">
+                                            <SelectValue placeholder="Pilih Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Semua Status</SelectItem>
+                                            <SelectItem value="draft">Draft</SelectItem>
+                                            <SelectItem value="posted">Posted</SelectItem>
+                                            <SelectItem value="reversed">Reversed</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-medium">Tanggal Dari</Label>
+                                    <Input
+                                        type="date"
+                                        value={initialFilters.tanggal_dari || ''}
+                                        onChange={(e) => handleDateFromChange(e.target.value)}
+                                        className="w-48"
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-medium">Tanggal Sampai</Label>
+                                    <Input
+                                        type="date"
+                                        value={initialFilters.tanggal_sampai || ''}
+                                        onChange={(e) => handleDateToChange(e.target.value)}
+                                        className="w-48"
+                                    />
+                                </div>
+                                {hasActiveFilters && (
+                                    <Button variant="outline" onClick={handleResetFilters} className="flex items-center gap-2">
+                                        <X className="h-4 w-4" />
+                                        Reset Filter
+                                    </Button>
+                                )}
+                            </div>
                         </div>
-                        <div className="grid gap-2">
-                            <Label className="text-sm font-medium">Tanggal Dari</Label>
-                            <Input
-                                type="date"
-                                value={initialFilters.tanggal_dari || ''}
-                                onChange={(e) => handleDateFromChange(e.target.value)}
-                                className="w-48"
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label className="text-sm font-medium">Tanggal Sampai</Label>
-                            <Input
-                                type="date"
-                                value={initialFilters.tanggal_sampai || ''}
-                                onChange={(e) => handleDateToChange(e.target.value)}
-                                className="w-48"
-                            />
-                        </div>
-                        {hasActiveFilters && (
-                            <Button variant="outline" onClick={handleResetFilters} className="flex items-center gap-2">
-                                <X className="h-4 w-4" />
-                                Reset Filter
-                            </Button>
-                        )}
-                    </div>
+                    )}
 
                     {/* Table */}
                     <div className="rounded-md border">

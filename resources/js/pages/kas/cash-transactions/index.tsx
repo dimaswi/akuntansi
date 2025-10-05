@@ -1,34 +1,21 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import FilterForm, { FilterField } from '@/components/filter-form';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import AppLayout from "@/layouts/app-layout";
-import { BreadcrumbItem, SharedData } from "@/types";
-import { Head, Link, router, usePage } from "@inertiajs/react";
-import { Edit3, PlusCircle, Search, Trash, X, Loader2, Wallet, Eye, CheckCircle, Send } from "lucide-react";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { route } from "ziggy-js";
-import { usePermission } from "@/hooks/use-permission";
+import { FilterField } from '@/components/filter-form';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { usePermission } from '@/hooks/use-permission';
+import AppLayout from '@/layouts/app-layout';
+import { BreadcrumbItem, SharedData } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { CheckCircle, Edit3, Eye, Filter, Loader2, PlusCircle, Search, Send, Trash, Wallet, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { route } from 'ziggy-js';
 
 interface DaftarAkun {
     id: number;
@@ -123,25 +110,22 @@ const getStatusBadge = (status: string) => {
 
 const getJenisTransaksiBadge = (jenis: string) => {
     const colors: Record<string, string> = {
-        'penerimaan': 'bg-green-100 text-green-800',
-        'pengeluaran': 'bg-red-100 text-red-800',
-        'uang_muka_penerimaan': 'bg-blue-100 text-blue-800',
-        'uang_muka_pengeluaran': 'bg-orange-100 text-orange-800',
-        'transfer_masuk': 'bg-purple-100 text-purple-800',
-        'transfer_keluar': 'bg-indigo-100 text-indigo-800',
+        penerimaan: 'bg-green-100 text-green-800',
+        pengeluaran: 'bg-red-100 text-red-800',
+        uang_muka_penerimaan: 'bg-blue-100 text-blue-800',
+        uang_muka_pengeluaran: 'bg-orange-100 text-orange-800',
+        transfer_masuk: 'bg-purple-100 text-purple-800',
+        transfer_keluar: 'bg-indigo-100 text-indigo-800',
     };
 
-    return (
-        <Badge className={colors[jenis] || 'bg-gray-100 text-gray-800'}>
-            {jenis.replace(/_/g, ' ').toUpperCase()}
-        </Badge>
-    );
+    return <Badge className={colors[jenis] || 'bg-gray-100 text-gray-800'}>{jenis.replace(/_/g, ' ').toUpperCase()}</Badge>;
 };
 
 export default function CashTransactionIndex() {
     const { cashTransactions, filters, jenisTransaksi } = usePage<Props>().props;
     const { hasPermission } = usePermission();
     const [search, setSearch] = useState(filters.search);
+    const [isFilterExpanded, setIsFilterExpanded] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState<{
         open: boolean;
         transaction: CashTransaction | null;
@@ -194,66 +178,136 @@ export default function CashTransactionIndex() {
         },
     ];
 
+    // Check if any filters are active and keep filter expanded
+    useEffect(() => {
+        const hasActiveFilters = 
+            filters.jenis_transaksi || 
+            filters.status || 
+            filters.tanggal_dari || 
+            filters.tanggal_sampai ||
+            (filters.search && filters.search.trim() !== '');
+            
+        if (hasActiveFilters) {
+            setIsFilterExpanded(true);
+        }
+    }, [filters]);
+
     const handleSearch = (searchValue: string) => {
-        router.get('/kas/cash-transactions', {
-            search: searchValue,
-            perPage: filters.perPage,
-            status: filters.status,
-            jenis_transaksi: filters.jenis_transaksi,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/kas/cash-transactions',
+            {
+                search: searchValue,
+                perPage: filters.perPage,
+                status: filters.status,
+                jenis_transaksi: filters.jenis_transaksi,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     const handleStatusChange = (status: string) => {
-        router.get('/kas/cash-transactions', {
-            search: filters.search,
-            perPage: filters.perPage,
-            status: status === 'all' ? '' : status,
-            jenis_transaksi: filters.jenis_transaksi,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/kas/cash-transactions',
+            {
+                search: filters.search,
+                perPage: filters.perPage,
+                status: status === 'all' ? '' : status,
+                jenis_transaksi: filters.jenis_transaksi,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     const handleJenisTransaksiChange = (jenis: string) => {
-        router.get('/kas/cash-transactions', {
-            search: filters.search,
-            perPage: filters.perPage,
-            status: filters.status,
-            jenis_transaksi: jenis === 'all' ? '' : jenis,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/kas/cash-transactions',
+            {
+                search: filters.search,
+                perPage: filters.perPage,
+                status: filters.status,
+                jenis_transaksi: jenis === 'all' ? '' : jenis,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handleDateFromChange = (tanggalDari: string) => {
+        router.get(
+            '/kas/cash-transactions',
+            {
+                search: filters.search,
+                perPage: filters.perPage,
+                status: filters.status,
+                jenis_transaksi: filters.jenis_transaksi,
+                tanggal_dari: tanggalDari,
+                tanggal_sampai: filters.tanggal_sampai || '',
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handleDateToChange = (tanggalSampai: string) => {
+        router.get(
+            '/kas/cash-transactions',
+            {
+                search: filters.search,
+                perPage: filters.perPage,
+                status: filters.status,
+                jenis_transaksi: filters.jenis_transaksi,
+                tanggal_dari: filters.tanggal_dari || '',
+                tanggal_sampai: tanggalSampai,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     const handlePerPageChange = (perPage: number) => {
-        router.get('/kas/cash-transactions', {
-            search: filters.search,
-            perPage,
-            status: filters.status,
-            jenis_transaksi: filters.jenis_transaksi,
-            page: 1,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/kas/cash-transactions',
+            {
+                search: filters.search,
+                perPage,
+                status: filters.status,
+                jenis_transaksi: filters.jenis_transaksi,
+                page: 1,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     const handlePageChange = (page: number) => {
-        router.get('/kas/cash-transactions', {
-            search: filters.search,
-            perPage: filters.perPage,
-            status: filters.status,
-            jenis_transaksi: filters.jenis_transaksi,
-            page,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/kas/cash-transactions',
+            {
+                search: filters.search,
+                perPage: filters.perPage,
+                status: filters.status,
+                jenis_transaksi: filters.jenis_transaksi,
+                page,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
@@ -276,9 +330,9 @@ export default function CashTransactionIndex() {
 
     const handleDeleteConfirm = async () => {
         if (!deleteDialog.transaction) return;
-        
-        setDeleteDialog(prev => ({ ...prev, loading: true }));
-        
+
+        setDeleteDialog((prev) => ({ ...prev, loading: true }));
+
         try {
             await router.delete(route('kas.cash-transactions.destroy', deleteDialog.transaction.id), {
                 onSuccess: () => {
@@ -287,12 +341,12 @@ export default function CashTransactionIndex() {
                 },
                 onError: () => {
                     toast.error('Gagal menghapus transaksi');
-                    setDeleteDialog(prev => ({ ...prev, loading: false }));
-                }
+                    setDeleteDialog((prev) => ({ ...prev, loading: false }));
+                },
             });
         } catch (error) {
             toast.error('Terjadi kesalahan saat menghapus transaksi');
-            setDeleteDialog(prev => ({ ...prev, loading: false }));
+            setDeleteDialog((prev) => ({ ...prev, loading: false }));
         }
     };
 
@@ -308,24 +362,24 @@ export default function CashTransactionIndex() {
             toast.error('Pilih minimal satu transaksi untuk diposting');
             return;
         }
-        
-        const queryParams = selectedTransactions.map(id => `ids[]=${id}`).join('&');
+
+        const queryParams = selectedTransactions.map((id) => `ids[]=${id}`).join('&');
         router.visit(`/kas/cash-transactions/post-to-journal?${queryParams}`);
     };
 
     const handleSelectTransaction = (transactionId: number, checked: boolean) => {
         if (checked) {
-            setSelectedTransactions(prev => [...prev, transactionId]);
+            setSelectedTransactions((prev) => [...prev, transactionId]);
         } else {
-            setSelectedTransactions(prev => prev.filter(id => id !== transactionId));
+            setSelectedTransactions((prev) => prev.filter((id) => id !== transactionId));
         }
     };
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
             const draftTransactionIds = cashTransactions.data
-                .filter(transaction => transaction.status === 'draft')
-                .map(transaction => transaction.id);
+                .filter((transaction) => transaction.status === 'draft')
+                .map((transaction) => transaction.id);
             setSelectedTransactions(draftTransactionIds);
         } else {
             setSelectedTransactions([]);
@@ -333,198 +387,167 @@ export default function CashTransactionIndex() {
     };
 
     const handleFilter = (filterValues: Record<string, any>) => {
-        router.get('/kas/cash-transactions', {
-            search: search,
-            perPage: filters.perPage,
-            status: filterValues.status || '',
-            jenis_transaksi: filterValues.jenis_transaksi || '',
-            tanggal_dari: filterValues.tanggal_dari || '',
-            tanggal_sampai: filterValues.tanggal_sampai || '',
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/kas/cash-transactions',
+            {
+                search: search,
+                perPage: filters.perPage,
+                status: filterValues.status || '',
+                jenis_transaksi: filterValues.jenis_transaksi || '',
+                tanggal_dari: filterValues.tanggal_dari || '',
+                tanggal_sampai: filterValues.tanggal_sampai || '',
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     const handleResetFilter = () => {
-        router.get('/kas/cash-transactions', {
-            search: '',
-            perPage: filters.perPage,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/kas/cash-transactions',
+            {
+                search: '',
+                perPage: filters.perPage,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
         setSearch('');
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Transaksi Kas" />
-            <div className="p-4 space-y-4">
+            <div className="space-y-4 p-4">
                 {/* Header */}
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold flex items-center gap-2">
-                            <Wallet className="h-6 w-6" />
-                            Transaksi Kas
-                        </h1>
-                        <p className="text-muted-foreground">Kelola transaksi penerimaan dan pengeluaran kas</p>
-                    </div>
-                    <div className="flex space-x-2">
-                        {hasPermission('kas.cash-management.daily-entry') && (
-                            <Button asChild>
-                                <Link href="/kas/cash-transactions/create">
-                                    <PlusCircle className="h-4 w-4 mr-2" />
-                                    Tambah Transaksi
-                                </Link>
-                            </Button>
-                        )}
-                        {selectedTransactions.length > 0 && (
-                            <Button onClick={handleBatchPost} variant="outline">
-                                <Send className="h-4 w-4 mr-2" />
-                                Post Terpilih ({selectedTransactions.length})
-                            </Button>
-                        )}
-                    </div>
-                </div>
 
-                {/* Filter Form */}
-                <FilterForm
-                    fields={filterFields}
-                    onFilter={handleFilter}
-                    onReset={handleResetFilter}
-                    searchValue={search}
-                    onSearchChange={setSearch}
-                    onSearchSubmit={() => handleSearch(search)}
-                />
 
-                <Card>
+                <Card className="mt-4">
                     <CardHeader>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                             <div>
                                 <CardTitle className="flex items-center gap-2">
                                     <Wallet className="h-5 w-5" />
                                     Transaksi Kas
                                 </CardTitle>
-                                <CardDescription>
-                                    Kelola transaksi penerimaan dan pengeluaran kas
-                                </CardDescription>
+                                <CardDescription>Kelola transaksi penerimaan dan pengeluaran kas</CardDescription>
                             </div>
                             <div className="flex gap-2">
+                                <Button variant="outline" onClick={() => setIsFilterExpanded(!isFilterExpanded)} className="gap-2">
+                                    <Filter className="h-4 w-4" />
+                                    {isFilterExpanded ? 'Tutup Filter' : 'Filter'}
+                                </Button>
                                 {selectedTransactions.length > 0 && hasPermission('akuntansi.journal-posting.post') && (
-                                    <Button
-                                        onClick={handleBatchPost}
-                                        variant="secondary"
-                                        className="gap-2"
-                                    >
+                                    <Button onClick={handleBatchPost} variant="secondary" className="gap-2">
                                         <CheckCircle className="h-4 w-4" />
                                         Posting ke Jurnal ({selectedTransactions.length})
                                     </Button>
                                 )}
-                                {hasPermission('kas.cash-management.daily-entry') && (
-                                    <Button
-                                        onClick={() => router.visit('/kas/cash-transactions/create')}
-                                        className="gap-2"
-                                    >
-                                        <PlusCircle className="h-4 w-4" />
-                                        Tambah Transaksi
-                                    </Button>
-                                )}
+
+                                <Button onClick={() => router.visit('/kas/cash-transactions/create')} className="gap-2">
+                                    <PlusCircle className="h-4 w-4" />
+                                    Tambah Transaksi
+                                </Button>
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {/* Filters */}
-                        <div className="flex flex-col gap-4 md:flex-row md:items-end">
-                            <div className="flex-1">
-                                <Label htmlFor="search">Cari</Label>
-                                <form onSubmit={handleSearchSubmit} className="flex gap-2">
-                                    <Input
-                                        id="search"
-                                        placeholder="Cari nomor transaksi, keterangan..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="flex-1"
-                                    />
-                                    <Button type="submit" variant="outline" size="icon">
-                                        <Search className="h-4 w-4" />
+                        {/* Search */}
+                        <div className="flex-1">
+                            <Label htmlFor="search">Cari</Label>
+                            <form onSubmit={handleSearchSubmit} className="flex gap-2">
+                                <Input
+                                    id="search"
+                                    placeholder="Cari nomor transaksi, keterangan..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="flex-1"
+                                />
+                                <Button type="submit" variant="outline" size="icon">
+                                    <Search className="h-4 w-4" />
+                                </Button>
+                                {search && (
+                                    <Button type="button" variant="outline" size="icon" onClick={handleClearSearch}>
+                                        <X className="h-4 w-4" />
                                     </Button>
-                                    {search && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={handleClearSearch}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </form>
-                            </div>
-                            <div className="flex gap-2">
-                                <div>
-                                    <Label>Status</Label>
-                                    <Select
-                                        value={filters.status || 'all'}
-                                        onValueChange={handleStatusChange}
-                                    >
-                                        <SelectTrigger className="w-32">
-                                            <SelectValue placeholder="Status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Semua</SelectItem>
-                                            <SelectItem value="draft">Draft</SelectItem>
-                                            <SelectItem value="posted">Posted</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Jenis</Label>
-                                    <Select
-                                        value={filters.jenis_transaksi || 'all'}
-                                        onValueChange={handleJenisTransaksiChange}
-                                    >
-                                        <SelectTrigger className="w-40">
-                                            <SelectValue placeholder="Jenis" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Semua</SelectItem>
-                                            {Object.entries(jenisTransaksi).map(([key, value]) => (
-                                                <SelectItem key={key} value={key}>
-                                                    {value}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Per halaman</Label>
-                                    <Select
-                                        value={(filters?.perPage || 15).toString()}
-                                        onValueChange={(value) => handlePerPageChange(parseInt(value))}
-                                    >
-                                        <SelectTrigger className="w-20">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="10">10</SelectItem>
-                                            <SelectItem value="25">25</SelectItem>
-                                            <SelectItem value="50">50</SelectItem>
-                                            <SelectItem value="100">100</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
+                                )}
+                            </form>
                         </div>
 
+                        {/* Filters */}
+                        {isFilterExpanded && (
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-medium">Status</Label>
+                                        <Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
+                                            <SelectTrigger className="w-48">
+                                                <SelectValue placeholder="Pilih Status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">Semua Status</SelectItem>
+                                                <SelectItem value="draft">Draft</SelectItem>
+                                                <SelectItem value="posted">Posted</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-medium">Jenis Transaksi</Label>
+                                        <Select value={filters.jenis_transaksi || 'all'} onValueChange={handleJenisTransaksiChange}>
+                                            <SelectTrigger className="w-48">
+                                                <SelectValue placeholder="Pilih Jenis" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">Semua Jenis</SelectItem>
+                                                {Object.entries(jenisTransaksi).map(([key, value]) => (
+                                                    <SelectItem key={key} value={key}>
+                                                        {value}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-medium">Tanggal Dari</Label>
+                                        <Input
+                                            type="date"
+                                            value={filters.tanggal_dari || ''}
+                                            onChange={(e) => handleDateFromChange(e.target.value)}
+                                            className="w-48"
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label className="text-sm font-medium">Tanggal Sampai</Label>
+                                        <Input
+                                            type="date"
+                                            value={filters.tanggal_sampai || ''}
+                                            onChange={(e) => handleDateToChange(e.target.value)}
+                                            className="w-48"
+                                        />
+                                    </div>
+                                    <Button variant="outline" onClick={handleResetFilter} className="flex items-center gap-2">
+                                        <X className="h-4 w-4" />
+                                        Reset Filter
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Table */}
-                        <div className="border rounded-md">
+                        <div className="rounded-md border">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-12">
                                             <Checkbox
-                                                checked={selectedTransactions.length > 0 && selectedTransactions.length === cashTransactions.data.filter(t => t.status === 'draft').length}
+                                                checked={
+                                                    selectedTransactions.length > 0 &&
+                                                    selectedTransactions.length === cashTransactions.data.filter((t) => t.status === 'draft').length
+                                                }
                                                 onCheckedChange={handleSelectAll}
                                                 aria-label="Select all"
                                             />
@@ -541,7 +564,7 @@ export default function CashTransactionIndex() {
                                 <TableBody>
                                     {cashTransactions.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                            <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                                                 Tidak ada data transaksi kas
                                             </TableCell>
                                         </TableRow>
@@ -552,31 +575,17 @@ export default function CashTransactionIndex() {
                                                     {transaction.status === 'draft' && (
                                                         <Checkbox
                                                             checked={selectedTransactions.includes(transaction.id)}
-                                                            onCheckedChange={(checked) => 
-                                                                handleSelectTransaction(transaction.id, checked as boolean)
-                                                            }
+                                                            onCheckedChange={(checked) => handleSelectTransaction(transaction.id, checked as boolean)}
                                                             aria-label={`Select transaction ${transaction.nomor_transaksi}`}
                                                         />
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="font-medium">
-                                                    {transaction.nomor_transaksi}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {formatDate(transaction.tanggal_transaksi)}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {getJenisTransaksiBadge(transaction.jenis_transaksi)}
-                                                </TableCell>
-                                                <TableCell className="font-mono">
-                                                    {formatCurrency(transaction.jumlah)}
-                                                </TableCell>
-                                                <TableCell className="max-w-xs truncate">
-                                                    {transaction.keterangan}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {getStatusBadge(transaction.status)}
-                                                </TableCell>
+                                                <TableCell className="font-medium">{transaction.nomor_transaksi}</TableCell>
+                                                <TableCell>{formatDate(transaction.tanggal_transaksi)}</TableCell>
+                                                <TableCell>{getJenisTransaksiBadge(transaction.jenis_transaksi)}</TableCell>
+                                                <TableCell className="font-mono">{formatCurrency(transaction.jumlah)}</TableCell>
+                                                <TableCell className="max-w-xs truncate">{transaction.keterangan}</TableCell>
+                                                <TableCell>{getStatusBadge(transaction.status)}</TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
                                                         {hasPermission('kas.cash-management.view') && (
@@ -631,11 +640,30 @@ export default function CashTransactionIndex() {
                         </div>
 
                         {/* Pagination */}
-                        {cashTransactions.last_page > 1 && (
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-muted-foreground">
-                                    Menampilkan {cashTransactions.from} sampai {cashTransactions.to} dari {cashTransactions.total} entri
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-sm">Per halaman</Label>
+                                    <Select
+                                        value={(filters?.perPage || 15).toString()}
+                                        onValueChange={(value) => handlePerPageChange(parseInt(value))}
+                                    >
+                                        <SelectTrigger className="w-20">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="10">10</SelectItem>
+                                            <SelectItem value="20">20</SelectItem>
+                                            <SelectItem value="30">30</SelectItem>
+                                            <SelectItem value="50">50</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
+                                <div className="text-sm text-muted-foreground">
+                                    Menampilkan {cashTransactions.from} sampai {cashTransactions.to} dari {cashTransactions.total} transaksi
+                                </div>
+                            </div>
+                            {cashTransactions.last_page > 1 && (
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant="outline"
@@ -645,9 +673,23 @@ export default function CashTransactionIndex() {
                                     >
                                         Sebelumnya
                                     </Button>
-                                    <span className="text-sm">
-                                        Halaman {cashTransactions.current_page} dari {cashTransactions.last_page}
-                                    </span>
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: Math.min(5, cashTransactions.last_page) }, (_, i) => {
+                                            const page = Math.max(1, cashTransactions.current_page - 2) + i;
+                                            if (page > cashTransactions.last_page) return null;
+                                            return (
+                                                <Button
+                                                    key={page}
+                                                    variant={page === cashTransactions.current_page ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    onClick={() => handlePageChange(page)}
+                                                    className="w-8"
+                                                >
+                                                    {page}
+                                                </Button>
+                                            );
+                                        })}
+                                    </div>
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -657,19 +699,19 @@ export default function CashTransactionIndex() {
                                         Selanjutnya
                                     </Button>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
 
                 {/* Delete Dialog */}
-                <Dialog open={deleteDialog.open} onOpenChange={(open) => !deleteDialog.loading && setDeleteDialog(prev => ({ ...prev, open }))}>
+                <Dialog open={deleteDialog.open} onOpenChange={(open) => !deleteDialog.loading && setDeleteDialog((prev) => ({ ...prev, open }))}>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Hapus Transaksi</DialogTitle>
                             <DialogDescription>
-                                Apakah Anda yakin ingin menghapus transaksi <strong>{deleteDialog.transaction?.nomor_transaksi}</strong>?
-                                Tindakan ini tidak dapat dibatalkan.
+                                Apakah Anda yakin ingin menghapus transaksi <strong>{deleteDialog.transaction?.nomor_transaksi}</strong>? Tindakan ini
+                                tidak dapat dibatalkan.
                             </DialogDescription>
                         </DialogHeader>
                         <DialogFooter>
@@ -680,12 +722,7 @@ export default function CashTransactionIndex() {
                             >
                                 Batal
                             </Button>
-                            <Button
-                                variant="destructive"
-                                onClick={handleDeleteConfirm}
-                                disabled={deleteDialog.loading}
-                                className="gap-2"
-                            >
+                            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteDialog.loading} className="gap-2">
                                 {deleteDialog.loading && <Loader2 className="h-4 w-4 animate-spin" />}
                                 Hapus
                             </Button>
