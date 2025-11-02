@@ -44,6 +44,13 @@ class LaporanKeuanganController extends Controller
                     'description' => 'Laporan perubahan modal pemilik',
                     'icon' => 'Activity',
                     'color' => 'bg-orange-500'
+                ],
+                [
+                    'id' => 'analisis-rasio',
+                    'name' => 'Analisis Rasio',
+                    'description' => 'Analisis rasio keuangan (Likuiditas, Solvabilitas, dll)',
+                    'icon' => 'PieChart',
+                    'color' => 'bg-pink-500'
                 ]
             ]
         ]);
@@ -53,9 +60,15 @@ class LaporanKeuanganController extends Controller
     {
         $request->validate([
             'tanggal' => 'nullable|date',
+            'periode_dari' => 'nullable|date',
+            'periode_sampai' => 'nullable|date|after_or_equal:periode_dari',
         ]);
 
         $tanggal = $request->tanggal ? Carbon::parse($request->tanggal) : Carbon::now();
+        
+        // Periode untuk laba rugi (default: awal tahun sampai tanggal neraca)
+        $periodeDari = $request->periode_dari ? Carbon::parse($request->periode_dari) : Carbon::create($tanggal->year, 1, 1);
+        $periodeSampai = $request->periode_sampai ? Carbon::parse($request->periode_sampai) : $tanggal;
 
         // Ambil semua akun aset, kewajiban, dan modal
         $akunAset = DaftarAkun::where('jenis_akun', 'aset')->aktif()->orderBy('kode_akun')->get();
@@ -67,8 +80,9 @@ class LaporanKeuanganController extends Controller
         $dataKewajiban = $this->hitungSaldoAkun($akunKewajiban, $tanggal);
         $dataEkuitas = $this->hitungSaldoAkun($akunEkuitas, $tanggal);
 
-        // Hitung laba rugi berjalan (untuk ekuitas)
-        $labaRugiBerjalan = $this->hitungLabaRugiBerjalan($tanggal);
+        // Hitung laba rugi berjalan berdasarkan periode yang dipilih
+        // Ini akan konsisten dengan laporan laba rugi
+        $labaRugiBerjalan = $this->hitungLabaRugiPeriode($periodeDari, $periodeSampai);
 
         $totalAset = collect($dataAset)->sum('saldo');
         $totalKewajiban = collect($dataKewajiban)->sum('saldo');
@@ -76,6 +90,8 @@ class LaporanKeuanganController extends Controller
 
         return Inertia::render('akuntansi/laporan-keuangan/neraca', [
             'tanggal' => $tanggal->format('Y-m-d'),
+            'periode_dari' => $periodeDari->format('Y-m-d'),
+            'periode_sampai' => $periodeSampai->format('Y-m-d'),
             'dataAset' => $dataAset,
             'dataKewajiban' => $dataKewajiban,
             'dataEkuitas' => $dataEkuitas,
@@ -215,6 +231,12 @@ class LaporanKeuanganController extends Controller
             $saldoAwalModal += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
         }
 
+        // Hitung laba ditahan (akumulasi laba/rugi sebelum periode)
+        $labaDitahan = $this->hitungLabaRugiPeriode(Carbon::parse('1970-01-01'), $periodeAwal->copy()->subDay());
+        
+        // Detail laba ditahan per bulan
+        $detailLabaDitahanPerBulan = $this->getLabaDitahanPerBulan($periodeAwal);
+
         // Hitung laba rugi periode berjalan
         $labaRugiPeriode = $this->hitungLabaRugiPeriode($periodeAwal, $periodeAkhir);
 
@@ -223,7 +245,8 @@ class LaporanKeuanganController extends Controller
         foreach ($akunEkuitas as $akun) {
             // Hanya hitung yang bukan retained earnings
             if (!str_contains(strtolower($akun->nama_akun), 'laba') && 
-                !str_contains(strtolower($akun->nama_akun), 'rugi')) {
+                !str_contains(strtolower($akun->nama_akun), 'rugi') &&
+                !str_contains(strtolower($akun->nama_akun), 'ditahan')) {
                 $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
                     ->whereHas('jurnal', function($query) use ($periodeAwal, $periodeAkhir) {
                         $query->whereBetween('tanggal_transaksi', [$periodeAwal, $periodeAkhir])
@@ -251,12 +274,14 @@ class LaporanKeuanganController extends Controller
             }
         }
 
-        $saldoAkhirModal = $saldoAwalModal + $labaRugiPeriode + $tambahanInvestasi - $penarikan;
+        $saldoAkhirModal = $saldoAwalModal + $labaDitahan + $labaRugiPeriode + $tambahanInvestasi - $penarikan;
 
         return Inertia::render('akuntansi/laporan-keuangan/perubahan-modal', [
             'periode_dari' => $periodeAwal->format('Y-m-d'),
             'periode_sampai' => $periodeAkhir->format('Y-m-d'),
             'saldoAwalModal' => $saldoAwalModal,
+            'labaDitahan' => $labaDitahan,
+            'detailLabaDitahanPerBulan' => $detailLabaDitahanPerBulan,
             'labaRugiPeriode' => $labaRugiPeriode,
             'tambahanInvestasi' => $tambahanInvestasi,
             'penarikan' => $penarikan,
@@ -265,11 +290,66 @@ class LaporanKeuanganController extends Controller
         ]);
     }
 
+    private function getLabaDitahanPerBulan($sampaiTanggal)
+    {
+        $detail = [];
+        
+        // Ambil transaksi pendapatan dan beban tertua
+        $transaksiPertama = DetailJurnal::with('jurnal')
+            ->whereHas('jurnal', function($query) use ($sampaiTanggal) {
+                $query->where('tanggal_transaksi', '<', $sampaiTanggal)
+                      ->where('status', 'posted');
+            })
+            ->join('jurnal', 'detail_jurnal.jurnal_id', '=', 'jurnal.id')
+            ->orderBy('jurnal.tanggal_transaksi', 'asc')
+            ->select('detail_jurnal.*')
+            ->first();
+        
+        if (!$transaksiPertama) {
+            return $detail;
+        }
+        
+        $tanggalMulai = Carbon::parse($transaksiPertama->jurnal->tanggal_transaksi)->startOfMonth();
+        $tanggalAkhir = Carbon::parse($sampaiTanggal)->subDay()->endOfMonth();
+        
+        $currentDate = $tanggalMulai->copy();
+        $saldoAkumulasi = 0;
+        
+        while ($currentDate <= $tanggalAkhir) {
+            $bulanAwal = $currentDate->copy()->startOfMonth();
+            $bulanAkhir = $currentDate->copy()->endOfMonth();
+            
+            // Pastikan tidak melewati batas akhir
+            if ($bulanAkhir > $tanggalAkhir) {
+                $bulanAkhir = $tanggalAkhir;
+            }
+            
+            // Hitung laba/rugi bulan ini
+            $labaRugiBulan = $this->hitungLabaRugiPeriode($bulanAwal, $bulanAkhir);
+            $saldoAkumulasi += $labaRugiBulan;
+            
+            $detail[] = [
+                'bulan' => $bulanAwal->format('F Y'),
+                'tahun' => $bulanAwal->year,
+                'bulan_num' => $bulanAwal->month,
+                'periode_dari' => $bulanAwal->format('Y-m-d'),
+                'periode_sampai' => $bulanAkhir->format('Y-m-d'),
+                'laba_rugi' => $labaRugiBulan,
+                'saldo_akumulasi' => $saldoAkumulasi
+            ];
+            
+            $currentDate->addMonth();
+        }
+        
+        return $detail;
+    }
+
     private function hitungSaldoAkun($akunList, $tanggal)
     {
         $hasil = [];
         foreach ($akunList as $akun) {
-            $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
+            $transaksi = DetailJurnal::with(['jurnal'])
+                ->where('daftar_akun_id', $akun->id)
                 ->whereHas('jurnal', function($query) use ($tanggal) {
                     $query->where('tanggal_transaksi', '<=', $tanggal)
                           ->where('status', 'posted');
@@ -287,9 +367,27 @@ class LaporanKeuanganController extends Controller
             }
 
             if ($saldo != 0 || $transaksi->count() > 0) {
+                // Format detail transaksi untuk expandable row
+                $detailTransaksi = $transaksi->map(function($detail) use ($akun) {
+                    $isNormalDebit = in_array($akun->jenis_akun, ['aset', 'beban']);
+                    
+                    return [
+                        'id' => $detail->id,
+                        'tanggal' => $detail->jurnal->tanggal_transaksi->format('Y-m-d'),
+                        'nomor_jurnal' => $detail->jurnal->nomor_jurnal,
+                        'keterangan' => $detail->jurnal->keterangan,
+                        'debit' => $detail->jumlah_debit,
+                        'kredit' => $detail->jumlah_kredit,
+                        'saldo' => $isNormalDebit 
+                            ? $detail->jumlah_debit - $detail->jumlah_kredit
+                            : $detail->jumlah_kredit - $detail->jumlah_debit
+                    ];
+                });
+
                 $hasil[] = [
                     'akun' => $akun,
-                    'saldo' => $saldo
+                    'saldo' => $saldo,
+                    'detail_transaksi' => $detailTransaksi
                 ];
             }
         }
@@ -300,7 +398,8 @@ class LaporanKeuanganController extends Controller
     {
         $hasil = [];
         foreach ($akunList as $akun) {
-            $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
+            $transaksi = DetailJurnal::with(['jurnal'])
+                ->where('daftar_akun_id', $akun->id)
                 ->whereHas('jurnal', function($query) use ($periodeAwal, $periodeAkhir) {
                     $query->whereBetween('tanggal_transaksi', [$periodeAwal, $periodeAkhir])
                           ->where('status', 'posted');
@@ -319,9 +418,25 @@ class LaporanKeuanganController extends Controller
             }
 
             if ($saldo != 0 || $transaksi->count() > 0) {
+                // Format detail transaksi untuk expandable row
+                $detailTransaksi = $transaksi->map(function($detail) use ($akun) {
+                    return [
+                        'id' => $detail->id,
+                        'tanggal' => $detail->jurnal->tanggal_transaksi->format('Y-m-d'),
+                        'nomor_jurnal' => $detail->jurnal->nomor_jurnal,
+                        'keterangan' => $detail->jurnal->keterangan,
+                        'debit' => $detail->jumlah_debit,
+                        'kredit' => $detail->jumlah_kredit,
+                        'saldo' => $akun->jenis_akun === 'pendapatan' 
+                            ? $detail->jumlah_kredit - $detail->jumlah_debit
+                            : $detail->jumlah_debit - $detail->jumlah_kredit
+                    ];
+                });
+
                 $hasil[] = [
                     'akun' => $akun,
-                    'saldo' => $saldo
+                    'saldo' => $saldo,
+                    'detail_transaksi' => $detailTransaksi
                 ];
             }
         }
@@ -423,6 +538,135 @@ class LaporanKeuanganController extends Controller
             }
         }
         return $detail;
+    }
+
+    public function analisisRasio(Request $request)
+    {
+        $request->validate([
+            'tanggal' => 'nullable|date',
+        ]);
+
+        $tanggal = $request->tanggal ? Carbon::parse($request->tanggal) : Carbon::now();
+
+        // Hitung total aset lancar
+        $asetLancar = DaftarAkun::where('jenis_akun', 'aset')
+            ->where('sub_jenis', 'aset_lancar')
+            ->aktif()
+            ->get();
+        $totalAsetLancar = 0;
+        $totalKas = 0;
+        $totalPersediaan = 0;
+
+        foreach ($asetLancar as $akun) {
+            $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
+                ->whereHas('jurnal', function($query) use ($tanggal) {
+                    $query->where('tanggal_transaksi', '<=', $tanggal)
+                          ->where('status', 'posted');
+                })
+                ->get();
+            $saldo = $transaksi->sum('jumlah_debit') - $transaksi->sum('jumlah_kredit');
+            $totalAsetLancar += $saldo;
+
+            // Identifikasi Kas/Bank
+            if (str_contains(strtolower($akun->nama_akun), 'kas') || 
+                str_contains(strtolower($akun->nama_akun), 'bank')) {
+                $totalKas += $saldo;
+            }
+
+            // Identifikasi Persediaan
+            if (str_contains(strtolower($akun->nama_akun), 'persediaan') ||
+                str_contains(strtolower($akun->nama_akun), 'inventory')) {
+                $totalPersediaan += $saldo;
+            }
+        }
+
+        // Hitung total kewajiban lancar
+        $kewajibanLancar = DaftarAkun::where('jenis_akun', 'kewajiban')
+            ->where('sub_jenis', 'kewajiban_lancar')
+            ->aktif()
+            ->get();
+        $totalKewajibanLancar = 0;
+
+        foreach ($kewajibanLancar as $akun) {
+            $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
+                ->whereHas('jurnal', function($query) use ($tanggal) {
+                    $query->where('tanggal_transaksi', '<=', $tanggal)
+                          ->where('status', 'posted');
+                })
+                ->get();
+            $saldo = $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
+            $totalKewajibanLancar += $saldo;
+        }
+
+        // Hitung total aset
+        $akunAset = DaftarAkun::where('jenis_akun', 'aset')->aktif()->get();
+        $totalAset = 0;
+        foreach ($akunAset as $akun) {
+            $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
+                ->whereHas('jurnal', function($query) use ($tanggal) {
+                    $query->where('tanggal_transaksi', '<=', $tanggal)
+                          ->where('status', 'posted');
+                })
+                ->get();
+            $totalAset += $transaksi->sum('jumlah_debit') - $transaksi->sum('jumlah_kredit');
+        }
+
+        // Hitung total kewajiban
+        $akunKewajiban = DaftarAkun::where('jenis_akun', 'kewajiban')->aktif()->get();
+        $totalKewajiban = 0;
+        foreach ($akunKewajiban as $akun) {
+            $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
+                ->whereHas('jurnal', function($query) use ($tanggal) {
+                    $query->where('tanggal_transaksi', '<=', $tanggal)
+                          ->where('status', 'posted');
+                })
+                ->get();
+            $totalKewajiban += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
+        }
+
+        // Hitung total ekuitas
+        $akunEkuitas = DaftarAkun::where('jenis_akun', 'modal')->aktif()->get();
+        $totalEkuitas = 0;
+        foreach ($akunEkuitas as $akun) {
+            $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
+                ->whereHas('jurnal', function($query) use ($tanggal) {
+                    $query->where('tanggal_transaksi', '<=', $tanggal)
+                          ->where('status', 'posted');
+                })
+                ->get();
+            $totalEkuitas += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
+        }
+
+        // Hitung laba berjalan sampai tanggal
+        $labaBerjalan = $this->hitungLabaRugiPeriode(Carbon::parse('1970-01-01'), $tanggal);
+        $totalEkuitas += $labaBerjalan;
+
+        // Hitung modal kerja
+        $modalKerja = $totalAsetLancar - $totalKewajibanLancar;
+
+        // Hitung rasio-rasio
+        $currentRatio = $totalKewajibanLancar > 0 ? $totalAsetLancar / $totalKewajibanLancar : 0;
+        $quickRatio = $totalKewajibanLancar > 0 ? ($totalAsetLancar - $totalPersediaan) / $totalKewajibanLancar : 0;
+        $cashRatio = $totalKewajibanLancar > 0 ? $totalKas / $totalKewajibanLancar : 0;
+        $debtToAssetRatio = $totalAset > 0 ? $totalKewajiban / $totalAset : 0;
+        $debtToEquityRatio = $totalEkuitas > 0 ? $totalKewajiban / $totalEkuitas : 0;
+
+        return Inertia::render('akuntansi/laporan-keuangan/analisis-rasio', [
+            'tanggal' => $tanggal->format('Y-m-d'),
+            'totalAsetLancar' => $totalAsetLancar,
+            'totalKewajibanLancar' => $totalKewajibanLancar,
+            'totalKas' => $totalKas,
+            'totalPersediaan' => $totalPersediaan,
+            'totalAset' => $totalAset,
+            'totalKewajiban' => $totalKewajiban,
+            'totalEkuitas' => $totalEkuitas,
+            'modalKerja' => $modalKerja,
+            'currentRatio' => $currentRatio,
+            'quickRatio' => $quickRatio,
+            'cashRatio' => $cashRatio,
+            'debtToAssetRatio' => $debtToAssetRatio,
+            'debtToEquityRatio' => $debtToEquityRatio,
+        ]);
     }
 
     public function export(Request $request)

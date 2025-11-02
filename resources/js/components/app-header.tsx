@@ -207,6 +207,9 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const { auth } = page.props;
     const { hasPermission } = usePermission();
     const getInitials = useInitials();
+    
+    // Get pathname without query string for route matching
+    const currentPath = page.url.split('?')[0];
 
     // Filter navigation items based on permissions
     const filteredNavItems = mainNavItems.map(item => {
@@ -258,7 +261,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                         href={item.href} 
                                         className={cn(
                                             "flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                                            (page.url === item.href || page.url.startsWith(item.href + '/')) && "bg-accent text-accent-foreground"
+                                            (currentPath === item.href || currentPath.startsWith(item.href + '/')) && "bg-accent text-accent-foreground"
                                         )}
                                     >
                                                         {item.icon && <Icon iconNode={item.icon} className="h-5 w-5 shrink-0" />}
@@ -272,7 +275,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                                     href={childItem.href}
                                                                     className={cn(
                                                                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-accent-foreground",
-                                                                        page.url === childItem.href && "bg-accent text-accent-foreground",
+                                                                        currentPath === childItem.href && "bg-accent text-accent-foreground",
                                                                         "text-muted-foreground"
                                                                     )}
                                                                 >
@@ -320,7 +323,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                 <DropdownMenuTrigger
                                                     className={cn(
                                                         "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground",
-                                                        (page.url === item.href || page.url.startsWith(item.href + '/')) && activeItemStyles,
+                                                        (currentPath === item.href || currentPath.startsWith(item.href + '/')) && activeItemStyles,
                                                         'h-9 cursor-pointer px-3',
                                                     )}
                                                 >
@@ -338,7 +341,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                                 href={childItem.href}
                                                                 className={cn(
                                                                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer",
-                                                                    page.url === childItem.href && "bg-accent text-accent-foreground"
+                                                                    currentPath === childItem.href && "bg-accent text-accent-foreground"
                                                                 )}
                                                             >
                                                                 {childItem.icon && <Icon iconNode={childItem.icon} className="h-4 w-4 shrink-0" />}
@@ -347,7 +350,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                         </DropdownMenuItem>
                                                     ))}
                                                 </DropdownMenuContent>
-                                                {(page.url === item.href || page.url.startsWith(item.href + '/')) && (
+                                                {(currentPath === item.href || currentPath.startsWith(item.href + '/')) && (
                                                     <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
                                                 )}
                                             </DropdownMenu>
@@ -357,14 +360,14 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                     href={item.href}
                                                     className={cn(
                                                         "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground",
-                                                        (page.url === item.href || page.url.startsWith(item.href + '/')) && activeItemStyles,
+                                                        (currentPath === item.href || currentPath.startsWith(item.href + '/')) && activeItemStyles,
                                                         'h-9 cursor-pointer px-3',
                                                     )}
                                                 >
                                                     {item.icon && <Icon iconNode={item.icon} className="mr-2 h-4 w-4" />}
                                                     {item.title}
                                                 </Link>
-                                                {(page.url === item.href || page.url.startsWith(item.href + '/')) && (
+                                                {(currentPath === item.href || currentPath.startsWith(item.href + '/')) && (
                                                     <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
                                                 )}
                                             </>

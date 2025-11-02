@@ -115,6 +115,10 @@ Route::middleware('auth')->group(function () {
         ->name('akuntansi.laporan.perubahan-modal')
         ->middleware('permission:akuntansi.laporan.view');
     
+    Route::get('akuntansi/laporan/analisis-rasio', [LaporanKeuanganController::class, 'analisisRasio'])
+        ->name('akuntansi.laporan.analisis-rasio')
+        ->middleware('permission:akuntansi.laporan.view');
+    
     Route::get('akuntansi/laporan/export', [LaporanKeuanganController::class, 'export'])
         ->name('akuntansi.laporan.export')
         ->middleware('permission:akuntansi.laporan.export');

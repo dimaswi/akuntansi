@@ -13,7 +13,9 @@ import {
     Calendar,
     TrendingUp,
     TrendingDown,
-    DollarSign
+    DollarSign,
+    ChevronDown,
+    ChevronRight
 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
@@ -24,9 +26,20 @@ interface Akun {
     jenis_akun: string;
 }
 
+interface DetailTransaksi {
+    id: number;
+    tanggal: string;
+    nomor_jurnal: string;
+    keterangan: string;
+    debit: number;
+    kredit: number;
+    saldo: number;
+}
+
 interface AkunSaldo {
     akun: Akun;
     saldo: number;
+    detail_transaksi: DetailTransaksi[];
 }
 
 interface Props {
@@ -50,6 +63,17 @@ export default function LabaRugi({
 }: Props) {
     const [periodeDari, setPeriodeDari] = useState(periode_dari);
     const [periodeSampai, setPeriodeSampai] = useState(periode_sampai);
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+    const toggleRow = (akunId: number) => {
+        const newExpanded = new Set(expandedRows);
+        if (newExpanded.has(akunId)) {
+            newExpanded.delete(akunId);
+        } else {
+            newExpanded.add(akunId);
+        }
+        setExpandedRows(newExpanded);
+    };
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -200,6 +224,7 @@ export default function LabaRugi({
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead className="w-[50px]"></TableHead>
                                             <TableHead className="w-[120px]">Kode Akun</TableHead>
                                             <TableHead>Nama Akun</TableHead>
                                             <TableHead className="text-right w-[150px]">Jumlah</TableHead>
@@ -208,30 +233,94 @@ export default function LabaRugi({
                                     <TableBody>
                                         {/* PENDAPATAN */}
                                         <TableRow className="bg-gray-50 dark:bg-gray-700">
-                                            <TableCell colSpan={3} className="font-bold text-lg">
+                                            <TableCell colSpan={4} className="font-bold text-lg">
                                                 PENDAPATAN
                                             </TableCell>
                                         </TableRow>
                                         {dataPendapatan.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={3} className="text-center text-gray-500 py-4">
+                                                <TableCell colSpan={4} className="text-center text-gray-500 py-4">
                                                     Tidak ada data pendapatan
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
                                             dataPendapatan.map((item) => (
-                                                <TableRow key={item.akun.id}>
-                                                    <TableCell className="font-mono text-sm">
-                                                        {item.akun.kode_akun}
-                                                    </TableCell>
-                                                    <TableCell>{item.akun.nama_akun}</TableCell>
-                                                    <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                                        {formatCurrency(item.saldo)}
-                                                    </TableCell>
-                                                </TableRow>
+                                                <React.Fragment key={item.akun.id}>
+                                                    <TableRow 
+                                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                                        onClick={() => toggleRow(item.akun.id)}
+                                                    >
+                                                        <TableCell>
+                                                            {expandedRows.has(item.akun.id) ? (
+                                                                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                            ) : (
+                                                                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="font-mono text-sm">
+                                                            {item.akun.kode_akun}
+                                                        </TableCell>
+                                                        <TableCell>{item.akun.nama_akun}</TableCell>
+                                                        <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                            {formatCurrency(item.saldo)}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                    {expandedRows.has(item.akun.id) && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={4} className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-0 border-l-4 border-green-500 dark:border-green-600">
+                                                                <div className="px-4 py-3">
+                                                                    <div className="mb-2 flex items-center justify-between">
+                                                                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Detail Transaksi</span>
+                                                                        <Badge variant="outline" className="text-xs">
+                                                                            {item.detail_transaksi.length} transaksi
+                                                                        </Badge>
+                                                                    </div>
+                                                                    <div className="overflow-x-auto">
+                                                                        <table className="w-full text-xs">
+                                                                            <thead>
+                                                                                <tr className="border-b border-gray-300 dark:border-gray-700">
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Tanggal</th>
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">No. Jurnal</th>
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Keterangan</th>
+                                                                                    <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Debit</th>
+                                                                                    <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Kredit</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {item.detail_transaksi.map((detail, idx) => (
+                                                                                    <tr 
+                                                                                        key={detail.id} 
+                                                                                        className={`border-b border-gray-200 dark:border-gray-700/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors ${
+                                                                                            idx % 2 === 0 ? 'bg-white/30 dark:bg-black/10' : ''
+                                                                                        }`}
+                                                                                    >
+                                                                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">{detail.tanggal}</td>
+                                                                                        <td className="py-2 px-2 font-mono text-gray-600 dark:text-gray-400">{detail.nomor_jurnal}</td>
+                                                                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300 max-w-xs truncate" title={detail.keterangan}>{detail.keterangan}</td>
+                                                                                        <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                            detail.debit > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                        }`}>
+                                                                                            {detail.debit > 0 ? formatCurrency(detail.debit) : '-'}
+                                                                                        </td>
+                                                                                        <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                            detail.kredit > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                        }`}>
+                                                                                            {detail.kredit > 0 ? formatCurrency(detail.kredit) : '-'}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </React.Fragment>
                                             ))
                                         )}
                                         <TableRow className="border-t border-gray-200 dark:border-gray-600">
+                                            <TableCell></TableCell>
                                             <TableCell colSpan={2} className="font-bold">
                                                 TOTAL PENDAPATAN
                                             </TableCell>
@@ -242,30 +331,94 @@ export default function LabaRugi({
 
                                         {/* BEBAN */}
                                         <TableRow className="bg-gray-50 dark:bg-gray-700">
-                                            <TableCell colSpan={3} className="font-bold text-lg pt-6">
+                                            <TableCell colSpan={4} className="font-bold text-lg pt-6">
                                                 BEBAN
                                             </TableCell>
                                         </TableRow>
                                         {dataBeban.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={3} className="text-center text-gray-500 py-4">
+                                                <TableCell colSpan={4} className="text-center text-gray-500 py-4">
                                                     Tidak ada data beban
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
                                             dataBeban.map((item) => (
-                                                <TableRow key={item.akun.id}>
-                                                    <TableCell className="font-mono text-sm">
-                                                        {item.akun.kode_akun}
-                                                    </TableCell>
-                                                    <TableCell>{item.akun.nama_akun}</TableCell>
-                                                    <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                                        {formatCurrency(item.saldo)}
-                                                    </TableCell>
-                                                </TableRow>
+                                                <React.Fragment key={item.akun.id}>
+                                                    <TableRow 
+                                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                                        onClick={() => toggleRow(item.akun.id)}
+                                                    >
+                                                        <TableCell>
+                                                            {expandedRows.has(item.akun.id) ? (
+                                                                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                            ) : (
+                                                                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="font-mono text-sm">
+                                                            {item.akun.kode_akun}
+                                                        </TableCell>
+                                                        <TableCell>{item.akun.nama_akun}</TableCell>
+                                                        <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                            {formatCurrency(item.saldo)}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                    {expandedRows.has(item.akun.id) && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={4} className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-0 border-l-4 border-red-500 dark:border-red-600">
+                                                                <div className="px-4 py-3">
+                                                                    <div className="mb-2 flex items-center justify-between">
+                                                                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Detail Transaksi</span>
+                                                                        <Badge variant="outline" className="text-xs">
+                                                                            {item.detail_transaksi.length} transaksi
+                                                                        </Badge>
+                                                                    </div>
+                                                                    <div className="overflow-x-auto">
+                                                                        <table className="w-full text-xs">
+                                                                            <thead>
+                                                                                <tr className="border-b border-gray-300 dark:border-gray-700">
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Tanggal</th>
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">No. Jurnal</th>
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Keterangan</th>
+                                                                                    <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Debit</th>
+                                                                                    <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Kredit</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {item.detail_transaksi.map((detail, idx) => (
+                                                                                    <tr 
+                                                                                        key={detail.id} 
+                                                                                        className={`border-b border-gray-200 dark:border-gray-700/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors ${
+                                                                                            idx % 2 === 0 ? 'bg-white/30 dark:bg-black/10' : ''
+                                                                                        }`}
+                                                                                    >
+                                                                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">{detail.tanggal}</td>
+                                                                                        <td className="py-2 px-2 font-mono text-gray-600 dark:text-gray-400">{detail.nomor_jurnal}</td>
+                                                                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300 max-w-xs truncate" title={detail.keterangan}>{detail.keterangan}</td>
+                                                                                        <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                            detail.debit > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                        }`}>
+                                                                                            {detail.debit > 0 ? formatCurrency(detail.debit) : '-'}
+                                                                                        </td>
+                                                                                        <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                            detail.kredit > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                        }`}>
+                                                                                            {detail.kredit > 0 ? formatCurrency(detail.kredit) : '-'}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </React.Fragment>
                                             ))
                                         )}
                                         <TableRow className="border-t border-gray-200 dark:border-gray-600">
+                                            <TableCell></TableCell>
                                             <TableCell colSpan={2} className="font-bold">
                                                 TOTAL BEBAN
                                             </TableCell>
@@ -276,6 +429,7 @@ export default function LabaRugi({
 
                                         {/* LABA/RUGI BERSIH */}
                                         <TableRow className="border-t-2 border-gray-300 dark:border-gray-600">
+                                            <TableCell></TableCell>
                                             <TableCell colSpan={2} className="font-bold text-lg pt-4">
                                                 {isProfit ? 'LABA BERSIH' : 'RUGI BERSIH'}
                                             </TableCell>

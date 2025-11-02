@@ -14,7 +14,9 @@ import {
     Calendar,
     CheckCircle,
     AlertTriangle,
-    BarChart3
+    BarChart3,
+    ChevronDown,
+    ChevronRight
 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
@@ -25,13 +27,26 @@ interface Akun {
     jenis_akun: string;
 }
 
+interface DetailTransaksi {
+    id: number;
+    tanggal: string;
+    nomor_jurnal: string;
+    keterangan: string;
+    debit: number;
+    kredit: number;
+    saldo: number;
+}
+
 interface AkunSaldo {
     akun: Akun;
     saldo: number;
+    detail_transaksi: DetailTransaksi[];
 }
 
 interface Props {
     tanggal: string;
+    periode_dari: string;
+    periode_sampai: string;
     dataAset: AkunSaldo[];
     dataKewajiban: AkunSaldo[];
     dataEkuitas: AkunSaldo[];
@@ -44,6 +59,8 @@ interface Props {
 
 export default function Neraca({ 
     tanggal,
+    periode_dari,
+    periode_sampai,
     dataAset,
     dataKewajiban,
     dataEkuitas,
@@ -54,6 +71,19 @@ export default function Neraca({
     balanced
 }: Props) {
     const [selectedDate, setSelectedDate] = useState(tanggal);
+    const [periodeDari, setPeriodeDari] = useState(periode_dari);
+    const [periodeSampai, setPeriodeSampai] = useState(periode_sampai);
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+    const toggleRow = (akunId: number) => {
+        const newExpanded = new Set(expandedRows);
+        if (newExpanded.has(akunId)) {
+            newExpanded.delete(akunId);
+        } else {
+            newExpanded.add(akunId);
+        }
+        setExpandedRows(newExpanded);
+    };
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -72,7 +102,11 @@ export default function Neraca({
     };
 
     const handleDateChange = () => {
-        router.get(route('akuntansi.laporan.neraca'), { tanggal: selectedDate }, {
+        router.get(route('akuntansi.laporan.neraca'), { 
+            tanggal: selectedDate,
+            periode_dari: periodeDari,
+            periode_sampai: periodeSampai 
+        }, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -119,23 +153,45 @@ export default function Neraca({
                             <div className="mb-4">
                                 <h3 className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                                     <Calendar className="h-5 w-5 mr-2" />
-                                    Pilih Tanggal Neraca
+                                    Pilih Tanggal Neraca dan Periode Laba Rugi
                                 </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    Periode laba rugi menentukan perhitungan laba/rugi berjalan yang ditampilkan di neraca
+                                </p>
                             </div>
-                            <div className="flex items-end space-x-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
-                                    <Label htmlFor="tanggal">Tanggal</Label>
+                                    <Label htmlFor="tanggal">Tanggal Neraca</Label>
                                     <Input
                                         id="tanggal"
                                         type="date"
                                         value={selectedDate}
                                         onChange={(e) => setSelectedDate(e.target.value)}
-                                        className="w-48"
                                     />
                                 </div>
-                                <Button onClick={handleDateChange}>
-                                    Refresh Neraca
-                                </Button>
+                                <div>
+                                    <Label htmlFor="periode_dari">Periode Dari</Label>
+                                    <Input
+                                        id="periode_dari"
+                                        type="date"
+                                        value={periodeDari}
+                                        onChange={(e) => setPeriodeDari(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="periode_sampai">Periode Sampai</Label>
+                                    <Input
+                                        id="periode_sampai"
+                                        type="date"
+                                        value={periodeSampai}
+                                        onChange={(e) => setPeriodeSampai(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex items-end">
+                                    <Button onClick={handleDateChange} className="w-full">
+                                        Refresh Neraca
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
@@ -230,6 +286,7 @@ export default function Neraca({
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
+                                                <TableHead className="w-[50px]"></TableHead>
                                                 <TableHead className="w-32">Kode Akun</TableHead>
                                                 <TableHead>Nama Akun</TableHead>
                                                 <TableHead className="text-right w-48">Saldo</TableHead>
@@ -237,21 +294,85 @@ export default function Neraca({
                                         </TableHeader>
                                         <TableBody>
                                             {dataAset.map((item) => (
-                                                <TableRow key={item.akun.id}>
-                                                    <TableCell className="font-mono text-sm">
-                                                        {item.akun.kode_akun}
-                                                    </TableCell>
-                                                    <TableCell>{item.akun.nama_akun}</TableCell>
-                                                    <TableCell className={`text-right font-mono ${
-                                                        item.saldo >= 0 
-                                                            ? 'text-green-600 dark:text-green-400' 
-                                                            : 'text-red-600 dark:text-red-400'
-                                                    }`}>
-                                                        {formatCurrency(item.saldo)}
-                                                    </TableCell>
-                                                </TableRow>
+                                                <React.Fragment key={item.akun.id}>
+                                                    <TableRow 
+                                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                                        onClick={() => toggleRow(item.akun.id)}
+                                                    >
+                                                        <TableCell>
+                                                            {expandedRows.has(item.akun.id) ? (
+                                                                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                            ) : (
+                                                                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="font-mono text-sm">
+                                                            {item.akun.kode_akun}
+                                                        </TableCell>
+                                                        <TableCell>{item.akun.nama_akun}</TableCell>
+                                                        <TableCell className={`text-right font-mono ${
+                                                            item.saldo >= 0 
+                                                                ? 'text-green-600 dark:text-green-400' 
+                                                                : 'text-red-600 dark:text-red-400'
+                                                        }`}>
+                                                            {formatCurrency(item.saldo)}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                    {expandedRows.has(item.akun.id) && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={4} className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-0 border-l-4 border-gray-400 dark:border-gray-600">
+                                                                <div className="px-4 py-3">
+                                                                    <div className="mb-2 flex items-center justify-between">
+                                                                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Detail Transaksi</span>
+                                                                        <Badge variant="outline" className="text-xs">
+                                                                            {item.detail_transaksi.length} transaksi
+                                                                        </Badge>
+                                                                    </div>
+                                                                    <div className="overflow-x-auto">
+                                                                        <table className="w-full text-xs">
+                                                                            <thead>
+                                                                                <tr className="border-b border-gray-300 dark:border-gray-700">
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Tanggal</th>
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">No. Jurnal</th>
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Keterangan</th>
+                                                                                    <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Debit</th>
+                                                                                    <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Kredit</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {item.detail_transaksi.map((detail, idx) => (
+                                                                                    <tr 
+                                                                                        key={detail.id} 
+                                                                                        className={`border-b border-gray-200 dark:border-gray-700/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors ${
+                                                                                            idx % 2 === 0 ? 'bg-white/30 dark:bg-black/10' : ''
+                                                                                        }`}
+                                                                                    >
+                                                                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">{detail.tanggal}</td>
+                                                                                        <td className="py-2 px-2 font-mono text-gray-600 dark:text-gray-400">{detail.nomor_jurnal}</td>
+                                                                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300 max-w-xs truncate" title={detail.keterangan}>{detail.keterangan}</td>
+                                                                                        <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                            detail.debit > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                        }`}>
+                                                                                            {detail.debit > 0 ? formatCurrency(detail.debit) : '-'}
+                                                                                        </td>
+                                                                                        <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                            detail.kredit > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                        }`}>
+                                                                                            {detail.kredit > 0 ? formatCurrency(detail.kredit) : '-'}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </React.Fragment>
                                             ))}
                                             <TableRow className="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                                                <TableCell></TableCell>
                                                 <TableCell colSpan={2} className="font-bold">
                                                     TOTAL ASET
                                                 </TableCell>
@@ -277,6 +398,7 @@ export default function Neraca({
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
+                                                <TableHead className="w-[50px]"></TableHead>
                                                 <TableHead>Kode</TableHead>
                                                 <TableHead>Nama Akun</TableHead>
                                                 <TableHead className="text-right">Saldo</TableHead>
@@ -287,22 +409,86 @@ export default function Neraca({
                                             {dataKewajiban.length > 0 && (
                                                 <>
                                                     <TableRow className="bg-gray-50 dark:bg-gray-700">
-                                                        <TableCell colSpan={3} className="font-semibold">
+                                                        <TableCell colSpan={4} className="font-semibold">
                                                             KEWAJIBAN
                                                         </TableCell>
                                                     </TableRow>
                                                     {dataKewajiban.map((item) => (
-                                                        <TableRow key={item.akun.id}>
-                                                            <TableCell className="font-mono text-sm">
-                                                                {item.akun.kode_akun}
-                                                            </TableCell>
-                                                            <TableCell>{item.akun.nama_akun}</TableCell>
-                                                            <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                                                {formatCurrency(item.saldo)}
-                                                            </TableCell>
-                                                        </TableRow>
+                                                        <React.Fragment key={item.akun.id}>
+                                                            <TableRow 
+                                                                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                                                onClick={() => toggleRow(item.akun.id)}
+                                                            >
+                                                                <TableCell>
+                                                                    {expandedRows.has(item.akun.id) ? (
+                                                                        <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                                    ) : (
+                                                                        <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell className="font-mono text-sm">
+                                                                    {item.akun.kode_akun}
+                                                                </TableCell>
+                                                                <TableCell>{item.akun.nama_akun}</TableCell>
+                                                                <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                                    {formatCurrency(item.saldo)}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                            {expandedRows.has(item.akun.id) && (
+                                                                <TableRow>
+                                                                    <TableCell colSpan={4} className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-0 border-l-4 border-gray-400 dark:border-gray-600">
+                                                                        <div className="px-4 py-3">
+                                                                            <div className="mb-2 flex items-center justify-between">
+                                                                                <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Detail Transaksi</span>
+                                                                                <Badge variant="outline" className="text-xs">
+                                                                                    {item.detail_transaksi.length} transaksi
+                                                                                </Badge>
+                                                                            </div>
+                                                                            <div className="overflow-x-auto">
+                                                                                <table className="w-full text-xs">
+                                                                                    <thead>
+                                                                                        <tr className="border-b border-gray-300 dark:border-gray-700">
+                                                                                            <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Tanggal</th>
+                                                                                            <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">No. Jurnal</th>
+                                                                                            <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Keterangan</th>
+                                                                                            <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Debit</th>
+                                                                                            <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Kredit</th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody>
+                                                                                        {item.detail_transaksi.map((detail, idx) => (
+                                                                                            <tr 
+                                                                                                key={detail.id} 
+                                                                                                className={`border-b border-gray-200 dark:border-gray-700/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors ${
+                                                                                                    idx % 2 === 0 ? 'bg-white/30 dark:bg-black/10' : ''
+                                                                                                }`}
+                                                                                            >
+                                                                                                <td className="py-2 px-2 text-gray-700 dark:text-gray-300">{detail.tanggal}</td>
+                                                                                                <td className="py-2 px-2 font-mono text-gray-600 dark:text-gray-400">{detail.nomor_jurnal}</td>
+                                                                                                <td className="py-2 px-2 text-gray-700 dark:text-gray-300 max-w-xs truncate" title={detail.keterangan}>{detail.keterangan}</td>
+                                                                                                <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                                    detail.debit > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                                }`}>
+                                                                                                    {detail.debit > 0 ? formatCurrency(detail.debit) : '-'}
+                                                                                                </td>
+                                                                                                <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                                    detail.kredit > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                                }`}>
+                                                                                                    {detail.kredit > 0 ? formatCurrency(detail.kredit) : '-'}
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        ))}
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            )}
+                                                        </React.Fragment>
                                                     ))}
                                                     <TableRow className="border-t border-gray-200 dark:border-gray-600">
+                                                        <TableCell></TableCell>
                                                         <TableCell colSpan={2} className="font-semibold">
                                                             Total Kewajiban
                                                         </TableCell>
@@ -315,23 +501,87 @@ export default function Neraca({
 
                                             {/* Modal */}
                                             <TableRow className="bg-gray-50 dark:bg-gray-700">
-                                                <TableCell colSpan={3} className="font-semibold">
+                                                <TableCell colSpan={4} className="font-semibold">
                                                     MODAL
                                                 </TableCell>
                                             </TableRow>
                                             {dataEkuitas.map((item) => (
-                                                <TableRow key={item.akun.id}>
-                                                    <TableCell className="font-mono text-sm">
-                                                        {item.akun.kode_akun}
-                                                    </TableCell>
-                                                    <TableCell>{item.akun.nama_akun}</TableCell>
-                                                    <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                                        {formatCurrency(item.saldo)}
-                                                    </TableCell>
-                                                </TableRow>
+                                                <React.Fragment key={item.akun.id}>
+                                                    <TableRow 
+                                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                                        onClick={() => toggleRow(item.akun.id)}
+                                                    >
+                                                        <TableCell>
+                                                            {expandedRows.has(item.akun.id) ? (
+                                                                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                            ) : (
+                                                                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="font-mono text-sm">
+                                                            {item.akun.kode_akun}
+                                                        </TableCell>
+                                                        <TableCell>{item.akun.nama_akun}</TableCell>
+                                                        <TableCell className={`text-right font-mono ${item.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                            {formatCurrency(item.saldo)}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                    {expandedRows.has(item.akun.id) && (
+                                                        <TableRow>
+                                                            <TableCell colSpan={4} className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-0 border-l-4 border-gray-400 dark:border-gray-600">
+                                                                <div className="px-4 py-3">
+                                                                    <div className="mb-2 flex items-center justify-between">
+                                                                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Detail Transaksi</span>
+                                                                        <Badge variant="outline" className="text-xs">
+                                                                            {item.detail_transaksi.length} transaksi
+                                                                        </Badge>
+                                                                    </div>
+                                                                    <div className="overflow-x-auto">
+                                                                        <table className="w-full text-xs">
+                                                                            <thead>
+                                                                                <tr className="border-b border-gray-300 dark:border-gray-700">
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Tanggal</th>
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">No. Jurnal</th>
+                                                                                    <th className="text-left py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Keterangan</th>
+                                                                                    <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Debit</th>
+                                                                                    <th className="text-right py-2 px-2 font-semibold text-gray-700 dark:text-gray-300">Kredit</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {item.detail_transaksi.map((detail, idx) => (
+                                                                                    <tr 
+                                                                                        key={detail.id} 
+                                                                                        className={`border-b border-gray-200 dark:border-gray-700/50 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors ${
+                                                                                            idx % 2 === 0 ? 'bg-white/30 dark:bg-black/10' : ''
+                                                                                        }`}
+                                                                                    >
+                                                                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300">{detail.tanggal}</td>
+                                                                                        <td className="py-2 px-2 font-mono text-gray-600 dark:text-gray-400">{detail.nomor_jurnal}</td>
+                                                                                        <td className="py-2 px-2 text-gray-700 dark:text-gray-300 max-w-xs truncate" title={detail.keterangan}>{detail.keterangan}</td>
+                                                                                        <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                            detail.debit > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                        }`}>
+                                                                                            {detail.debit > 0 ? formatCurrency(detail.debit) : '-'}
+                                                                                        </td>
+                                                                                        <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                                                                                            detail.kredit > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-600'
+                                                                                        }`}>
+                                                                                            {detail.kredit > 0 ? formatCurrency(detail.kredit) : '-'}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )}
+                                                </React.Fragment>
                                             ))}
                                             {labaRugiBerjalan !== 0 && (
                                                 <TableRow>
+                                                    <TableCell></TableCell>
                                                     <TableCell className="font-mono text-sm">-</TableCell>
                                                     <TableCell>Laba/Rugi Berjalan</TableCell>
                                                     <TableCell className={`text-right font-mono ${labaRugiBerjalan >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -340,6 +590,7 @@ export default function Neraca({
                                                 </TableRow>
                                             )}
                                             <TableRow className="border-t border-gray-200 dark:border-gray-600">
+                                                <TableCell></TableCell>
                                                 <TableCell colSpan={2} className="font-semibold">
                                                     Total Modal
                                                 </TableCell>
@@ -350,6 +601,7 @@ export default function Neraca({
                                             
                                             {/* Total Kewajiban + Modal */}
                                             <TableRow className="border-t-2 border-gray-300 dark:border-gray-600">
+                                                <TableCell></TableCell>
                                                 <TableCell colSpan={2} className="font-bold">
                                                     TOTAL KEWAJIBAN + MODAL
                                                 </TableCell>
