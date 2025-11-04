@@ -192,12 +192,12 @@ export function SearchableAccountSelectTable({
                 <div 
                     ref={listRef}
                     className="fixed z-[9999] max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-2xl"
-                    //style={{
-                    //    top: inputRef.current ? `${inputRef.current.getBoundingClientRect().bottom + window.scrollY + 2}px` : '0',
-                    //    left: inputRef.current ? `${inputRef.current.getBoundingClientRect().left + window.scrollX}px` : '0',
-                    //    width: inputRef.current ? `${Math.max(inputRef.current.getBoundingClientRect().width, 300)}px` : 'auto',
-                    //    minWidth: '300px'
-                    //}}
+                    style={{
+                      top: position.top,
+                      left: position.left,
+                      width: Math.max(position.width, 300),
+                      minWidth: 300,
+                    }}
                 >
                     {filteredAccounts.length === 0 ? (
                         <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
