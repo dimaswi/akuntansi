@@ -221,7 +221,7 @@ export function SearchableAccountSelectTable({
             {open && !disabled && (
                 <div 
                     ref={listRef}
-                    className="fixed z-[9999] max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-2xl"
+                    className="z-[9999] max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-2xl"
                     style={{
                       top: position.top,
                       left: position.left,
