@@ -92,6 +92,36 @@ export function SearchableAccountSelectTable({
         }
     };
 
+    const [position, setPosition] = React.useState<{ top: number, left: number, width: number }>({
+  top: 0,
+  left: 0,
+  width: 0,
+});
+
+    React.useEffect(() => {
+      const updatePosition = () => {
+        if (inputRef.current) {
+          const rect = inputRef.current.getBoundingClientRect();
+          setPosition({
+            top: rect.bottom + window.scrollY + 2,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+          });
+        }
+      };
+    
+      if (open) {
+        updatePosition();
+        window.addEventListener("scroll", updatePosition);
+        window.addEventListener("resize", updatePosition);
+      }
+    
+      return () => {
+        window.removeEventListener("scroll", updatePosition);
+        window.removeEventListener("resize", updatePosition);
+      };
+    }, [open]);
+
     // Scroll highlighted item into view
     React.useEffect(() => {
         if (highlightedIndex >= 0 && listRef.current) {
