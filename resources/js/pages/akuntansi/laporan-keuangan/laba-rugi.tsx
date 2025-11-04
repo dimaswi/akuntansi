@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 
@@ -45,6 +45,7 @@ interface AkunSaldo {
 interface Props {
     periode_dari: string;
     periode_sampai: string;
+    include_penyesuaian: boolean;
     dataPendapatan: AkunSaldo[];
     dataBeban: AkunSaldo[];
     totalPendapatan: number;
@@ -55,6 +56,7 @@ interface Props {
 export default function LabaRugi({ 
     periode_dari,
     periode_sampai,
+    include_penyesuaian,
     dataPendapatan,
     dataBeban,
     totalPendapatan,
@@ -63,7 +65,22 @@ export default function LabaRugi({
 }: Props) {
     const [periodeDari, setPeriodeDari] = useState(periode_dari);
     const [periodeSampai, setPeriodeSampai] = useState(periode_sampai);
+    const [includePenyesuaian, setIncludePenyesuaian] = useState(include_penyesuaian);
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+    // Auto-reload ketika toggle jurnal penyesuaian berubah
+    useEffect(() => {
+        if (includePenyesuaian !== include_penyesuaian) {
+            router.get(route('akuntansi.laporan.laba-rugi'), {
+                periode_dari: periodeDari,
+                periode_sampai: periodeSampai,
+                include_penyesuaian: includePenyesuaian ? 1 : 0  // Convert boolean ke 1/0
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }
+    }, [includePenyesuaian]);
 
     const toggleRow = (akunId: number) => {
         const newExpanded = new Set(expandedRows);
@@ -94,7 +111,8 @@ export default function LabaRugi({
     const handleFilter = () => {
         router.get(route('akuntansi.laporan.laba-rugi'), {
             periode_dari: periodeDari,
-            periode_sampai: periodeSampai
+            periode_sampai: periodeSampai,
+            include_penyesuaian: includePenyesuaian ? 1 : 0  // Convert boolean ke 1/0
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -171,6 +189,26 @@ export default function LabaRugi({
                                         Refresh Laporan
                                     </Button>
                                 </div>
+                            </div>
+                            
+                            {/* Toggle Jurnal Penyesuaian */}
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={includePenyesuaian}
+                                        onChange={(e) => setIncludePenyesuaian(e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    />
+                                    <div>
+                                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            Sertakan Jurnal Penyesuaian
+                                        </span>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            Aktifkan untuk melihat laba/rugi setelah jurnal penyesuaian periode akhir
+                                        </p>
+                                    </div>
+                                </label>
                             </div>
                         </div>
 

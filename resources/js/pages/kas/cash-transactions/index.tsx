@@ -353,8 +353,8 @@ export default function CashTransactionIndex() {
     const [selectedTransactions, setSelectedTransactions] = useState<number[]>([]);
 
     const handlePost = (transaction: CashTransaction) => {
-        // Redirect to batch posting page with single transaction
-        router.visit(`/kas/cash-transactions/post-to-journal?ids[]=${transaction.id}`);
+        // Redirect to single transaction posting page with manual journal entry
+        router.visit(`/kas/cash-transactions/post-to-journal?id=${transaction.id}`);
     };
 
     const handleBatchPost = () => {

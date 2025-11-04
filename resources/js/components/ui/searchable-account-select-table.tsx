@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, X } from "lucide-react";
 
@@ -13,8 +14,8 @@ interface Account {
 
 interface SearchableAccountSelectTableProps {
     accounts: Account[];
-    value?: number;
-    onValueChange: (value: number) => void;
+    value?: string;
+    onValueChange: (value: string) => void;
     placeholder?: string;
     className?: string;
     disabled?: boolean;
@@ -35,7 +36,7 @@ export function SearchableAccountSelectTable({
     const listRef = React.useRef<HTMLDivElement>(null);
 
     // Get selected account
-    const selectedAccount = accounts.find(account => account.id === value);
+    const selectedAccount = accounts.find(account => account.id.toString() === value);
 
     // Filter accounts based on search
     const filteredAccounts = React.useMemo(() => {
@@ -56,7 +57,7 @@ export function SearchableAccountSelectTable({
             case "Enter":
                 e.preventDefault();
                 if (open && highlightedIndex >= 0 && highlightedIndex < filteredAccounts.length) {
-                    onValueChange(filteredAccounts[highlightedIndex].id);
+                    onValueChange(filteredAccounts[highlightedIndex].id.toString());
                     setOpen(false);
                     setSearchValue("");
                     setHighlightedIndex(-1);
@@ -86,13 +87,6 @@ export function SearchableAccountSelectTable({
                     setHighlightedIndex(prev => 
                         prev > 0 ? prev - 1 : filteredAccounts.length - 1
                     );
-                }
-                break;
-            case "Tab":
-                if (open) {
-                    setOpen(false);
-                    setSearchValue("");
-                    setHighlightedIndex(-1);
                 }
                 break;
         }
@@ -126,7 +120,7 @@ export function SearchableAccountSelectTable({
     }, []);
 
     const handleSelect = (account: Account) => {
-        onValueChange(account.id);
+        onValueChange(account.id.toString());
         setOpen(false);
         setSearchValue("");
         setHighlightedIndex(-1);
@@ -134,7 +128,7 @@ export function SearchableAccountSelectTable({
     };
 
     const handleClear = () => {
-        onValueChange(0);
+        onValueChange("");
         setSearchValue("");
         setHighlightedIndex(-1);
         inputRef.current?.focus();
@@ -163,10 +157,7 @@ export function SearchableAccountSelectTable({
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
                     disabled={disabled}
-                    className={cn(
-                        "pr-16 text-sm",
-                        open ? "rounded-b-none border-b-0" : ""
-                    )}
+                    className="pr-16 h-8 text-xs"
                 />
                 
                 <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -176,7 +167,7 @@ export function SearchableAccountSelectTable({
                             variant="ghost"
                             size="sm"
                             onClick={handleClear}
-                            className="h-5 w-5 p-0 hover:bg-gray-100"
+                            className="h-6 w-6 p-0 hover:bg-gray-100"
                         >
                             <X className="h-3 w-3" />
                         </Button>
@@ -186,7 +177,7 @@ export function SearchableAccountSelectTable({
                         variant="ghost"
                         size="sm"
                         onClick={() => !disabled && setOpen(!open)}
-                        className="h-5 w-5 p-0 hover:bg-gray-100"
+                        className="h-6 w-6 p-0 hover:bg-gray-100"
                         disabled={disabled}
                     >
                         <ChevronDown className={cn(
@@ -200,10 +191,16 @@ export function SearchableAccountSelectTable({
             {open && !disabled && (
                 <div 
                     ref={listRef}
-                    className="absolute top-full left-0 right-0 z-50 max-h-48 overflow-auto bg-white border border-t-0 border-gray-300 rounded-b-md shadow-lg"
+                    className="fixed z-[9999] max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-2xl"
+                    style={{
+                        top: inputRef.current ? `${inputRef.current.getBoundingClientRect().bottom + window.scrollY + 2}px` : '0',
+                        left: inputRef.current ? `${inputRef.current.getBoundingClientRect().left + window.scrollX}px` : '0',
+                        width: inputRef.current ? `${Math.max(inputRef.current.getBoundingClientRect().width, 300)}px` : 'auto',
+                        minWidth: '300px'
+                    }}
                 >
                     {filteredAccounts.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-gray-500">
+                        <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
                             {searchValue ? "Tidak ada akun yang ditemukan" : "Tidak ada data"}
                         </div>
                     ) : (
@@ -219,25 +216,25 @@ export function SearchableAccountSelectTable({
                                     handleSelect(account);
                                 }}
                                 className={cn(
-                                    "px-3 py-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0",
-                                    "hover:bg-gray-50",
-                                    index === highlightedIndex ? "bg-blue-50" : "",
-                                    selectedAccount?.id === account.id ? "bg-blue-100" : ""
+                                    "px-3 py-2 cursor-pointer text-sm border-b border-gray-100 dark:border-gray-700 last:border-b-0",
+                                    "hover:bg-gray-50 dark:hover:bg-gray-700",
+                                    index === highlightedIndex ? "bg-blue-50 dark:bg-blue-900/30" : "",
+                                    selectedAccount?.id === account.id ? "bg-blue-100 dark:bg-blue-900/50" : ""
                                 )}
                             >
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <div className="font-medium text-xs">
+                                        <div className="font-medium text-gray-900 dark:text-gray-100">
                                             {account.kode_akun} - {account.nama_akun}
                                         </div>
                                         {account.jenis_akun && (
-                                            <div className="text-xs text-gray-500 capitalize">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                                                 {account.jenis_akun.replace('_', ' ')}
                                             </div>
                                         )}
                                     </div>
                                     {selectedAccount?.id === account.id && (
-                                        <Check className="h-3 w-3 text-blue-600" />
+                                        <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                     )}
                                 </div>
                             </div>

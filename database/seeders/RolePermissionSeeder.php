@@ -64,6 +64,18 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'akuntansi.jurnal.post', 'display_name' => 'Post Jurnal', 'description' => 'Dapat memposting jurnal', 'module' => 'Akuntansi'],
             ['name' => 'akuntansi.jurnal.reverse', 'display_name' => 'Reverse Jurnal', 'description' => 'Dapat membalik jurnal', 'module' => 'Akuntansi'],
             
+            // Akuntansi - Jurnal Penyesuaian
+            ['name' => 'akuntansi.jurnal-penyesuaian.view', 'display_name' => 'Lihat Jurnal Penyesuaian', 'description' => 'Dapat melihat jurnal penyesuaian', 'module' => 'Akuntansi'],
+            ['name' => 'akuntansi.jurnal-penyesuaian.create', 'display_name' => 'Tambah Jurnal Penyesuaian', 'description' => 'Dapat menambah jurnal penyesuaian', 'module' => 'Akuntansi'],
+            ['name' => 'akuntansi.jurnal-penyesuaian.edit', 'display_name' => 'Edit Jurnal Penyesuaian', 'description' => 'Dapat mengedit jurnal penyesuaian draft', 'module' => 'Akuntansi'],
+            ['name' => 'akuntansi.jurnal-penyesuaian.delete', 'display_name' => 'Hapus Jurnal Penyesuaian', 'description' => 'Dapat menghapus jurnal penyesuaian draft', 'module' => 'Akuntansi'],
+            ['name' => 'akuntansi.jurnal-penyesuaian.show', 'display_name' => 'Lihat Jurnal Penyesuaian', 'description' => 'Dapat melihat jurnal penyesuaian', 'module' => 'Akuntansi'],
+            ['name' => 'akuntansi.jurnal-penyesuaian.edit', 'display_name' => 'Edit Jurnal Penyesuaian', 'description' => 'Dapat mengedit jurnal penyesuaian', 'module' => 'Akuntansi'],
+            
+            // Akuntansi - Journal Posting (dari Kas/Bank ke Jurnal)
+            ['name' => 'akuntansi.journal-posting.view', 'display_name' => 'Lihat Journal Posting', 'description' => 'Dapat melihat halaman posting ke jurnal', 'module' => 'Akuntansi'],
+            ['name' => 'akuntansi.journal-posting.post', 'display_name' => 'Post to Journal', 'description' => 'Dapat memposting transaksi kas/bank ke jurnal', 'module' => 'Akuntansi'],
+            
             // Akuntansi - Buku Besar
             ['name' => 'akuntansi.buku-besar.view', 'display_name' => 'Lihat Buku Besar', 'description' => 'Dapat melihat buku besar', 'module' => 'Akuntansi'],
             ['name' => 'akuntansi.buku-besar.export', 'display_name' => 'Export Buku Besar', 'description' => 'Dapat mengexport buku besar', 'module' => 'Akuntansi'],
@@ -122,39 +134,29 @@ class RolePermissionSeeder extends Seeder
             // ========== KAS MODULE ==========
             ['name' => 'kas.view', 'display_name' => 'Lihat Kas', 'description' => 'Dapat mengakses modul kas', 'module' => 'Kas'],
             
-            // Kas - Cash Management
-            ['name' => 'kas.cash-management.view', 'display_name' => 'Lihat Cash Management', 'description' => 'Dapat melihat cash management', 'module' => 'Kas'],
-            ['name' => 'kas.cash-management.create', 'display_name' => 'Tambah Cash Management', 'description' => 'Dapat menambah cash transaction', 'module' => 'Kas'],
-            ['name' => 'kas.cash-management.edit', 'display_name' => 'Edit Cash Management', 'description' => 'Dapat mengedit cash transaction', 'module' => 'Kas'],
-            ['name' => 'kas.cash-management.delete', 'display_name' => 'Hapus Cash Management', 'description' => 'Dapat menghapus cash transaction', 'module' => 'Kas'],
-            ['name' => 'kas.cash-management.approve', 'display_name' => 'Approve Cash Transaction', 'description' => 'Dapat approve cash transaction', 'module' => 'Kas'],
-            ['name' => 'kas.cash-management.reverse', 'display_name' => 'Reverse Cash Transaction', 'description' => 'Dapat reverse cash transaction', 'module' => 'Kas'],
+            // Kas - Cash & Bank Management (Used in routes)
+            ['name' => 'kas.cash-management.view', 'display_name' => 'Lihat Cash Management', 'description' => 'Dapat melihat dashboard kas, transaksi kas & bank', 'module' => 'Kas'],
+            ['name' => 'kas.cash-management.daily-entry', 'display_name' => 'Entry Transaksi Kas/Bank Harian', 'description' => 'Dapat create/edit transaksi kas dan bank', 'module' => 'Kas'],
+            ['name' => 'kas.cash-management.reconcile', 'display_name' => 'Rekonsiliasi Bank', 'description' => 'Dapat melakukan rekonsiliasi bank', 'module' => 'Kas'],
             
-            // Kas - Bank Account
-            ['name' => 'kas.bank-account.view', 'display_name' => 'Lihat Bank Account', 'description' => 'Dapat melihat bank account', 'module' => 'Kas'],
+            // Kas - Delete Permissions (Separated per transaction type)
+            ['name' => 'kas.cash-transaction.delete', 'display_name' => 'Hapus Transaksi Kas', 'description' => 'Dapat menghapus transaksi kas', 'module' => 'Kas'],
+            ['name' => 'kas.bank-transaction.delete', 'display_name' => 'Hapus Transaksi Bank', 'description' => 'Dapat menghapus transaksi bank', 'module' => 'Kas'],
+            
+            // Kas - Bank Account (Master Data)
+            ['name' => 'kas.bank-account.view', 'display_name' => 'Lihat Bank Account', 'description' => 'Dapat melihat daftar bank account', 'module' => 'Kas'],
             ['name' => 'kas.bank-account.create', 'display_name' => 'Tambah Bank Account', 'description' => 'Dapat menambah bank account', 'module' => 'Kas'],
             ['name' => 'kas.bank-account.edit', 'display_name' => 'Edit Bank Account', 'description' => 'Dapat mengedit bank account', 'module' => 'Kas'],
             ['name' => 'kas.bank-account.delete', 'display_name' => 'Hapus Bank Account', 'description' => 'Dapat menghapus bank account', 'module' => 'Kas'],
-            ['name' => 'kas.bank-account.toggle-status', 'display_name' => 'Toggle Status Bank Account', 'description' => 'Dapat mengubah status bank account', 'module' => 'Kas'],
-            
-            // Kas - Bank Transaction
-            ['name' => 'kas.bank-transaction.view', 'display_name' => 'Lihat Bank Transaction', 'description' => 'Dapat melihat bank transaction', 'module' => 'Kas'],
-            ['name' => 'kas.bank-transaction.create', 'display_name' => 'Tambah Bank Transaction', 'description' => 'Dapat menambah bank transaction', 'module' => 'Kas'],
-            ['name' => 'kas.bank-transaction.edit', 'display_name' => 'Edit Bank Transaction', 'description' => 'Dapat mengedit bank transaction', 'module' => 'Kas'],
-            ['name' => 'kas.bank-transaction.delete', 'display_name' => 'Hapus Bank Transaction', 'description' => 'Dapat menghapus bank transaction', 'module' => 'Kas'],
-            ['name' => 'kas.bank-transaction.approve', 'display_name' => 'Approve Bank Transaction', 'description' => 'Dapat approve bank transaction', 'module' => 'Kas'],
-            ['name' => 'kas.bank-transaction.reverse', 'display_name' => 'Reverse Bank Transaction', 'description' => 'Dapat reverse bank transaction', 'module' => 'Kas'],
-            ['name' => 'kas.bank-transaction.reconcile', 'display_name' => 'Reconcile Bank Transaction', 'description' => 'Dapat reconcile bank transaction', 'module' => 'Kas'],
             
             // Kas - Giro Transaction
             ['name' => 'kas.giro-transaction.view', 'display_name' => 'Lihat Giro Transaction', 'description' => 'Dapat melihat giro transaction', 'module' => 'Kas'],
             ['name' => 'kas.giro-transaction.create', 'display_name' => 'Tambah Giro Transaction', 'description' => 'Dapat menambah giro transaction', 'module' => 'Kas'],
             ['name' => 'kas.giro-transaction.edit', 'display_name' => 'Edit Giro Transaction', 'description' => 'Dapat mengedit giro transaction', 'module' => 'Kas'],
             ['name' => 'kas.giro-transaction.delete', 'display_name' => 'Hapus Giro Transaction', 'description' => 'Dapat menghapus giro transaction', 'module' => 'Kas'],
-            ['name' => 'kas.giro-transaction.approve', 'display_name' => 'Approve Giro Transaction', 'description' => 'Dapat approve giro transaction', 'module' => 'Kas'],
-            ['name' => 'kas.giro-transaction.reverse', 'display_name' => 'Reverse Giro Transaction', 'description' => 'Dapat reverse giro transaction', 'module' => 'Kas'],
-            ['name' => 'kas.giro-transaction.clear', 'display_name' => 'Clear Giro Transaction', 'description' => 'Dapat clear giro transaction', 'module' => 'Kas'],
-            ['name' => 'kas.giro-transaction.reject', 'display_name' => 'Reject Giro Transaction', 'description' => 'Dapat reject giro transaction', 'module' => 'Kas'],
+            ['name' => 'kas.giro-transaction.post', 'display_name' => 'Post Giro Transaction', 'description' => 'Dapat post giro ke bank', 'module' => 'Kas'],
+            ['name' => 'kas.giro-transaction.clear', 'display_name' => 'Clear Giro Transaction', 'description' => 'Dapat clear/cash giro transaction', 'module' => 'Kas'],
+            ['name' => 'kas.giro-transaction.reject', 'display_name' => 'Reject Giro Transaction', 'description' => 'Dapat reject/bounce giro transaction', 'module' => 'Kas'],
             
             // Kas - Transfer
             ['name' => 'kas.transfer.view', 'display_name' => 'Lihat Transfer', 'description' => 'Dapat melihat transfer', 'module' => 'Kas'],
@@ -164,9 +166,13 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'kas.transfer.approve', 'display_name' => 'Approve Transfer', 'description' => 'Dapat approve transfer', 'module' => 'Kas'],
             ['name' => 'kas.transfer.reverse', 'display_name' => 'Reverse Transfer', 'description' => 'Dapat reverse transfer', 'module' => 'Kas'],
             
-            // Kas - Reports
-            ['name' => 'kas.report.view', 'display_name' => 'Lihat Laporan Kas', 'description' => 'Dapat melihat laporan kas', 'module' => 'Kas'],
-            ['name' => 'kas.report.export', 'display_name' => 'Export Laporan Kas', 'description' => 'Dapat export laporan kas', 'module' => 'Kas'],
+            // Laporan - Cash Flow
+            ['name' => 'laporan.cash-flow.view', 'display_name' => 'Lihat Laporan Arus Kas', 'description' => 'Dapat melihat laporan arus kas', 'module' => 'Laporan'],
+            ['name' => 'laporan.cash-flow.export', 'display_name' => 'Export Laporan Arus Kas', 'description' => 'Dapat export laporan arus kas', 'module' => 'Laporan'],
+            
+            // Laporan - Giro
+            ['name' => 'laporan.giro-report.view', 'display_name' => 'Lihat Laporan Giro', 'description' => 'Dapat melihat laporan giro', 'module' => 'Laporan'],
+            ['name' => 'laporan.giro-report.export', 'display_name' => 'Export Laporan Giro', 'description' => 'Dapat export laporan giro', 'module' => 'Laporan'],
         ];
 
         foreach ($permissions as $permission) {
@@ -232,20 +238,23 @@ class RolePermissionSeeder extends Seeder
             'akuntansi.view', 'inventory.view', 'kas.view',
             
             // Akuntansi - View and Reports
-            'akuntansi.daftar-akun.view', 'akuntansi.jurnal.view', 'akuntansi.jurnal.approve',
+            'akuntansi.daftar-akun.view', 'akuntansi.jurnal.view', 
             'akuntansi.buku-besar.view', 'akuntansi.buku-besar.export',
             'akuntansi.laporan.view', 'akuntansi.laporan.export',
+            'akuntansi.journal-posting.view', 'akuntansi.journal-posting.post',
             
             // Inventory - View and Limited Management
             'inventory.items.view', 'inventory.categories.view', 'inventory.departments.view',
             'inventory.suppliers.view', 'inventory.purchases.view', 'inventory.purchases.approve',
+            'inventory.requisitions.view', 'inventory.requisitions.approve',
             
-            // Kas - View and Approval
-            'kas.cash-management.view', 'kas.cash-management.approve',
-            'kas.bank-account.view', 'kas.bank-transaction.view', 'kas.bank-transaction.approve',
-            'kas.giro-transaction.view', 'kas.giro-transaction.approve',
+            // Kas - View and Approval (Sesuai dengan routes)
+            'kas.cash-management.view', 'kas.cash-management.reconcile',
+            'kas.bank-account.view',
+            'kas.giro-transaction.view', 'kas.giro-transaction.post', 'kas.giro-transaction.clear', 'kas.giro-transaction.reject',
             'kas.transfer.view', 'kas.transfer.approve',
-            'kas.report.view', 'kas.report.export'
+            'laporan.cash-flow.view', 'laporan.cash-flow.export',
+            'laporan.giro-report.view', 'laporan.giro-report.export'
         ])->pluck('id');
         $managerRole->permissions()->sync($managerPermissions);
 
@@ -261,20 +270,20 @@ class RolePermissionSeeder extends Seeder
             'akuntansi.daftar-akun.import', 'akuntansi.daftar-akun.export', 'akuntansi.daftar-akun.activate', 'akuntansi.daftar-akun.deactivate',
             'akuntansi.jurnal.view', 'akuntansi.jurnal.create', 'akuntansi.jurnal.edit', 'akuntansi.jurnal.delete',
             'akuntansi.jurnal.post', 'akuntansi.jurnal.reverse',
+            'akuntansi.journal-posting.view', 'akuntansi.journal-posting.post',
             'akuntansi.buku-besar.view', 'akuntansi.buku-besar.export',
             'akuntansi.laporan.view', 'akuntansi.laporan.export',
             
-            // Kas - Full Access
-            'kas.cash-management.view', 'kas.cash-management.create', 'kas.cash-management.edit', 'kas.cash-management.delete',
-            'kas.cash-management.approve', 'kas.cash-management.reverse',
-            'kas.bank-account.view', 'kas.bank-account.create', 'kas.bank-account.edit', 'kas.bank-account.delete', 'kas.bank-account.toggle-status',
-            'kas.bank-transaction.view', 'kas.bank-transaction.create', 'kas.bank-transaction.edit', 'kas.bank-transaction.delete',
-            'kas.bank-transaction.approve', 'kas.bank-transaction.reverse', 'kas.bank-transaction.reconcile',
+            // Kas - Full Access (Sesuai dengan routes)
+            'kas.cash-management.view', 'kas.cash-management.daily-entry', 'kas.cash-management.reconcile',
+            'kas.cash-transaction.delete', 'kas.bank-transaction.delete',
+            'kas.bank-account.view', 'kas.bank-account.create', 'kas.bank-account.edit', 'kas.bank-account.delete',
             'kas.giro-transaction.view', 'kas.giro-transaction.create', 'kas.giro-transaction.edit', 'kas.giro-transaction.delete',
-            'kas.giro-transaction.approve', 'kas.giro-transaction.reverse', 'kas.giro-transaction.clear', 'kas.giro-transaction.reject',
+            'kas.giro-transaction.post', 'kas.giro-transaction.clear', 'kas.giro-transaction.reject',
             'kas.transfer.view', 'kas.transfer.create', 'kas.transfer.edit', 'kas.transfer.delete',
             'kas.transfer.approve', 'kas.transfer.reverse',
-            'kas.report.view', 'kas.report.export'
+            'laporan.cash-flow.view', 'laporan.cash-flow.export',
+            'laporan.giro-report.view', 'laporan.giro-report.export'
         ])->pluck('id');
         $akuntansiRole->permissions()->sync($akuntansiPermissions);
 
@@ -309,8 +318,9 @@ class RolePermissionSeeder extends Seeder
             'akuntansi.buku-besar.view', 'akuntansi.laporan.view',
             'inventory.items.view', 'inventory.categories.view', 'inventory.departments.view', 'inventory.suppliers.view',
             'inventory.requisitions.view', 'inventory.requisitions.create',
-            'kas.cash-management.view', 'kas.bank-account.view', 'kas.bank-transaction.view',
-            'kas.giro-transaction.view', 'kas.transfer.view', 'kas.report.view'
+            'kas.cash-management.view', 'kas.bank-account.view',
+            'kas.giro-transaction.view', 'kas.transfer.view',
+            'laporan.cash-flow.view', 'laporan.giro-report.view'
         ])->pluck('id');
         $userRole->permissions()->sync($userPermissions);
 

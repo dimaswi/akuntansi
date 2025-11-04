@@ -76,11 +76,11 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/akuntansi',
     },
     {
-        title: 'Jurnal',
-        href: '/akuntansi/jurnal',
+        title: 'Jurnal Penyesuaian',
+        href: '/akuntansi/jurnal-penyesuaian',
     },
     {
-        title: 'Detail Jurnal',
+        title: 'Detail Jurnal Penyesuaian',
         href: '#',
     },
 ];
@@ -122,7 +122,7 @@ const getStatusBadge = (status: string) => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
 };
 
-export default function JurnalShow({ jurnal }: JurnalPageProps) {
+export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
     const [dialogState, setDialogState] = useState<{
         open: boolean;
         type: 'post' | 'unpost' | 'reverse' | 'delete' | null;
@@ -142,43 +142,43 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
 
         switch (type) {
             case 'post':
-                router.post(route('akuntansi.jurnal.post', jurnal?.id), {}, {
+                router.post(route('akuntansi.jurnal-penyesuaian.post', jurnal?.id), {}, {
                     onSuccess: () => {
-                        toast.success('Jurnal berhasil diposting');
+                        toast.success('Jurnal penyesuaian berhasil diposting');
                     },
                     onError: () => {
-                        toast.error('Gagal memposting jurnal');
+                        toast.error('Gagal memposting jurnal penyesuaian');
                     },
                 });
                 break;
             case 'unpost':
-                router.post(route('akuntansi.jurnal.unpost', jurnal?.id), {}, {
+                router.post(route('akuntansi.jurnal-penyesuaian.unpost', jurnal?.id), {}, {
                     onSuccess: () => {
-                        toast.success('Posting jurnal berhasil dibatalkan');
+                        toast.success('Posting jurnal penyesuaian berhasil dibatalkan');
                     },
                     onError: () => {
-                        toast.error('Gagal membatalkan posting jurnal');
+                        toast.error('Gagal membatalkan posting jurnal penyesuaian');
                     },
                 });
                 break;
             case 'reverse':
-                router.post(route('akuntansi.jurnal.reverse', jurnal?.id), {}, {
+                router.post(route('akuntansi.jurnal-penyesuaian.reverse', jurnal?.id), {}, {
                     onSuccess: () => {
-                        toast.success('Jurnal berhasil dibalik');
+                        toast.success('Jurnal penyesuaian berhasil dibalik');
                     },
                     onError: () => {
-                        toast.error('Gagal membalik jurnal');
+                        toast.error('Gagal membalik jurnal penyesuaian');
                     },
                 });
                 break;
             case 'delete':
-                router.delete(route('akuntansi.jurnal.destroy', jurnal?.id), {
+                router.delete(route('akuntansi.jurnal-penyesuaian.destroy', jurnal?.id), {
                     onSuccess: () => {
-                        toast.success('Jurnal berhasil dihapus');
-                        router.visit(route('akuntansi.jurnal.index'));
+                        toast.success('Jurnal penyesuaian berhasil dihapus');
+                        router.visit(route('akuntansi.jurnal-penyesuaian.index'));
                     },
                     onError: () => {
-                        toast.error('Gagal menghapus jurnal');
+                        toast.error('Gagal menghapus jurnal penyesuaian');
                     },
                 });
                 break;
@@ -189,45 +189,49 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
         switch (dialogState.type) {
             case 'post':
                 return {
-                    title: 'Posting Jurnal',
-                    description: 'Apakah Anda yakin ingin memposting jurnal ini? Jurnal yang sudah diposting tidak dapat diubah.',
+                    title: 'Posting Jurnal Penyesuaian',
+                    description: 'Apakah Anda yakin ingin memposting jurnal penyesuaian ini? Jurnal yang sudah diposting tidak dapat diubah.',
+                    confirmText: 'Ya, Posting',
                 };
             case 'unpost':
                 return {
-                    title: 'Batal Posting Jurnal',
-                    description: 'Apakah Anda yakin ingin membatalkan posting jurnal ini? Jurnal akan kembali ke status draft dan dapat diubah kembali.',
+                    title: 'Batal Posting Jurnal Penyesuaian',
+                    description: 'Apakah Anda yakin ingin membatalkan posting jurnal penyesuaian ini? Jurnal akan kembali ke status draft dan dapat diubah kembali.',
+                    confirmText: 'Ya, Batal Posting',
                 };
             case 'reverse':
                 return {
-                    title: 'Reverse Jurnal',
-                    description: 'Apakah Anda yakin ingin membalik jurnal ini? Jurnal yang dibalik tidak dapat diubah lagi.',
+                    title: 'Reverse Jurnal Penyesuaian',
+                    description: 'Apakah Anda yakin ingin membalik jurnal penyesuaian ini? Jurnal yang dibalik tidak dapat diubah lagi.',
+                    confirmText: 'Ya, Reverse',
                 };
             case 'delete':
                 return {
-                    title: 'Hapus Jurnal',
-                    description: 'Apakah Anda yakin ingin menghapus jurnal ini? Tindakan ini tidak dapat dibatalkan.',
+                    title: 'Hapus Jurnal Penyesuaian',
+                    description: 'Apakah Anda yakin ingin menghapus jurnal penyesuaian ini? Tindakan ini tidak dapat dibatalkan.',
+                    confirmText: 'Ya, Hapus',
                 };
             default:
-                return { title: '', description: '' };
+                return { title: '', description: '', confirmText: '' };
         }
     };
 
     if (!jurnal) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Jurnal Tidak Ditemukan" />
+                <Head title="Jurnal Penyesuaian Tidak Ditemukan" />
                 <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
                     <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                        <h2 className="text-lg font-semibold text-red-800 mb-2">Jurnal Tidak Ditemukan</h2>
-                        <p className="text-red-700">Jurnal yang Anda cari tidak ditemukan atau mungkin telah dihapus.</p>
+                        <h2 className="text-lg font-semibold text-red-800 mb-2">Jurnal Penyesuaian Tidak Ditemukan</h2>
+                        <p className="text-red-700">Jurnal penyesuaian yang Anda cari tidak ditemukan atau mungkin telah dihapus.</p>
                         <div className="mt-4">
                             <Button 
                                 variant="outline" 
-                                onClick={() => router.visit(route('akuntansi.jurnal.index'))}
+                                onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.index'))}
                                 className="flex items-center gap-2"
                             >
                                 <ArrowLeft className="h-4 w-4" />
-                                Kembali ke Daftar Jurnal
+                                Kembali ke Daftar Jurnal Penyesuaian
                             </Button>
                         </div>
                     </div>
@@ -238,7 +242,7 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Detail Jurnal - ${jurnal.nomor_jurnal}`} />
+            <Head title={`Detail Jurnal Penyesuaian - ${jurnal.nomor_jurnal}`} />
             <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-8">
@@ -254,11 +258,11 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
                                 <>
                                     <Button 
                                         variant="outline" 
-                                        onClick={() => router.visit(route('akuntansi.jurnal.edit', jurnal.id))}
+                                        onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.edit', jurnal.id))}
                                         className="flex items-center gap-2"
                                     >
                                         <Edit className="h-4 w-4" />
-                                        Edit Jurnal
+                                        Edit Jurnal Penyesuaian
                                     </Button>
                                     <Button 
                                         variant="default" 
@@ -300,7 +304,7 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
                             )}
                             <Button 
                                 variant="outline" 
-                                onClick={() => router.visit(route('akuntansi.jurnal.index'))}
+                                onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.index'))}
                                 className="flex items-center gap-2"
                             >
                                 <ArrowLeft className="h-4 w-4" />
@@ -313,8 +317,8 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
                 {/* Jurnal Information */}
                 <div className="bg-white rounded-lg border shadow-sm mb-6">
                     <div className="border-b border-gray-200 px-6 py-4">
-                        <h2 className="text-lg font-semibold text-gray-900">Informasi Jurnal</h2>
-                        <p className="text-sm text-gray-600">Detail informasi header jurnal</p>
+                        <h2 className="text-lg font-semibold text-gray-900">Informasi Jurnal Penyesuaian</h2>
+                        <p className="text-sm text-gray-600">Detail informasi header jurnal penyesuaian</p>
                     </div>
                     <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -385,8 +389,8 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
                 {/* Detail Jurnal */}
                 <div className="bg-white rounded-lg border shadow-sm mb-6">
                     <div className="border-b border-gray-200 px-6 py-4">
-                        <h2 className="text-lg font-semibold text-gray-900">Detail Jurnal</h2>
-                        <p className="text-sm text-gray-600">Rincian debit dan kredit jurnal</p>
+                        <h2 className="text-lg font-semibold text-gray-900">Detail Jurnal Penyesuaian</h2>
+                        <p className="text-sm text-gray-600">Rincian debit dan kredit jurnal penyesuaian</p>
                     </div>
                     <div className="overflow-x-auto">
                         <Table>
@@ -420,7 +424,7 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                            Tidak ada detail jurnal
+                                            Tidak ada detail jurnal penyesuaian
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -443,38 +447,36 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
                 <div className="bg-white rounded-lg border shadow-sm">
                     <div className="border-b border-gray-200 px-6 py-4">
                         <h2 className="text-lg font-semibold text-gray-900">Aksi</h2>
-                        <p className="text-sm text-gray-600">Tindakan yang dapat dilakukan pada jurnal ini</p>
+                        <p className="text-sm text-gray-600">Tindakan yang dapat dilakukan pada jurnal penyesuaian ini</p>
                     </div>
                     <div className="p-6">
                         <div className="flex flex-wrap gap-3">
-                            
                             {jurnal.status === 'reversed' && (
                                 <div className="text-sm text-gray-500 italic">
-                                    Jurnal ini telah di-reverse. Tidak ada aksi yang dapat dilakukan.
+                                    Jurnal penyesuaian ini telah di-reverse. Tidak ada aksi yang dapat dilakukan.
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
-
-                {/* Alert Dialog */}
-                <AlertDialog open={dialogState.open} onOpenChange={closeDialog}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>{getDialogContent().title}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                {getDialogContent().description}
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Batal</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleConfirmAction}>
-                                Ya, Lanjutkan
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
             </div>
+
+            <AlertDialog open={dialogState.open} onOpenChange={closeDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{getDialogContent().title}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {getDialogContent().description}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmAction}>
+                            {getDialogContent().confirmText}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     );
 }

@@ -51,6 +51,13 @@ class LaporanKeuanganController extends Controller
                     'description' => 'Analisis rasio keuangan (Likuiditas, Solvabilitas, dll)',
                     'icon' => 'PieChart',
                     'color' => 'bg-pink-500'
+                ],
+                [
+                    'id' => 'dampak-penyesuaian',
+                    'name' => 'Dampak Jurnal Penyesuaian',
+                    'description' => 'Laporan dampak jurnal penyesuaian terhadap laporan keuangan',
+                    'icon' => 'FileEdit',
+                    'color' => 'bg-indigo-500'
                 ]
             ]
         ]);
@@ -62,9 +69,11 @@ class LaporanKeuanganController extends Controller
             'tanggal' => 'nullable|date',
             'periode_dari' => 'nullable|date',
             'periode_sampai' => 'nullable|date|after_or_equal:periode_dari',
+            'include_penyesuaian' => 'nullable|boolean',
         ]);
 
         $tanggal = $request->tanggal ? Carbon::parse($request->tanggal) : Carbon::now();
+        $includePenyesuaian = $request->boolean('include_penyesuaian', false);
         
         // Periode untuk laba rugi (default: awal tahun sampai tanggal neraca)
         $periodeDari = $request->periode_dari ? Carbon::parse($request->periode_dari) : Carbon::create($tanggal->year, 1, 1);
@@ -76,13 +85,13 @@ class LaporanKeuanganController extends Controller
         $akunEkuitas = DaftarAkun::where('jenis_akun', 'modal')->aktif()->orderBy('kode_akun')->get();
 
         // Hitung saldo masing-masing akun
-        $dataAset = $this->hitungSaldoAkun($akunAset, $tanggal);
-        $dataKewajiban = $this->hitungSaldoAkun($akunKewajiban, $tanggal);
-        $dataEkuitas = $this->hitungSaldoAkun($akunEkuitas, $tanggal);
+        $dataAset = $this->hitungSaldoAkun($akunAset, $tanggal, $includePenyesuaian);
+        $dataKewajiban = $this->hitungSaldoAkun($akunKewajiban, $tanggal, $includePenyesuaian);
+        $dataEkuitas = $this->hitungSaldoAkun($akunEkuitas, $tanggal, $includePenyesuaian);
 
         // Hitung laba rugi berjalan berdasarkan periode yang dipilih
         // Ini akan konsisten dengan laporan laba rugi
-        $labaRugiBerjalan = $this->hitungLabaRugiPeriode($periodeDari, $periodeSampai);
+        $labaRugiBerjalan = $this->hitungLabaRugiPeriode($periodeDari, $periodeSampai, $includePenyesuaian);
 
         $totalAset = collect($dataAset)->sum('saldo');
         $totalKewajiban = collect($dataKewajiban)->sum('saldo');
@@ -92,6 +101,7 @@ class LaporanKeuanganController extends Controller
             'tanggal' => $tanggal->format('Y-m-d'),
             'periode_dari' => $periodeDari->format('Y-m-d'),
             'periode_sampai' => $periodeSampai->format('Y-m-d'),
+            'include_penyesuaian' => $includePenyesuaian,
             'dataAset' => $dataAset,
             'dataKewajiban' => $dataKewajiban,
             'dataEkuitas' => $dataEkuitas,
@@ -108,18 +118,20 @@ class LaporanKeuanganController extends Controller
         $request->validate([
             'periode_dari' => 'nullable|date',
             'periode_sampai' => 'nullable|date|after_or_equal:periode_dari',
+            'include_penyesuaian' => 'nullable|boolean',
         ]);
 
         $periodeAwal = $request->periode_dari ? Carbon::parse($request->periode_dari) : Carbon::now()->startOfMonth();
         $periodeAkhir = $request->periode_sampai ? Carbon::parse($request->periode_sampai) : Carbon::now()->endOfMonth();
+        $includePenyesuaian = $request->boolean('include_penyesuaian', false);
 
         // Ambil akun pendapatan dan beban
         $akunPendapatan = DaftarAkun::where('jenis_akun', 'pendapatan')->aktif()->orderBy('kode_akun')->get();
         $akunBeban = DaftarAkun::where('jenis_akun', 'beban')->aktif()->orderBy('kode_akun')->get();
 
         // Hitung saldo dalam periode
-        $dataPendapatan = $this->hitungSaldoAkunPeriode($akunPendapatan, $periodeAwal, $periodeAkhir);
-        $dataBeban = $this->hitungSaldoAkunPeriode($akunBeban, $periodeAwal, $periodeAkhir);
+        $dataPendapatan = $this->hitungSaldoAkunPeriode($akunPendapatan, $periodeAwal, $periodeAkhir, $includePenyesuaian);
+        $dataBeban = $this->hitungSaldoAkunPeriode($akunBeban, $periodeAwal, $periodeAkhir, $includePenyesuaian);
 
         $totalPendapatan = collect($dataPendapatan)->sum('saldo');
         $totalBeban = collect($dataBeban)->sum('saldo');
@@ -128,6 +140,7 @@ class LaporanKeuanganController extends Controller
         return Inertia::render('akuntansi/laporan-keuangan/laba-rugi', [
             'periode_dari' => $periodeAwal->format('Y-m-d'),
             'periode_sampai' => $periodeAkhir->format('Y-m-d'),
+            'include_penyesuaian' => $includePenyesuaian,
             'dataPendapatan' => $dataPendapatan,
             'dataBeban' => $dataBeban,
             'totalPendapatan' => $totalPendapatan,
@@ -231,14 +244,14 @@ class LaporanKeuanganController extends Controller
             $saldoAwalModal += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
         }
 
-        // Hitung laba ditahan (akumulasi laba/rugi sebelum periode)
-        $labaDitahan = $this->hitungLabaRugiPeriode(Carbon::parse('1970-01-01'), $periodeAwal->copy()->subDay());
+        // Hitung laba ditahan (akumulasi laba/rugi sebelum periode) - tanpa penyesuaian
+        $labaDitahan = $this->hitungLabaRugiPeriode(Carbon::parse('1970-01-01'), $periodeAwal->copy()->subDay(), false);
         
         // Detail laba ditahan per bulan
         $detailLabaDitahanPerBulan = $this->getLabaDitahanPerBulan($periodeAwal);
 
-        // Hitung laba rugi periode berjalan
-        $labaRugiPeriode = $this->hitungLabaRugiPeriode($periodeAwal, $periodeAkhir);
+        // Hitung laba rugi periode berjalan - tanpa penyesuaian
+        $labaRugiPeriode = $this->hitungLabaRugiPeriode($periodeAwal, $periodeAkhir, false);
 
         // Hitung tambahan investasi dalam periode
         $tambahanInvestasi = 0;
@@ -324,8 +337,8 @@ class LaporanKeuanganController extends Controller
                 $bulanAkhir = $tanggalAkhir;
             }
             
-            // Hitung laba/rugi bulan ini
-            $labaRugiBulan = $this->hitungLabaRugiPeriode($bulanAwal, $bulanAkhir);
+            // Hitung laba/rugi bulan ini (tanpa penyesuaian untuk laba ditahan)
+            $labaRugiBulan = $this->hitungLabaRugiPeriode($bulanAwal, $bulanAkhir, false);
             $saldoAkumulasi += $labaRugiBulan;
             
             $detail[] = [
@@ -344,15 +357,23 @@ class LaporanKeuanganController extends Controller
         return $detail;
     }
 
-    private function hitungSaldoAkun($akunList, $tanggal)
+    private function hitungSaldoAkun($akunList, $tanggal, $includePenyesuaian = false)
     {
         $hasil = [];
         foreach ($akunList as $akun) {
             $transaksi = DetailJurnal::with(['jurnal'])
                 ->where('daftar_akun_id', $akun->id)
-                ->whereHas('jurnal', function($query) use ($tanggal) {
+                ->whereHas('jurnal', function($query) use ($tanggal, $includePenyesuaian) {
                     $query->where('tanggal_transaksi', '<=', $tanggal)
                           ->where('status', 'posted');
+                    
+                    // Exclude jurnal penyesuaian jika tidak diminta
+                    if (!$includePenyesuaian) {
+                        $query->where(function($q) {
+                            $q->where('jenis_jurnal', '!=', 'penyesuaian')
+                              ->orWhereNull('jenis_jurnal');
+                        });
+                    }
                 })
                 ->get();
 
@@ -394,15 +415,23 @@ class LaporanKeuanganController extends Controller
         return $hasil;
     }
 
-    private function hitungSaldoAkunPeriode($akunList, $periodeAwal, $periodeAkhir)
+    private function hitungSaldoAkunPeriode($akunList, $periodeAwal, $periodeAkhir, $includePenyesuaian = false)
     {
         $hasil = [];
         foreach ($akunList as $akun) {
             $transaksi = DetailJurnal::with(['jurnal'])
                 ->where('daftar_akun_id', $akun->id)
-                ->whereHas('jurnal', function($query) use ($periodeAwal, $periodeAkhir) {
+                ->whereHas('jurnal', function($query) use ($periodeAwal, $periodeAkhir, $includePenyesuaian) {
                     $query->whereBetween('tanggal_transaksi', [$periodeAwal, $periodeAkhir])
                           ->where('status', 'posted');
+                    
+                    // Exclude jurnal penyesuaian jika tidak diminta
+                    if (!$includePenyesuaian) {
+                        $query->where(function($q) {
+                            $q->where('jenis_jurnal', '!=', 'penyesuaian')
+                              ->orWhereNull('jenis_jurnal');
+                        });
+                    }
                 })
                 ->get();
 
@@ -443,7 +472,7 @@ class LaporanKeuanganController extends Controller
         return $hasil;
     }
 
-    private function hitungLabaRugiBerjalan($tanggal)
+    private function hitungLabaRugiBerjalan($tanggal, $includePenyesuaian = false)
     {
         // Hitung pendapatan sampai tanggal tertentu
         $akunPendapatan = DaftarAkun::where('jenis_akun', 'pendapatan')->aktif()->get();
@@ -454,9 +483,16 @@ class LaporanKeuanganController extends Controller
 
         foreach ($akunPendapatan as $akun) {
             $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
-                ->whereHas('jurnal', function($query) use ($tanggal) {
+                ->whereHas('jurnal', function($query) use ($tanggal, $includePenyesuaian) {
                     $query->where('tanggal_transaksi', '<=', $tanggal)
                           ->where('status', 'posted');
+                    
+                    if (!$includePenyesuaian) {
+                        $query->where(function($q) {
+                            $q->where('jenis_jurnal', '!=', 'penyesuaian')
+                              ->orWhereNull('jenis_jurnal');
+                        });
+                    }
                 })
                 ->get();
             $totalPendapatan += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
@@ -464,9 +500,16 @@ class LaporanKeuanganController extends Controller
 
         foreach ($akunBeban as $akun) {
             $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
-                ->whereHas('jurnal', function($query) use ($tanggal) {
+                ->whereHas('jurnal', function($query) use ($tanggal, $includePenyesuaian) {
                     $query->where('tanggal_transaksi', '<=', $tanggal)
                           ->where('status', 'posted');
+                    
+                    if (!$includePenyesuaian) {
+                        $query->where(function($q) {
+                            $q->where('jenis_jurnal', '!=', 'penyesuaian')
+                              ->orWhereNull('jenis_jurnal');
+                        });
+                    }
                 })
                 ->get();
             $totalBeban += $transaksi->sum('jumlah_debit') - $transaksi->sum('jumlah_kredit');
@@ -475,7 +518,7 @@ class LaporanKeuanganController extends Controller
         return $totalPendapatan - $totalBeban;
     }
 
-    private function hitungLabaRugiPeriode($periodeAwal, $periodeAkhir)
+    private function hitungLabaRugiPeriode($periodeAwal, $periodeAkhir, $includePenyesuaian = false)
     {
         $akunPendapatan = DaftarAkun::where('jenis_akun', 'pendapatan')->aktif()->get();
         $akunBeban = DaftarAkun::where('jenis_akun', 'beban')->aktif()->get();
@@ -485,9 +528,16 @@ class LaporanKeuanganController extends Controller
 
         foreach ($akunPendapatan as $akun) {
             $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
-                ->whereHas('jurnal', function($query) use ($periodeAwal, $periodeAkhir) {
+                ->whereHas('jurnal', function($query) use ($periodeAwal, $periodeAkhir, $includePenyesuaian) {
                     $query->whereBetween('tanggal_transaksi', [$periodeAwal, $periodeAkhir])
                           ->where('status', 'posted');
+                    
+                    if (!$includePenyesuaian) {
+                        $query->where(function($q) {
+                            $q->where('jenis_jurnal', '!=', 'penyesuaian')
+                              ->orWhereNull('jenis_jurnal');
+                        });
+                    }
                 })
                 ->get();
             $totalPendapatan += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
@@ -495,9 +545,16 @@ class LaporanKeuanganController extends Controller
 
         foreach ($akunBeban as $akun) {
             $transaksi = DetailJurnal::where('daftar_akun_id', $akun->id)
-                ->whereHas('jurnal', function($query) use ($periodeAwal, $periodeAkhir) {
+                ->whereHas('jurnal', function($query) use ($periodeAwal, $periodeAkhir, $includePenyesuaian) {
                     $query->whereBetween('tanggal_transaksi', [$periodeAwal, $periodeAkhir])
                           ->where('status', 'posted');
+                    
+                    if (!$includePenyesuaian) {
+                        $query->where(function($q) {
+                            $q->where('jenis_jurnal', '!=', 'penyesuaian')
+                              ->orWhereNull('jenis_jurnal');
+                        });
+                    }
                 })
                 ->get();
             $totalBeban += $transaksi->sum('jumlah_debit') - $transaksi->sum('jumlah_kredit');
@@ -637,8 +694,8 @@ class LaporanKeuanganController extends Controller
             $totalEkuitas += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
         }
 
-        // Hitung laba berjalan sampai tanggal
-        $labaBerjalan = $this->hitungLabaRugiPeriode(Carbon::parse('1970-01-01'), $tanggal);
+        // Hitung laba berjalan sampai tanggal (tanpa penyesuaian untuk analisis rasio)
+        $labaBerjalan = $this->hitungLabaRugiPeriode(Carbon::parse('1970-01-01'), $tanggal, false);
         $totalEkuitas += $labaBerjalan;
 
         // Hitung modal kerja
@@ -666,6 +723,102 @@ class LaporanKeuanganController extends Controller
             'cashRatio' => $cashRatio,
             'debtToAssetRatio' => $debtToAssetRatio,
             'debtToEquityRatio' => $debtToEquityRatio,
+        ]);
+    }
+
+    public function dampakPenyesuaian(Request $request)
+    {
+        $request->validate([
+            'periode_dari' => 'nullable|date',
+            'periode_sampai' => 'nullable|date|after_or_equal:periode_dari',
+        ]);
+
+        $periodeAwal = $request->periode_dari ? Carbon::parse($request->periode_dari) : Carbon::now()->startOfMonth();
+        $periodeAkhir = $request->periode_sampai ? Carbon::parse($request->periode_sampai) : Carbon::now()->endOfMonth();
+
+        // Ambil semua jurnal penyesuaian dalam periode
+        $jurnalPenyesuaian = Jurnal::with(['details.daftarAkun'])
+            ->where('jenis_jurnal', 'penyesuaian')
+            ->where('status', 'posted')
+            ->whereBetween('tanggal_transaksi', [$periodeAwal, $periodeAkhir])
+            ->orderBy('tanggal_transaksi')
+            ->get();
+
+        // Hitung dampak per akun
+        $dampakPerAkun = [];
+        foreach ($jurnalPenyesuaian as $jurnal) {
+            foreach ($jurnal->details as $detail) {
+                $akunId = $detail->daftar_akun_id;
+                
+                if (!isset($dampakPerAkun[$akunId])) {
+                    $dampakPerAkun[$akunId] = [
+                        'akun' => $detail->daftarAkun,
+                        'total_debit' => 0,
+                        'total_kredit' => 0,
+                        'net' => 0,
+                        'jurnal_list' => []
+                    ];
+                }
+                
+                $dampakPerAkun[$akunId]['total_debit'] += $detail->jumlah_debit;
+                $dampakPerAkun[$akunId]['total_kredit'] += $detail->jumlah_kredit;
+                
+                // Net berdasarkan jenis akun
+                $jenisAkun = $detail->daftarAkun->jenis_akun;
+                if (in_array($jenisAkun, ['aset', 'beban'])) {
+                    $net = $detail->jumlah_debit - $detail->jumlah_kredit;
+                } else {
+                    $net = $detail->jumlah_kredit - $detail->jumlah_debit;
+                }
+                $dampakPerAkun[$akunId]['net'] += $net;
+                
+                $dampakPerAkun[$akunId]['jurnal_list'][] = [
+                    'nomor_jurnal' => $jurnal->nomor_jurnal,
+                    'tanggal' => $jurnal->tanggal_transaksi->format('Y-m-d'),
+                    'keterangan' => $jurnal->keterangan,
+                    'debit' => $detail->jumlah_debit,
+                    'kredit' => $detail->jumlah_kredit,
+                    'net' => $net
+                ];
+            }
+        }
+
+        // Kelompokkan dampak per jenis akun
+        $dampakPerJenisAkun = [
+            'aset' => [],
+            'kewajiban' => [],
+            'modal' => [],
+            'pendapatan' => [],
+            'beban' => []
+        ];
+
+        foreach ($dampakPerAkun as $data) {
+            $jenisAkun = $data['akun']->jenis_akun;
+            $dampakPerJenisAkun[$jenisAkun][] = $data;
+        }
+
+        // Hitung total dampak laba rugi
+        $dampakPendapatan = collect($dampakPerJenisAkun['pendapatan'])->sum('net');
+        $dampakBeban = collect($dampakPerJenisAkun['beban'])->sum('net');
+        $dampakLabaRugi = $dampakPendapatan - $dampakBeban;
+
+        // Hitung total dampak neraca
+        $dampakAset = collect($dampakPerJenisAkun['aset'])->sum('net');
+        $dampakKewajiban = collect($dampakPerJenisAkun['kewajiban'])->sum('net');
+        $dampakModal = collect($dampakPerJenisAkun['modal'])->sum('net');
+
+        return Inertia::render('akuntansi/laporan-keuangan/dampak-penyesuaian', [
+            'periode_dari' => $periodeAwal->format('Y-m-d'),
+            'periode_sampai' => $periodeAkhir->format('Y-m-d'),
+            'jurnalPenyesuaian' => $jurnalPenyesuaian,
+            'dampakPerJenisAkun' => $dampakPerJenisAkun,
+            'dampakPendapatan' => $dampakPendapatan,
+            'dampakBeban' => $dampakBeban,
+            'dampakLabaRugi' => $dampakLabaRugi,
+            'dampakAset' => $dampakAset,
+            'dampakKewajiban' => $dampakKewajiban,
+            'dampakModal' => $dampakModal,
+            'totalJurnalPenyesuaian' => $jurnalPenyesuaian->count()
         ]);
     }
 

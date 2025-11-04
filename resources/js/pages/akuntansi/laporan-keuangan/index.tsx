@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, TrendingUp, DollarSign, Activity, FileText, Calendar, Download } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, Activity, FileText, Calendar, Download, PieChart, FileEdit } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
 interface LaporanType {
@@ -28,7 +28,9 @@ export default function LaporanKeuanganIndex({ laporanTypes }: Props) {
             Activity,
             FileText,
             Calendar,
-            Download
+            Download,
+            PieChart,
+            FileEdit
         };
         return icons[iconName] || FileText;
     };
@@ -52,7 +54,7 @@ export default function LaporanKeuanganIndex({ laporanTypes }: Props) {
                                     </p>
                                 </div>
                                 <span className="text-sm text-gray-500">
-                                    4 Laporan
+                                    {laporanTypes.length} Laporan
                                 </span>
                             </div>
                         </div>

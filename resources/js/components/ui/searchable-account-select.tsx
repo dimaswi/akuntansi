@@ -169,8 +169,7 @@ export function SearchableAccountSelect({
                     disabled={disabled}
                     className={cn(
                         "pr-16",
-                        error ? "border-red-500" : "",
-                        open ? "rounded-b-none border-b-0" : ""
+                        error ? "border-red-500" : ""
                     )}
                 />
                 
@@ -205,10 +204,15 @@ export function SearchableAccountSelect({
             {open && !disabled && (
                 <div 
                     ref={listRef}
-                    className="absolute top-full left-0 right-0 z-50 max-h-60 overflow-auto bg-white border border-t-0 border-gray-300 rounded-b-md shadow-lg"
+                    className="fixed z-[9999] max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-xl"
+                    style={{
+                        top: inputRef.current ? `${inputRef.current.getBoundingClientRect().bottom + window.scrollY}px` : '0',
+                        left: inputRef.current ? `${inputRef.current.getBoundingClientRect().left + window.scrollX}px` : '0',
+                        width: inputRef.current ? `${inputRef.current.getBoundingClientRect().width}px` : 'auto'
+                    }}
                 >
                     {filteredAccounts.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-gray-500">
+                        <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
                             {searchValue ? "Tidak ada akun yang ditemukan" : "Tidak ada data"}
                         </div>
                     ) : (
@@ -224,25 +228,25 @@ export function SearchableAccountSelect({
                                     handleSelect(account);
                                 }}
                                 className={cn(
-                                    "px-3 py-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0",
-                                    "hover:bg-gray-50",
-                                    index === highlightedIndex ? "bg-blue-50" : "",
-                                    selectedAccount?.id === account.id ? "bg-blue-100" : ""
+                                    "px-3 py-2 cursor-pointer text-sm border-b border-gray-100 dark:border-gray-700 last:border-b-0",
+                                    "hover:bg-gray-50 dark:hover:bg-gray-700",
+                                    index === highlightedIndex ? "bg-blue-50 dark:bg-blue-900/30" : "",
+                                    selectedAccount?.id === account.id ? "bg-blue-100 dark:bg-blue-900/50" : ""
                                 )}
                             >
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <div className="font-medium">
+                                        <div className="font-medium text-gray-900 dark:text-gray-100">
                                             {account.kode_akun} - {account.nama_akun}
                                         </div>
                                         {account.jenis_akun && (
-                                            <div className="text-xs text-gray-500 capitalize">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                                                 {account.jenis_akun.replace('_', ' ')}
                                             </div>
                                         )}
                                     </div>
                                     {selectedAccount?.id === account.id && (
-                                        <Check className="h-4 w-4 text-blue-600" />
+                                        <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                     )}
                                 </div>
                             </div>

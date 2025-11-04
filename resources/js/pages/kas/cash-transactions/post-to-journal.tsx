@@ -1,103 +1,138 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SearchableAccountSelect } from "@/components/ui/searchable-account-select";
-import AppLayout from "@/layouts/app-layout";
-import { BreadcrumbItem, SharedData } from "@/types";
-import { Head, router, usePage } from "@inertiajs/react";
-import { ArrowLeft, BookOpen, AlertCircle, Wallet } from "lucide-react";
-import { FormEventHandler, useState } from "react";
-import { toast } from "sonner";
+﻿import React, { useState, useEffect } from 'react';
+import { Head, router, useForm } from '@inertiajs/react';
+import AppLayout from '@/layouts/app-layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { SearchableAccountSelect } from '@/components/ui/searchable-account-select';
+import { Badge } from '@/components/ui/badge';
+import {
+    ArrowLeft,
+    Plus,
+    Trash2,
+    FileText,
+    Calendar,
+    Hash,
+    User,
+    Wallet,
+    AlertCircle,
+    CheckCircle2
+} from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { toast } from 'sonner';
 
-interface CashTransaction {
-    id: number;
-    nomor_transaksi: string;
-    tanggal_transaksi: string;
-    jenis_transaksi: string;
-    kategori_transaksi: string;
-    jumlah: number;
-    keterangan: string;
-    pihak_terkait: string;
-    daftar_akun_kas: {
-        id: number;
-        kode_akun: string;
-        nama_akun: string;
-    };
-    user: {
-        name: string;
-    };
-}
-
-interface DaftarAkun {
+interface Akun {
     id: number;
     kode_akun: string;
     nama_akun: string;
     jenis_akun: string;
 }
 
-interface Props extends SharedData {
-    cashTransactions: CashTransaction[];
-    daftarAkun: DaftarAkun[];
+interface CashTransaction {
+    id: number;
+    nomor_transaksi: string;
+    tanggal_transaksi: string;
+    jenis_transaksi: string;
+    pihak_terkait: string;
+    keterangan: string;
+    jumlah: number;
+    daftar_akun_kas_id: number;
+    daftar_akun_kas: Akun; // Laravel sends snake_case
+    user?: {
+        name: string;
+    } | null;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: <Wallet className="h-4 w-4" />,
-        href: '/kas',
-    },
-    {
-        title: 'Transaksi Kas',
-        href: '/kas/cash-transactions',
-    },
-    {
-        title: 'Posting ke Jurnal',
-        href: '#',
-    },
-];
+interface DetailJurnalRow {
+    id: string;
+    daftar_akun_id: string;
+    keterangan: string;
+    jumlah_debit: number;
+    jumlah_kredit: number;
+    is_readonly: boolean;
+}
 
-export default function CashTransactionPostToJournal() {
-    const { cashTransactions, daftarAkun } = usePage<Props>().props;
-    const [accountMappings, setAccountMappings] = useState<Record<number, string>>({});
-    const [processing, setProcessing] = useState(false);
+interface Props {
+    cashTransaction: CashTransaction;
+    daftarAkun: Akun[];
+    nomorJurnalPreview: string;
+}
 
-    const handleAccountChange = (transactionId: number, accountId: string) => {
-        setAccountMappings(prev => ({
-            ...prev,
-            [transactionId]: accountId
-        }));
-    };
+export default function PostToJurnal({ cashTransaction, daftarAkun, nomorJurnalPreview }: Props) {
+    // Debug: Check data received
+    console.log('PostToJurnal Props:', { cashTransaction, daftarAkun, nomorJurnalPreview });
+    
+    // Handle undefined/null cashTransaction early
+    if (!cashTransaction) {
+        return (
+            <AppLayout>
+                <Head title="Post Transaksi Kas ke Jurnal" />
+                <div className="max-w-7xl mx-auto p-4 sm:px-6 lg:px-8">
+                    <div className="text-center py-12">
+                        <p className="text-red-500">Error: Data transaksi tidak ditemukan</p>
+                        <Link href="/kas/cash-transactions" className="text-blue-600 hover:underline mt-4 inline-block">
+                            Kembali ke Daftar Transaksi
+                        </Link>
+                    </div>
+                </div>
+            </AppLayout>
+        );
+    }
 
-    const handleSubmit: FormEventHandler = (e) => {
-        e.preventDefault();
-        
-        // Validasi semua transaksi sudah dipilih akun lawannya
-        const mappings = cashTransactions.map(transaction => ({
-            cash_transaction_id: transaction.id,
-            daftar_akun_lawan_id: accountMappings[transaction.id]
-        }));
+    const { data, setData, post, processing, errors } = useForm({
+        cash_transaction_id: cashTransaction.id,
+        detail_jurnal: [] as any[]
+    });
 
-        const hasUnmappedTransaction = mappings.some(mapping => !mapping.daftar_akun_lawan_id);
-        
-        if (hasUnmappedTransaction) {
-            toast.error('Semua transaksi harus dipilih akun lawannya');
+    const [detailRows, setDetailRows] = useState<DetailJurnalRow[]>([]);
+    const [totalDebit, setTotalDebit] = useState(0);
+    const [totalKredit, setTotalKredit] = useState(0);
+    const [isBalance, setIsBalance] = useState(false);
+
+    // Get kas account (Laravel sends snake_case)
+    const kasAccount = cashTransaction.daftar_akun_kas;
+
+    // Store original amount for validation
+    const originalAmount = cashTransaction.jumlah;
+    const isPenerimaan = ['penerimaan', 'uang_muka_penerimaan', 'transfer_masuk'].includes(cashTransaction.jenis_transaksi);
+
+    // Initialize with first row (kas account - now editable)
+    useEffect(() => {
+        if (!kasAccount) {
+            console.error('Kas account not found in transaction data');
             return;
         }
 
-        setProcessing(true);
-        router.post('/kas/cash-transactions/post-to-journal', {
-            selected_transactions: cashTransactions.map(t => t.id),
-            account_mappings: mappings
-        }, {
-            onSuccess: () => {
-                toast.success('Transaksi berhasil diposting ke jurnal');
-                setProcessing(false);
-            },
-            onError: () => {
-                toast.error('Gagal memposting transaksi ke jurnal');
-                setProcessing(false);
-            }
-        });
-    };
+        const firstRow: DetailJurnalRow = {
+            id: 'kas-auto',
+            daftar_akun_id: cashTransaction.daftar_akun_kas_id.toString(),
+            keterangan: cashTransaction.keterangan,
+            jumlah_debit: isPenerimaan ? cashTransaction.jumlah : 0,
+            jumlah_kredit: isPenerimaan ? 0 : cashTransaction.jumlah,
+            is_readonly: false // Changed to false to make editable
+        };
+
+        setDetailRows([firstRow]);
+    }, [cashTransaction]);
+
+    // Calculate totals and balance
+    useEffect(() => {
+        const debit = detailRows.reduce((sum, row) => sum + Number(row.jumlah_debit), 0);
+        const kredit = detailRows.reduce((sum, row) => sum + Number(row.jumlah_kredit), 0);
+
+        setTotalDebit(debit);
+        setTotalKredit(kredit);
+        setIsBalance(debit === kredit && debit > 0 && detailRows.length >= 2);
+
+        // Update form data
+        setData('detail_jurnal', detailRows.map(row => ({
+            daftar_akun_id: Number(row.daftar_akun_id),
+            keterangan: row.keterangan,
+            jumlah_debit: Number(row.jumlah_debit),
+            jumlah_kredit: Number(row.jumlah_kredit)
+        })));
+    }, [detailRows]);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -107,202 +142,393 @@ export default function CashTransactionPostToJournal() {
         }).format(amount);
     };
 
-    const getRecommendedAccounts = (transaction: CashTransaction) => {
-        const kategori = transaction.kategori_transaksi;
-        const jenis = transaction.jenis_transaksi;
-
-        if (jenis === 'penerimaan') {
-            switch (kategori) {
-                case 'penjualan':
-                    return daftarAkun.filter(akun => 
-                        akun.jenis_akun === 'pendapatan' && 
-                        akun.nama_akun.toLowerCase().includes('penjualan')
-                    );
-                case 'piutang':
-                    return daftarAkun.filter(akun => 
-                        akun.jenis_akun === 'aset' && 
-                        akun.nama_akun.toLowerCase().includes('piutang')
-                    );
-                case 'investasi':
-                    return daftarAkun.filter(akun => 
-                        akun.jenis_akun === 'modal'
-                    );
-                case 'bunga':
-                    return daftarAkun.filter(akun => 
-                        akun.jenis_akun === 'pendapatan' && 
-                        akun.nama_akun.toLowerCase().includes('bunga')
-                    );
-                default:
-                    return daftarAkun.filter(akun => akun.jenis_akun === 'pendapatan');
-            }
-        } else {
-            switch (kategori) {
-                case 'pembelian':
-                    return daftarAkun.filter(akun => 
-                        akun.jenis_akun === 'biaya' && 
-                        akun.nama_akun.toLowerCase().includes('pembelian')
-                    );
-                case 'gaji':
-                    return daftarAkun.filter(akun => 
-                        (akun.jenis_akun === 'biaya' || akun.jenis_akun === 'beban') && 
-                        (akun.nama_akun.toLowerCase().includes('gaji') || akun.nama_akun.toLowerCase().includes('upah'))
-                    );
-                case 'operasional':
-                    return daftarAkun.filter(akun => 
-                        (akun.jenis_akun === 'biaya' || akun.jenis_akun === 'beban') && 
-                        akun.nama_akun.toLowerCase().includes('operasional')
-                    );
-                case 'pinjaman':
-                    return daftarAkun.filter(akun => 
-                        akun.jenis_akun === 'kewajiban'
-                    );
-                default:
-                    return daftarAkun.filter(akun => akun.jenis_akun === 'biaya' || akun.jenis_akun === 'beban');
-            }
-        }
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
     };
 
+    const addRow = () => {
+        const newRow: DetailJurnalRow = {
+            id: `new-row-${Date.now()}`,
+            daftar_akun_id: '',
+            keterangan: cashTransaction.keterangan, // Use transaction keterangan as default
+            jumlah_debit: 0,
+            jumlah_kredit: 0,
+            is_readonly: false
+        };
+        setDetailRows([...detailRows, newRow]);
+    };
+
+    const removeRow = (id: string) => {
+        setDetailRows(detailRows.filter(row => row.id !== id));
+    };
+
+    const updateRow = (id: string, field: keyof DetailJurnalRow, value: any) => {
+        setDetailRows(detailRows.map(row => {
+            if (row.id !== id) return row;
+            
+            // Validate if this is the kas row (first row) and amount exceeds original
+            if (row.id === 'kas-auto') {
+                if (field === 'jumlah_debit' && isPenerimaan) {
+                    const newValue = Number(value);
+                    if (newValue > originalAmount) {
+                        toast.error(`Jumlah debit tidak boleh melebihi ${formatCurrency(originalAmount)}`);
+                        return row; // Don't update
+                    }
+                } else if (field === 'jumlah_kredit' && !isPenerimaan) {
+                    const newValue = Number(value);
+                    if (newValue > originalAmount) {
+                        toast.error(`Jumlah kredit tidak boleh melebihi ${formatCurrency(originalAmount)}`);
+                        return row; // Don't update
+                    }
+                }
+            }
+            
+            return { ...row, [field]: value };
+        }));
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!isBalance) return;
+
+        post(route('kas.cash-transactions.post-to-journal'));
+    };
+
+    const getJenisColor = (jenis: string) => {
+        const colors: Record<string, { bg: string; text: string; border: string }> = {
+            'penerimaan': { bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-300', border: 'border-green-200 dark:border-green-700' },
+            'pengeluaran': { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-300', border: 'border-red-200 dark:border-red-700' },
+            'transfer_masuk': { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-700' },
+            'transfer_keluar': { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-200 dark:border-orange-700' },
+        };
+        return colors[jenis] || { bg: 'bg-gray-50 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', border: 'border-gray-200 dark:border-gray-600' };
+    };
+
+    const jenisColor = getJenisColor(cashTransaction.jenis_transaksi);
+
+    // Show loading if data not ready
+    if (!cashTransaction || !kasAccount) {
+        return (
+            <AppLayout>
+                <Head title="Post Transaksi Kas ke Jurnal" />
+                <div className="max-w-7xl mx-auto p-4 sm:px-6 lg:px-8">
+                    <div className="text-center py-12">
+                        <p className="text-gray-500 dark:text-gray-400">Loading data transaksi...</p>
+                    </div>
+                </div>
+            </AppLayout>
+        );
+    }
+
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Posting Transaksi Kas ke Jurnal" />
-            <div className="p-4">
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <BookOpen className="h-5 w-5" />
-                                    Posting Transaksi Kas ke Jurnal
-                                </CardTitle>
-                                <CardDescription>
-                                    Pilih akun lawan untuk setiap transaksi sebelum posting ke jurnal
-                                </CardDescription>
-                            </div>
-                            <Button
-                                variant="outline"
-                                onClick={() => router.visit('/kas/cash-transactions')}
-                                className="gap-2"
-                            >
+        <AppLayout>
+            <Head title="Post Transaksi Kas ke Jurnal" />
+            
+            <div className="max-w-7xl mx-auto p-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="mb-6">
+                    <div className="flex items-center space-x-4 mb-2">
+                        <Link href={route('kas.cash-transactions.index')}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                 <ArrowLeft className="h-4 w-4" />
-                                Kembali
                             </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Post ke Jurnal</h1>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Cross-check transaksi kas ke jurnal akuntansi</p>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Alert className="mb-6">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>
-                                <strong>Petunjuk:</strong> Pilih akun lawan yang sesuai untuk setiap transaksi. 
-                                Sistem memberikan rekomendasi berdasarkan kategori transaksi, namun Anda dapat memilih akun lain sesuai kebutuhan.
-                            </AlertDescription>
-                        </Alert>
+                    </div>
+                </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="space-y-4">
-                                {cashTransactions.map((transaction, index) => {
-                                    const recommendedAccounts = getRecommendedAccounts(transaction);
-                                    const allAccounts = daftarAkun.filter(akun => 
-                                        transaction.jenis_transaksi === 'penerimaan' 
-                                            ? ['pendapatan', 'kewajiban', 'modal', 'aset'].includes(akun.jenis_akun)
-                                            : ['biaya', 'beban', 'aset', 'kewajiban'].includes(akun.jenis_akun)
-                                    );
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {/* Left: Transaction Info */}
+                    <div className="lg:col-span-1">
+                        <Card className="border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 sticky top-4">
+                            <CardHeader className="pb-3 border-b border-gray-200 dark:border-gray-700">
+                                <CardTitle className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                                    <Wallet className="h-4 w-4 mr-2 text-gray-600 dark:text-gray-400" />
+                                    Info Transaksi Kas
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-3">
+                                <div>
+                                    <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Nomor Transaksi</p>
+                                    <p className="text-xs font-mono font-semibold text-gray-900 dark:text-gray-100">{cashTransaction.nomor_transaksi}</p>
+                                </div>
 
-                                    return (
-                                        <Card key={transaction.id} className="p-4">
-                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <h4 className="font-medium text-sm text-gray-900">
-                                                        {transaction.nomor_transaksi}
-                                                    </h4>
-                                                    <div className="text-sm space-y-1">
-                                                        <p><span className="font-medium">Tanggal:</span> {new Date(transaction.tanggal_transaksi).toLocaleDateString('id-ID')}</p>
-                                                        <p><span className="font-medium">Jenis:</span> {transaction.jenis_transaksi === 'penerimaan' ? 'Penerimaan' : 'Pengeluaran'}</p>
-                                                        <p><span className="font-medium">Kategori:</span> {transaction.kategori_transaksi}</p>
-                                                        <p><span className="font-medium">Jumlah:</span> {formatCurrency(transaction.jumlah)}</p>
-                                                        <p><span className="font-medium">Keterangan:</span> {transaction.keterangan}</p>
-                                                        <p><span className="font-medium">Akun Kas:</span> {transaction.daftar_akun_kas.kode_akun} - {transaction.daftar_akun_kas.nama_akun}</p>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="space-y-3">
-                                                    <div>
-                                                        <SearchableAccountSelect
-                                                            accounts={allAccounts}
-                                                            value={accountMappings[transaction.id]}
-                                                            onValueChange={(value) => handleAccountChange(transaction.id, value)}
-                                                            label="Akun Lawan *"
-                                                            placeholder="Pilih akun lawan"
-                                                            error=""
-                                                        />
-                                                        {recommendedAccounts.length > 0 && (
-                                                            <div className="mt-2">
-                                                                <p className="text-xs font-medium text-blue-600 mb-1">Rekomendasi:</p>
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {recommendedAccounts.slice(0, 3).map((akun) => (
-                                                                        <button
-                                                                            key={`rec-${akun.id}`}
+                                <div>
+                                    <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Tanggal</p>
+                                    <div className="flex items-center text-xs text-gray-700 dark:text-gray-300">
+                                        <Calendar className="h-3 w-3 mr-1.5 text-gray-500" />
+                                        {formatDate(cashTransaction.tanggal_transaksi)}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Jenis Transaksi</p>
+                                    <Badge className={`text-[10px] px-2 py-0.5 h-5 font-medium ${jenisColor.text} ${jenisColor.bg} border ${jenisColor.border}`}>
+                                        {cashTransaction.jenis_transaksi.replace(/_/g, ' ').toUpperCase()}
+                                    </Badge>
+                                </div>
+
+                                <div>
+                                    <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Akun Kas</p>
+                                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">{kasAccount.nama_akun}</p>
+                                    <p className="text-[10px] font-mono text-gray-500 dark:text-gray-400 mt-0.5">{kasAccount.kode_akun}</p>
+                                </div>
+
+                                <div>
+                                    <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Jumlah</p>
+                                    <p className="text-lg font-bold font-mono text-gray-900 dark:text-gray-100">{formatCurrency(cashTransaction.jumlah)}</p>
+                                </div>
+
+                                <div>
+                                    <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Pihak Terkait</p>
+                                    <p className="text-xs text-gray-700 dark:text-gray-300">{cashTransaction.pihak_terkait}</p>
+                                </div>
+
+                                <div>
+                                    <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Dibuat Oleh</p>
+                                    <div className="flex items-center text-xs text-gray-700 dark:text-gray-300">
+                                        <User className="h-3 w-3 mr-1.5 text-gray-500" />
+                                        {cashTransaction.user?.name || 'Unknown'}
+                                    </div>
+                                </div>
+
+                                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                                    <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Keterangan</p>
+                                    <p className="text-xs text-gray-700 dark:text-gray-300 italic">{cashTransaction.keterangan}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Right: Journal Form */}
+                    <div className="lg:col-span-2">
+                        <form onSubmit={handleSubmit}>
+                            <Card className="border-gray-200 dark:border-gray-700 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+                                <CardHeader className="pb-4 border-b border-gray-200 dark:border-gray-700">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                                            <FileText className="h-4 w-4 mr-2 text-gray-600 dark:text-gray-400" />
+                                            Form Jurnal
+                                        </CardTitle>
+                                        <Badge variant="outline" className="text-[10px] font-mono">
+                                            <Hash className="h-3 w-3 mr-1" />
+                                            {nomorJurnalPreview}
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="pt-4 space-y-4">
+                                    {/* Detail Jurnal Table */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <Label className="text-xs font-medium text-gray-700 dark:text-gray-300">Detail Jurnal</Label>
+                                            <Button
+                                                type="button"
+                                                onClick={addRow}
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-7 text-xs"
+                                            >
+                                                <Plus className="h-3 w-3 mr-1" />
+                                                Tambah Baris
+                                            </Button>
+                                        </div>
+
+                                        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-xs">
+                                                    <thead>
+                                                        <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                                                            <th className="text-left py-2 px-3 text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[200px]">Akun</th>
+                                                            <th className="text-left py-2 px-3 text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Keterangan</th>
+                                                            <th className="text-right py-2 px-3 text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">Debit</th>
+                                                            <th className="text-right py-2 px-3 text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[120px]">Kredit</th>
+                                                            <th className="text-center py-2 px-3 text-[10px] font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider w-[40px]"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {detailRows.map((row, index) => {
+                                                            // Check if kas row exceeds original amount
+                                                            const kasExceeded = row.id === 'kas-auto' && (
+                                                                (isPenerimaan && row.jumlah_debit > originalAmount) ||
+                                                                (!isPenerimaan && row.jumlah_kredit > originalAmount)
+                                                            );
+                                                            
+                                                            return (
+                                                            <tr
+                                                                key={row.id}
+                                                                className={`border-b border-gray-100 dark:border-gray-700/50 ${
+                                                                    kasExceeded 
+                                                                        ? 'bg-red-50 dark:bg-red-900/20' 
+                                                                        : row.id === 'kas-auto' 
+                                                                            ? 'bg-blue-50/50 dark:bg-blue-900/10' 
+                                                                            : 'bg-white dark:bg-gray-900/50 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                                                                }`}
+                                                            >
+                                                                <td className="py-2 px-3">
+                                                                    {row.id === 'kas-auto' ? (
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                                                                                KAS
+                                                                            </Badge>
+                                                                            <div>
+                                                                                <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">{kasAccount.nama_akun}</p>
+                                                                                <p className="text-[10px] font-mono text-gray-500 dark:text-gray-400">{kasAccount.kode_akun}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <SearchableAccountSelect
+                                                                            accounts={daftarAkun}
+                                                                            value={row.daftar_akun_id}
+                                                                            onValueChange={(value) => updateRow(row.id, 'daftar_akun_id', value)}
+                                                                            placeholder="Pilih akun..."
+                                                                        />
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-2 px-3">
+                                                                    <Input
+                                                                        value={row.keterangan}
+                                                                        onChange={(e) => updateRow(row.id, 'keterangan', e.target.value)}
+                                                                        className="text-xs h-8 border-gray-300 dark:border-gray-600"
+                                                                        placeholder="Keterangan untuk akun ini..."
+                                                                    />
+                                                                </td>
+                                                                <td className="py-2 px-3">
+                                                                    <div className="relative">
+                                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">Rp</span>
+                                                                        <Input
+                                                                            type="number"
+                                                                            value={row.jumlah_debit}
+                                                                            onChange={(e) => updateRow(row.id, 'jumlah_debit', Number(e.target.value))}
+                                                                            className="text-xs h-8 text-right font-mono border-gray-300 dark:border-gray-600 pl-8"
+                                                                            min="0"
+                                                                            step="1"
+                                                                            placeholder="0"
+                                                                        />
+                                                                    </div>
+                                                                </td>
+                                                                <td className="py-2 px-3">
+                                                                    <div className="relative">
+                                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">Rp</span>
+                                                                        <Input
+                                                                            type="number"
+                                                                            value={row.jumlah_kredit}
+                                                                            onChange={(e) => updateRow(row.id, 'jumlah_kredit', Number(e.target.value))}
+                                                                            className="text-xs h-8 text-right font-mono border-gray-300 dark:border-gray-600 pl-8"
+                                                                            min="0"
+                                                                            step="1"
+                                                                            placeholder="0"
+                                                                        />
+                                                                    </div>
+                                                                </td>
+                                                                <td className="py-2 px-3 text-center">
+                                                                    {row.id !== 'kas-auto' && (
+                                                                        <Button
                                                                             type="button"
-                                                                            onClick={() => handleAccountChange(transaction.id, akun.id.toString())}
-                                                                            className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            onClick={() => removeRow(row.id)}
+                                                                            className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/20"
                                                                         >
-                                                                            ★ {akun.kode_akun} - {akun.nama_akun}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    
-                                                    <div className="text-xs text-gray-500">
-                                                        <p><strong>Jurnal yang akan dibuat:</strong></p>
-                                                        {transaction.jenis_transaksi === 'penerimaan' ? (
-                                                            <div className="mt-1 p-2 bg-green-50 rounded text-green-800">
-                                                                <p>Dr. {transaction.daftar_akun_kas.nama_akun} = {formatCurrency(transaction.jumlah)}</p>
-                                                                <p>Cr. [Akun Lawan] = {formatCurrency(transaction.jumlah)}</p>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="mt-1 p-2 bg-red-50 rounded text-red-800">
-                                                                <p>Dr. [Akun Lawan] = {formatCurrency(transaction.jumlah)}</p>
-                                                                <p>Cr. {transaction.daftar_akun_kas.nama_akun} = {formatCurrency(transaction.jumlah)}</p>
-                                                            </div>
-                                                        )}
+                                                                            <Trash2 className="h-3 w-3 text-red-600 dark:text-red-400" />
+                                                                        </Button>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                            );
+                                                        })}
+                                                        
+                                                        {/* Total Row */}
+                                                        <tr className="bg-gray-100 dark:bg-gray-800 border-t-2 border-gray-300 dark:border-gray-600">
+                                                            <td colSpan={2} className="py-2 px-3 text-right font-semibold text-gray-900 dark:text-gray-100">TOTAL</td>
+                                                            <td className="py-2 px-3 text-right font-mono font-bold text-gray-900 dark:text-gray-100">
+                                                                {formatCurrency(totalDebit)}
+                                                            </td>
+                                                            <td className="py-2 px-3 text-right font-mono font-bold text-gray-900 dark:text-gray-100">
+                                                                {formatCurrency(totalKredit)}
+                                                            </td>
+                                                            <td></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        {errors.detail_jurnal && <p className="text-xs text-red-600 mt-1">{errors.detail_jurnal}</p>}
+                                    </div>
+
+                                    {/* Kas Amount Warning */}
+                                    {(() => {
+                                        const kasRow = detailRows.find(r => r.id === 'kas-auto');
+                                        const kasExceeded = kasRow && (
+                                            (isPenerimaan && kasRow.jumlah_debit > originalAmount) ||
+                                            (!isPenerimaan && kasRow.jumlah_kredit > originalAmount)
+                                        );
+                                        
+                                        if (kasExceeded) {
+                                            return (
+                                                <div className="p-3 rounded-lg border bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
+                                                    <div className="flex items-center space-x-2">
+                                                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                                        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                                            Peringatan: Jumlah kas melebihi jumlah transaksi original ({formatCurrency(originalAmount)})
+                                                        </span>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </Card>
-                                    );
-                                })}
-                            </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
 
-                            <div className="flex justify-end gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => router.visit('/kas/cash-transactions')}
-                                >
-                                    Batal
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="gap-2"
-                                >
-                                    {processing ? (
-                                        <>
-                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                                            Memposting...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <BookOpen className="h-4 w-4" />
-                                            Posting ke Jurnal ({cashTransactions.length} transaksi)
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
+                                    {/* Balance Status */}
+                                    <div className={`p-3 rounded-lg border ${isBalance ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'}`}>
+                                        <div className="flex items-center space-x-2">
+                                            {isBalance ? (
+                                                <>
+                                                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                                    <span className="text-xs font-semibold text-green-700 dark:text-green-300">Jurnal Balance - Siap diposting!</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                                    <span className="text-xs font-semibold text-red-700 dark:text-red-300">
+                                                        {detailRows.length < 2 
+                                                            ? 'Tambahkan minimal 1 akun lawan' 
+                                                            : `Tidak Balance! Selisih: ${formatCurrency(Math.abs(totalDebit - totalKredit))}`
+                                                        }
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex items-center justify-end space-x-2 pt-2">
+                                        <Link href={route('kas.cash-transactions.index')}>
+                                            <Button type="button" variant="outline" size="sm" className="h-8 text-xs">
+                                                Batal
+                                            </Button>
+                                        </Link>
+                                        <Button 
+                                            type="submit" 
+                                            size="sm" 
+                                            className="h-8 text-xs"
+                                            disabled={!isBalance || processing}
+                                        >
+                                            {processing ? 'Memposting...' : 'Post ke Jurnal'}
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </form>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </AppLayout>
     );

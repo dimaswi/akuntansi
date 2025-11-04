@@ -12,6 +12,7 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class CashTransactionController extends Controller
 {
@@ -211,76 +212,120 @@ class CashTransactionController extends Controller
     /**
      * Batch posting cash transactions to journal
      */
-    public function postToJournal(Request $request)
+    public function postToJurnal(Request $request)
     {
         $request->validate([
-            'selected_transactions' => 'required|array|min:1',
-            'selected_transactions.*' => 'exists:cash_transactions,id',
-            'account_mappings' => 'required|array',
-            'account_mappings.*.cash_transaction_id' => 'required|exists:cash_transactions,id',
-            'account_mappings.*.daftar_akun_lawan_id' => 'required|exists:daftar_akun,id'
+            'cash_transaction_id' => 'required|exists:cash_transactions,id',
+            'detail_jurnal' => 'required|array|min:2',
+            'detail_jurnal.*.daftar_akun_id' => 'required|exists:daftar_akun,id',
+            'detail_jurnal.*.keterangan' => 'required|string|max:255',
+            'detail_jurnal.*.jumlah_debit' => 'required|numeric|min:0',
+            'detail_jurnal.*.jumlah_kredit' => 'required|numeric|min:0',
         ]);
 
-        $postedCount = 0;
+        // Validasi balance
+        $totalDebit = collect($request->detail_jurnal)->sum('jumlah_debit');
+        $totalKredit = collect($request->detail_jurnal)->sum('jumlah_kredit');
 
-        DB::transaction(function () use ($request, &$postedCount) {
-            foreach ($request->account_mappings as $mapping) {
-                $cashTransaction = CashTransaction::find($mapping['cash_transaction_id']);
-                
-                if ($cashTransaction && $cashTransaction->status === 'draft') {
-                    // Generate jurnal
-                    $jurnal = $this->generateJurnal($cashTransaction, $mapping['daftar_akun_lawan_id']);
-                    
-                    // Update status
-                    $cashTransaction->update([
-                        'status' => 'posted',
-                        'posted_at' => now(),
-                        'posted_by' => Auth::id(),
-                        'jurnal_id' => $jurnal->id,
-                        'daftar_akun_lawan_id' => $mapping['daftar_akun_lawan_id']
-                    ]);
+        if ($totalDebit != $totalKredit) {
+            return back()->withErrors(['detail_jurnal' => 'Total debit dan kredit harus balance.']);
+        }
 
-                    $postedCount++;
-                }
+        $cashTransaction = CashTransaction::findOrFail($request->cash_transaction_id);
+
+        if ($cashTransaction->status !== 'draft') {
+            return back()->withErrors(['cash_transaction_id' => 'Transaksi sudah diposting atau bukan draft.']);
+        }
+
+        DB::transaction(function () use ($request, $cashTransaction, $totalDebit) {
+            // Generate nomor jurnal
+            $nomorJurnal = $this->generateNomorJurnal();
+
+            // Buat keterangan jurnal dari transaksi kas
+            $keteranganJurnal = $cashTransaction->keterangan . ' - ' . $cashTransaction->pihak_terkait;
+
+            // Buat jurnal header
+            $jurnal = Jurnal::create([
+                'nomor_jurnal' => $nomorJurnal,
+                'jenis_jurnal' => 'umum',
+                'tanggal_transaksi' => $cashTransaction->tanggal_transaksi, // Tanggal kas sesuai kaidah akuntansi
+                'jenis_referensi' => 'kas',
+                'nomor_referensi' => $cashTransaction->nomor_transaksi,
+                'keterangan' => $keteranganJurnal,
+                'total_debit' => $totalDebit,
+                'total_kredit' => $totalDebit,
+                'dibuat_oleh' => Auth::id(),
+                'status' => 'posted',
+                'tanggal_posting' => now(),
+                'diposting_oleh' => Auth::id()
+            ]);
+
+            // Buat detail jurnal dengan keterangan masing-masing
+            foreach ($request->detail_jurnal as $detail) {
+                DetailJurnal::create([
+                    'jurnal_id' => $jurnal->id,
+                    'daftar_akun_id' => $detail['daftar_akun_id'],
+                    'keterangan' => $detail['keterangan'],
+                    'jumlah_debit' => $detail['jumlah_debit'],
+                    'jumlah_kredit' => $detail['jumlah_kredit']
+                ]);
             }
+
+            // Update status cash transaction
+            $cashTransaction->update([
+                'status' => 'posted',
+                'posted_at' => now(),
+                'posted_by' => Auth::id(),
+                'jurnal_id' => $jurnal->id
+            ]);
         });
 
         return redirect()->route('kas.cash-transactions.index')
-            ->with('success', "Berhasil memposting {$postedCount} transaksi kas ke jurnal.");
+            ->with('success', 'Berhasil memposting transaksi kas ke jurnal.');
     }
 
     /**
-     * Show batch posting page
+     * Show single transaction posting page
      */
     public function showPostToJournal(Request $request)
     {
-        $selectedIds = $request->get('ids', []);
+        $transactionId = $request->get('id');
         
-        if (empty($selectedIds)) {
+        if (!$transactionId) {
             return redirect()->route('kas.cash-transactions.index')
-                ->with('error', 'Pilih minimal satu transaksi untuk diposting ke jurnal.');
+                ->with('error', 'Pilih transaksi untuk diposting ke jurnal.');
         }
 
-        $cashTransactions = CashTransaction::with(['daftarAkunKas', 'user'])
-            ->whereIn('id', $selectedIds)
+        $cashTransaction = CashTransaction::with(['daftarAkunKas', 'user'])
+            ->where('id', $transactionId)
             ->where('status', 'draft')
-            ->get();
+            ->first();
 
-        if ($cashTransactions->isEmpty()) {
+        if (!$cashTransaction) {
             return redirect()->route('kas.cash-transactions.index')
-                ->with('error', 'Tidak ada transaksi draft yang dipilih.');
+                ->with('error', 'Transaksi tidak ditemukan atau sudah diposting.');
         }
 
-        // Daftar akun untuk mapping
+        // Debug: Log to check data
+        Log::info('Cash Transaction Data:', [
+            'transaction' => $cashTransaction->toArray(),
+            'has_daftar_akun_kas' => $cashTransaction->daftarAkunKas ? 'yes' : 'no'
+        ]);
+
+        // Daftar akun untuk dropdown (exclude kas yang sudah auto-filled)
         $daftarAkun = DaftarAkun::aktif()
-            ->whereIn('jenis_akun', ['pendapatan', 'biaya', 'beban', 'kewajiban', 'modal', 'aset'])
+            ->where('id', '!=', $cashTransaction->daftar_akun_kas_id)
             ->orderBy('jenis_akun')
             ->orderBy('kode_akun')
-            ->get();
+            ->get(['id', 'kode_akun', 'nama_akun', 'jenis_akun']);
+
+        // Generate nomor jurnal preview
+        $nomorJurnal = $this->generateNomorJurnal();
 
         return Inertia::render('kas/cash-transactions/post-to-journal', [
-            'cashTransactions' => $cashTransactions,
-            'daftarAkun' => $daftarAkun
+            'cashTransaction' => $cashTransaction->load('daftarAkunKas', 'user'),
+            'daftarAkun' => $daftarAkun,
+            'nomorJurnalPreview' => $nomorJurnal
         ]);
     }
 
@@ -292,6 +337,7 @@ class CashTransactionController extends Controller
         // Buat jurnal header
         $jurnal = Jurnal::create([
             'nomor_jurnal' => $nomorJurnal,
+            'jenis_jurnal' => 'kas',
             'tanggal_transaksi' => $cashTransaction->tanggal_transaksi,
             'keterangan' => $cashTransaction->keterangan . ' - ' . $cashTransaction->pihak_terkait,
             'nomor_referensi' => $cashTransaction->nomor_transaksi,
@@ -345,10 +391,11 @@ class CashTransactionController extends Controller
 
     private function generateNomorJurnal()
     {
-        $prefix = 'JKS'; // Jurnal Kas
+        $prefix = 'JU'; // Jurnal Umum (bukan JKS karena ini jurnal accounting, bukan transaksi kas)
         $tahun = date('Y');
         $bulan = date('m');
         
+        // Cari nomor terakhir dari semua jurnal (JU) agar tidak bentrok dengan jurnal lain
         $lastJurnal = Jurnal::where('nomor_jurnal', 'like', "$prefix/$tahun/$bulan/%")
             ->orderBy('nomor_jurnal', 'desc')
             ->first();

@@ -248,7 +248,7 @@ export default function CreateJurnal() {
                     </div>
                 </div>
 
-                <form onSubmit={submit} className="space-y-6">
+                <form onSubmit={submit} className="space-y-4">
                     {/* Header Information */}
                     <div className="bg-white rounded-lg border shadow-sm">
                         <div className="border-b border-gray-200 px-6 py-4">
@@ -339,8 +339,8 @@ export default function CreateJurnal() {
                     </div>
 
                     {/* Journal Details */}
-                    <div className="bg-white rounded-lg border shadow-sm">
-                        <div className="border-b border-gray-200 px-6 py-4">
+                    <div>
+                        <div className="border-b border-gray-200 pb-3 mb-3">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h2 className="text-lg font-semibold text-gray-900">Detail Jurnal</h2>
@@ -352,9 +352,8 @@ export default function CreateJurnal() {
                                 </Button>
                             </div>
                         </div>
-                        <div className="p-6">
-                            <div className="overflow-x-auto">
-                                <Table>
+                        <div className="rounded-lg border bg-white shadow-sm overflow-visible">
+                            <Table>
                                     <TableHeader className="bg-gray-50">
                                         <TableRow>
                                             <TableHead className="w-[40%]">Akun</TableHead>
@@ -370,8 +369,8 @@ export default function CreateJurnal() {
                                                 <TableCell>
                                                     <SearchableAccountSelectTable
                                                         accounts={daftar_akun}
-                                                        value={detail.daftar_akun_id}
-                                                        onValueChange={(value) => updateDetail(index, 'daftar_akun_id', value)}
+                                                        value={detail.daftar_akun_id.toString()}
+                                                        onValueChange={(value) => updateDetail(index, 'daftar_akun_id', parseInt(value))}
                                                         placeholder="Pilih akun"
                                                     />
                                                 </TableCell>
@@ -432,7 +431,6 @@ export default function CreateJurnal() {
                                         </TableRow>
                                     </TableBody>
                                 </Table>
-                            </div>
                         </div>
                     </div>
 

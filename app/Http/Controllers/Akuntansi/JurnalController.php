@@ -25,6 +25,10 @@ class JurnalController extends Controller
         $tanggalSampai = $request->get('tanggal_sampai', '');
 
         $query = Jurnal::with(['dibuatOleh'])
+            ->where(function($q) {
+                $q->where('jenis_jurnal', 'umum')
+                  ->orWhereNull('jenis_jurnal');
+            })
             ->orderBy('tanggal_transaksi', 'desc')
             ->orderBy('created_at', 'desc');
 
@@ -131,6 +135,7 @@ class JurnalController extends Controller
         DB::transaction(function () use ($validated) {
             $jurnal = Jurnal::create([
                 'nomor_jurnal' => $validated['nomor_jurnal'],
+                'jenis_jurnal' => 'umum',
                 'tanggal_transaksi' => $validated['tanggal_transaksi'],
                 'jenis_referensi' => $validated['jenis_referensi'],
                 'nomor_referensi' => $validated['nomor_referensi'],
@@ -305,6 +310,26 @@ class JurnalController extends Controller
         ]);
 
         return back()->with('message', 'Jurnal berhasil diposting');
+    }
+
+    /**
+     * Unpost journal entry (cancel posting)
+     */
+    public function unpost(Jurnal $jurnal)
+    {
+        if ($jurnal->status !== 'posted') {
+            return back()->withErrors([
+                'message' => 'Hanya jurnal dengan status posted yang dapat dibatalkan postingnya'
+            ]);
+        }
+
+        $jurnal->update([
+            'status' => 'draft',
+            'diposting_oleh' => null,
+            'tanggal_posting' => null,
+        ]);
+
+        return back()->with('message', 'Posting jurnal berhasil dibatalkan');
     }
 
     /**

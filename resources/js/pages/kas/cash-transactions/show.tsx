@@ -197,11 +197,11 @@ export default function CashTransactionShow({ cashTransaction }: Props) {
                                             Edit
                                         </Button>
                                         <Button
-                                            onClick={handlePost}
+                                            onClick={() => router.visit(`/kas/cash-transactions/post-to-journal?id=${cashTransaction.id}`)}
                                             className="gap-2 bg-green-600 hover:bg-green-700"
                                         >
                                             <CheckCircle className="h-4 w-4" />
-                                            Post
+                                            Post ke Jurnal
                                         </Button>
                                         <Button
                                             variant="destructive"

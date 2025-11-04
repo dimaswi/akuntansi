@@ -94,6 +94,12 @@ const mainNavItems: NavItem[] = [
                 permission: 'akuntansi.jurnal.view',
             },
             {
+                title: 'Jurnal Penyesuaian',
+                href: '/akuntansi/jurnal-penyesuaian',
+                icon: BookOpenCheck,
+                permission: 'akuntansi.jurnal-penyesuaian.view',
+            },
+            {
                 title: 'Buku Besar',
                 href: '/akuntansi/buku-besar',
                 icon: Book,

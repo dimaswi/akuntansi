@@ -16,6 +16,7 @@ class Jurnal extends Model
         'tanggal_transaksi',
         'jenis_referensi',
         'nomor_referensi',
+        'jenis_jurnal',
         'keterangan',
         'total_debit',
         'total_kredit',

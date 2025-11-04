@@ -53,7 +53,7 @@ interface Jurnal {
 
 interface Props extends SharedData {
     jurnal: Jurnal;
-    daftar_akun: DaftarAkun[];
+    akuns: DaftarAkun[];
 }
 
 interface Errors {
@@ -66,11 +66,11 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/akuntansi',
     },
     {
-        title: 'Jurnal',
-        href: '/akuntansi/jurnal',
+        title: 'Jurnal Penyesuaian',
+        href: '/akuntansi/jurnal-penyesuaian',
     },
     {
-        title: 'Edit Jurnal',
+        title: 'Edit Jurnal Penyesuaian',
         href: '#',
     },
 ];
@@ -83,8 +83,8 @@ const formatCurrency = (amount: number) => {
     }).format(amount);
 };
 
-export default function EditJurnal() {
-    const { jurnal, daftar_akun } = usePage<Props>().props;
+export default function EditJurnalPenyesuaian() {
+    const { jurnal, akuns } = usePage<Props>().props;
     const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState<Errors>({});
 
@@ -143,17 +143,22 @@ export default function EditJurnal() {
 
         const submitData = {
             ...formData,
-            details: validDetails,
+            details: validDetails.map(detail => ({
+                akun_id: detail.daftar_akun_id,
+                debit: detail.jumlah_debit,
+                kredit: detail.jumlah_kredit,
+                keterangan: detail.keterangan
+            })),
         };
 
-        router.put(route('akuntansi.jurnal.update', jurnal.id), submitData as any, {
+        router.put(route('akuntansi.jurnal-penyesuaian.update', jurnal.id), submitData as any, {
             onSuccess: () => {
-                toast.success('Jurnal berhasil diupdate');
-                router.visit(route('akuntansi.jurnal.index'));
+                toast.success('Jurnal penyesuaian berhasil diupdate');
+                router.visit(route('akuntansi.jurnal-penyesuaian.index'));
             },
             onError: (responseErrors) => {
                 setErrors(responseErrors);
-                toast.error('Gagal mengupdate jurnal. Periksa data yang dimasukkan.');
+                toast.error('Gagal mengupdate jurnal penyesuaian. Periksa data yang dimasukkan.');
                 setProcessing(false);
             },
             onFinish: () => {
@@ -201,22 +206,22 @@ export default function EditJurnal() {
     if (jurnal.status !== 'draft') {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Edit Jurnal" />
+                <Head title="Edit Jurnal Penyesuaian" />
                 <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
                     <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-6">
-                        <h2 className="mb-2 text-lg font-semibold text-yellow-800">Jurnal Tidak Dapat Diedit</h2>
+                        <h2 className="mb-2 text-lg font-semibold text-yellow-800">Jurnal Penyesuaian Tidak Dapat Diedit</h2>
                         <p className="text-yellow-700">
-                            Jurnal dengan status <strong>{jurnal.status}</strong> tidak dapat diedit. Hanya jurnal dengan status draft yang dapat
+                            Jurnal penyesuaian dengan status <strong>{jurnal.status}</strong> tidak dapat diedit. Hanya jurnal dengan status draft yang dapat
                             diubah.
                         </p>
                         <div className="mt-4">
                             <Button
                                 variant="outline"
-                                onClick={() => router.visit(route('akuntansi.jurnal.index'))}
+                                onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.index'))}
                                 className="flex items-center gap-2"
                             >
                                 <ArrowLeft className="h-4 w-4" />
-                                Kembali ke Daftar Jurnal
+                                Kembali ke Daftar Jurnal Penyesuaian
                             </Button>
                         </div>
                     </div>
@@ -227,7 +232,7 @@ export default function EditJurnal() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Edit Jurnal" />
+            <Head title="Edit Jurnal Penyesuaian" />
             <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-8">
@@ -238,7 +243,7 @@ export default function EditJurnal() {
                                 <h1 className="text-2xl font-bold text-gray-900">{jurnal.nomor_jurnal}</h1>
                             </div>
                         </div>
-                        <Button variant="outline" onClick={() => router.visit(route('akuntansi.jurnal.index'))} className="flex items-center gap-2">
+                        <Button variant="outline" onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.index'))} className="flex items-center gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             Kembali
                         </Button>
@@ -249,8 +254,8 @@ export default function EditJurnal() {
                     {/* Header Information */}
                     <div className="rounded-lg border bg-white shadow-sm">
                         <div className="border-b border-gray-200 px-6 py-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Informasi Jurnal</h2>
-                            <p className="text-sm text-gray-600">Edit detail header jurnal</p>
+                            <h2 className="text-lg font-semibold text-gray-900">Informasi Jurnal Penyesuaian</h2>
+                            <p className="text-sm text-gray-600">Edit detail header jurnal penyesuaian</p>
                         </div>
                         <div className="space-y-4 p-6">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -295,10 +300,11 @@ export default function EditJurnal() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="manual">Manual</SelectItem>
-                                            <SelectItem value="kas">Kas</SelectItem>
-                                            <SelectItem value="bank">Bank</SelectItem>
-                                            <SelectItem value="pembelian">Pembelian</SelectItem>
-                                            <SelectItem value="penjualan">Penjualan</SelectItem>
+                                            <SelectItem value="penyusutan">Penyusutan</SelectItem>
+                                            <SelectItem value="beban_dibayar_dimuka">Beban Dibayar Dimuka</SelectItem>
+                                            <SelectItem value="beban_masih_harus_dibayar">Beban Masih Harus Dibayar</SelectItem>
+                                            <SelectItem value="pendapatan_diterima_dimuka">Pendapatan Diterima Dimuka</SelectItem>
+                                            <SelectItem value="pendapatan_masih_harus_diterima">Pendapatan Masih Harus Diterima</SelectItem>
                                             <SelectItem value="adjustment">Adjustment</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -340,7 +346,7 @@ export default function EditJurnal() {
                         <div className="border-b border-gray-200 pb-3 mb-3">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-lg font-semibold text-gray-900">Detail Jurnal</h2>
+                                    <h2 className="text-lg font-semibold text-gray-900">Detail Jurnal Penyesuaian</h2>
                                     <p className="text-sm text-gray-600">Edit detail debit dan kredit</p>
                                 </div>
                                 <Button type="button" onClick={addDetail} variant="outline" size="sm">
@@ -365,7 +371,7 @@ export default function EditJurnal() {
                                             <TableRow key={index}>
                                                 <TableCell>
                                                     <SearchableAccountSelectTable
-                                                        accounts={daftar_akun}
+                                                        accounts={akuns}
                                                         value={detail.daftar_akun_id.toString()}
                                                         onValueChange={(value) => updateDetail(index, 'daftar_akun_id', parseInt(value))}
                                                         placeholder="Pilih akun"
@@ -433,7 +439,7 @@ export default function EditJurnal() {
 
                     {/* Submit Button */}
                     <div className="flex justify-end gap-3">
-                        <Button type="button" variant="outline" onClick={() => router.visit(route('akuntansi.jurnal.index'))}>
+                        <Button type="button" variant="outline" onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.index'))}>
                             Batal
                         </Button>
                         <Button type="submit" disabled={processing || !isBalanced}>

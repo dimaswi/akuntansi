@@ -3,6 +3,7 @@
 use App\Http\Controllers\Akuntansi\AkuntansiController;
 use App\Http\Controllers\Akuntansi\DaftarAkunController;
 use App\Http\Controllers\Akuntansi\JurnalController;
+use App\Http\Controllers\Akuntansi\JurnalPenyesuaianController;
 use App\Http\Controllers\Akuntansi\BukuBesarController;
 use App\Http\Controllers\Akuntansi\LaporanKeuanganController;
 use Illuminate\Support\Facades\Route;
@@ -77,9 +78,54 @@ Route::middleware('auth')->group(function () {
         ->name('akuntansi.jurnal.post')
         ->middleware('permission:akuntansi.jurnal.post');
     
+    Route::post('akuntansi/jurnal/{jurnal}/unpost', [JurnalController::class, 'unpost'])
+        ->name('akuntansi.jurnal.unpost')
+        ->middleware('permission:akuntansi.jurnal.edit');
+    
     Route::post('akuntansi/jurnal/{jurnal}/reverse', [JurnalController::class, 'reverse'])
         ->name('akuntansi.jurnal.reverse')
         ->middleware('permission:akuntansi.jurnal.reverse');
+
+    // Jurnal Penyesuaian Management
+    Route::get('akuntansi/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'index'])
+        ->name('akuntansi.jurnal-penyesuaian.index')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.view');
+    
+    Route::get('akuntansi/jurnal-penyesuaian/create', [JurnalPenyesuaianController::class, 'create'])
+        ->name('akuntansi.jurnal-penyesuaian.create')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.create');
+    
+    Route::post('akuntansi/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'store'])
+        ->name('akuntansi.jurnal-penyesuaian.store')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.create');
+    
+    Route::get('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}', [JurnalPenyesuaianController::class, 'show'])
+        ->name('akuntansi.jurnal-penyesuaian.show')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.view');
+    
+    Route::get('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}/edit', [JurnalPenyesuaianController::class, 'edit'])
+        ->name('akuntansi.jurnal-penyesuaian.edit')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.edit');
+    
+    Route::put('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}', [JurnalPenyesuaianController::class, 'update'])
+        ->name('akuntansi.jurnal-penyesuaian.update')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.edit');
+    
+    Route::delete('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}', [JurnalPenyesuaianController::class, 'destroy'])
+        ->name('akuntansi.jurnal-penyesuaian.destroy')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.delete');
+    
+    Route::post('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}/post', [JurnalPenyesuaianController::class, 'post'])
+        ->name('akuntansi.jurnal-penyesuaian.post')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.edit');
+    
+    Route::post('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}/unpost', [JurnalPenyesuaianController::class, 'unpost'])
+        ->name('akuntansi.jurnal-penyesuaian.unpost')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.edit');
+    
+    Route::post('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}/reverse', [JurnalPenyesuaianController::class, 'reverse'])
+        ->name('akuntansi.jurnal-penyesuaian.reverse')
+        ->middleware('permission:akuntansi.jurnal-penyesuaian.edit');
 
     // Buku Besar Management
     Route::get('akuntansi/buku-besar', [BukuBesarController::class, 'index'])
@@ -117,6 +163,10 @@ Route::middleware('auth')->group(function () {
     
     Route::get('akuntansi/laporan/analisis-rasio', [LaporanKeuanganController::class, 'analisisRasio'])
         ->name('akuntansi.laporan.analisis-rasio')
+        ->middleware('permission:akuntansi.laporan.view');
+    
+    Route::get('akuntansi/laporan/dampak-penyesuaian', [LaporanKeuanganController::class, 'dampakPenyesuaian'])
+        ->name('akuntansi.laporan.dampak-penyesuaian')
         ->middleware('permission:akuntansi.laporan.view');
     
     Route::get('akuntansi/laporan/export', [LaporanKeuanganController::class, 'export'])
