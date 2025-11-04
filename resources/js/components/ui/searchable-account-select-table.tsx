@@ -93,10 +93,10 @@ export function SearchableAccountSelectTable({
     };
 
     const [position, setPosition] = React.useState<{ top: number, left: number, width: number }>({
-  top: 0,
-  left: 0,
-  width: 0,
-});
+      top: 0,
+      left: 0,
+      width: 0,
+    });
 
     React.useEffect(() => {
       const updatePosition = () => {
