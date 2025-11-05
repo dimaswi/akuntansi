@@ -21,6 +21,7 @@ interface Permission {
 
 interface Props extends SharedData {
     permissions: Permission[];
+    notificationTypes: Record<string, string>;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -35,11 +36,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function CreateRole() {
-    const { permissions } = usePage<Props>().props;
+    const { permissions, notificationTypes } = usePage<Props>().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         display_name: '',
         description: '',
         permission_ids: [] as number[],
+        notification_settings: {} as Record<string, boolean>,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -67,6 +69,7 @@ export default function CreateRole() {
                     display_name: '',
                     description: '',
                     permission_ids: [],
+                    notification_settings: {},
                 });
             },
             onError: () => {
@@ -81,6 +84,13 @@ export default function CreateRole() {
         } else {
             setData('permission_ids', data.permission_ids.filter(id => id !== permissionId));
         }
+    };
+
+    const handleNotificationChange = (type: string, checked: boolean) => {
+        setData('notification_settings', {
+            ...data.notification_settings,
+            [type]: checked,
+        });
     };
 
     const toggleModule = (module: string) => {
@@ -168,6 +178,44 @@ export default function CreateRole() {
                                         <AlertDescription>{errors.description}</AlertDescription>
                                     </Alert>
                                 )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Notification Settings</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                                Choose which notifications this role should receive
+                            </p>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {Object.entries(notificationTypes).map(([type, label]) => (
+                                    <div key={type} className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                                        <Checkbox
+                                            id={`notif-${type}`}
+                                            checked={data.notification_settings[type] || false}
+                                            onCheckedChange={(checked) => handleNotificationChange(type, checked as boolean)}
+                                        />
+                                        <div className="flex-1">
+                                            <label
+                                                htmlFor={`notif-${type}`}
+                                                className="text-sm font-medium leading-none cursor-pointer"
+                                            >
+                                                {label}
+                                            </label>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                {type === 'kas_post_to_jurnal' && 'Notifikasi saat transaksi kas diposting ke jurnal'}
+                                                {type === 'jurnal_created' && 'Notifikasi saat jurnal baru dibuat'}
+                                                {type === 'closing_period' && 'Notifikasi terkait closing period'}
+                                                {type === 'revision_approval' && 'Notifikasi permintaan persetujuan revisi'}
+                                                {type === 'period_reminder' && 'Pengingat sebelum periode ditutup'}
+                                                {type === 'system' && 'Notifikasi sistem umum'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </CardContent>
                     </Card>

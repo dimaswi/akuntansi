@@ -25,11 +25,13 @@ interface Role {
     display_name: string;
     description: string;
     permissions: Permission[];
+    notification_settings?: Record<string, boolean>;
 }
 
 interface Props extends SharedData {
     role: Role;
     permissions: Permission[];
+    notificationTypes: Record<string, string>;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -44,11 +46,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function EditRole() {
-    const { role, permissions } = usePage<Props>().props;
+    const { role, permissions, notificationTypes } = usePage<Props>().props;
     const { data, setData, put, processing, errors } = useForm({
         display_name: role.display_name,
         description: role.description,
         permission_ids: role.permissions.map(p => p.id),
+        notification_settings: role.notification_settings || {} as Record<string, boolean>,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -62,6 +65,13 @@ export default function EditRole() {
             onError: () => {
                 toast.error('Gagal mengupdate role');
             }
+        });
+    };
+
+    const handleNotificationChange = (type: string, checked: boolean) => {
+        setData('notification_settings', {
+            ...data.notification_settings,
+            [type]: checked,
         });
     };
 
@@ -158,6 +168,44 @@ export default function EditRole() {
                                         <AlertDescription>{errors.description}</AlertDescription>
                                     </Alert>
                                 )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Notification Settings</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                                Choose which notifications this role should receive
+                            </p>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {Object.entries(notificationTypes).map(([type, label]) => (
+                                    <div key={type} className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                                        <Checkbox
+                                            id={`notif-${type}`}
+                                            checked={data.notification_settings[type] || false}
+                                            onCheckedChange={(checked) => handleNotificationChange(type, checked as boolean)}
+                                        />
+                                        <div className="flex-1">
+                                            <label
+                                                htmlFor={`notif-${type}`}
+                                                className="text-sm font-medium leading-none cursor-pointer"
+                                            >
+                                                {label}
+                                            </label>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                {type === 'kas_post_to_jurnal' && 'Notifikasi saat transaksi kas diposting ke jurnal'}
+                                                {type === 'jurnal_created' && 'Notifikasi saat jurnal baru dibuat'}
+                                                {type === 'closing_period' && 'Notifikasi terkait closing period'}
+                                                {type === 'revision_approval' && 'Notifikasi permintaan persetujuan revisi'}
+                                                {type === 'period_reminder' && 'Pengingat sebelum periode ditutup'}
+                                                {type === 'system' && 'Notifikasi sistem umum'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </CardContent>
                     </Card>

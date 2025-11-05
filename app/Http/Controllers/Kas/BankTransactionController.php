@@ -8,6 +8,7 @@ use App\Models\Kas\BankAccount;
 use App\Models\Akuntansi\DaftarAkun;
 use App\Models\Akuntansi\Jurnal;
 use App\Models\Akuntansi\DetailJurnal;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -385,7 +386,7 @@ class BankTransactionController extends Controller
     /**
      * Process posting multiple transactions to journal
      */
-    public function postToJournal(Request $request)
+    public function postToJurnal(Request $request)
     {
         $validated = $request->validate([
             'selected_transactions' => 'required|array|min:1',
@@ -421,6 +422,20 @@ class BankTransactionController extends Controller
                 }
             }
         });
+
+        // Send notification - system will auto-filter based on each role's notification_settings
+        if ($postedCount > 0) {
+            $notificationService = new NotificationService();
+            $notificationService->sendToAllRoles(
+                NotificationService::TYPE_KAS_POST,
+                [
+                    'title' => 'Transaksi Bank Posted ke Jurnal',
+                    'message' => "{$postedCount} transaksi bank telah berhasil diposting ke jurnal oleh " . Auth::user()->name,
+                    'action_url' => route('kas.bank-transactions.index'),
+                    'data' => ['count' => $postedCount]
+                ]
+            );
+        }
 
         return redirect()->route('kas.bank-transactions.index')
             ->with('success', "Berhasil memposting {$postedCount} transaksi bank ke jurnal.");

@@ -59,7 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('kas.cash-transactions.show-post-to-journal')
         ->middleware('permission:akuntansi.journal-posting.view');
         
-    Route::post('kas/cash-transactions/post-to-journal', [CashTransactionController::class, 'postToJournal'])
+    Route::post('kas/cash-transactions/post-to-journal', [CashTransactionController::class, 'postToJurnal'])
         ->name('kas.cash-transactions.post-to-journal')
         ->middleware('permission:akuntansi.journal-posting.post');
         
@@ -97,7 +97,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('kas.bank-transactions.show-post-to-journal')
         ->middleware('permission:akuntansi.journal-posting.view');
         
-    Route::post('kas/bank-transactions/post-to-journal', [BankTransactionController::class, 'postToJournal'])
+    Route::post('kas/bank-transactions/post-to-journal', [BankTransactionController::class, 'postToJurnal'])
         ->name('kas.bank-transactions.post-to-journal')
         ->middleware('permission:akuntansi.journal-posting.post');
         

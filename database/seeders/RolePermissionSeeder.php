@@ -84,6 +84,18 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'akuntansi.laporan.view', 'display_name' => 'Lihat Laporan Keuangan', 'description' => 'Dapat melihat laporan keuangan', 'module' => 'Akuntansi'],
             ['name' => 'akuntansi.laporan.export', 'display_name' => 'Export Laporan Keuangan', 'description' => 'Dapat mengexport laporan keuangan', 'module' => 'Akuntansi'],
             
+            // ========== TUTUP BUKU & CUT OFF ==========
+            ['name' => 'closing-period.view', 'display_name' => 'Lihat Periode Tutup Buku', 'description' => 'Dapat melihat daftar periode tutup buku', 'module' => 'Tutup Buku'],
+            ['name' => 'closing-period.create', 'display_name' => 'Buat Periode Tutup Buku', 'description' => 'Dapat membuat periode tutup buku baru', 'module' => 'Tutup Buku'],
+            ['name' => 'closing-period.edit', 'display_name' => 'Edit Periode Tutup Buku', 'description' => 'Dapat mengedit periode tutup buku', 'module' => 'Tutup Buku'],
+            ['name' => 'closing-period.delete', 'display_name' => 'Hapus Periode Tutup Buku', 'description' => 'Dapat menghapus periode tutup buku', 'module' => 'Tutup Buku'],
+            ['name' => 'closing-period.soft-close', 'display_name' => 'Soft Close Periode', 'description' => 'Dapat melakukan soft close periode', 'module' => 'Tutup Buku'],
+            ['name' => 'closing-period.hard-close', 'display_name' => 'Hard Close Periode', 'description' => 'Dapat melakukan hard close periode', 'module' => 'Tutup Buku'],
+            ['name' => 'closing-period.reopen', 'display_name' => 'Buka Kembali Periode', 'description' => 'Dapat membuka kembali periode yang sudah ditutup (emergency)', 'module' => 'Tutup Buku'],
+            ['name' => 'closing-period.manage-settings', 'display_name' => 'Kelola Settings Tutup Buku', 'description' => 'Dapat mengelola konfigurasi tutup buku & cut off', 'module' => 'Tutup Buku'],
+            ['name' => 'closing-period.approve-revision', 'display_name' => 'Approve Revisi Periode', 'description' => 'Dapat menyetujui revisi setelah soft close', 'module' => 'Tutup Buku'],
+            ['name' => 'closing-period.view-dashboard', 'display_name' => 'Lihat Dashboard Kelengkapan', 'description' => 'Dapat melihat dashboard kelengkapan data periode', 'module' => 'Tutup Buku'],
+            
             // ========== INVENTORY MODULE ==========
             ['name' => 'inventory.view', 'display_name' => 'Lihat Inventory', 'description' => 'Dapat mengakses modul inventory', 'module' => 'Inventory'],
             
@@ -243,6 +255,11 @@ class RolePermissionSeeder extends Seeder
             'akuntansi.laporan.view', 'akuntansi.laporan.export',
             'akuntansi.journal-posting.view', 'akuntansi.journal-posting.post',
             
+            // Tutup Buku - Full Access for Manager
+            'closing-period.view', 'closing-period.create', 'closing-period.edit', 'closing-period.delete',
+            'closing-period.soft-close', 'closing-period.hard-close', 'closing-period.reopen',
+            'closing-period.manage-settings', 'closing-period.approve-revision', 'closing-period.view-dashboard',
+            
             // Inventory - View and Limited Management
             'inventory.items.view', 'inventory.categories.view', 'inventory.departments.view',
             'inventory.suppliers.view', 'inventory.purchases.view', 'inventory.purchases.approve',
@@ -273,6 +290,9 @@ class RolePermissionSeeder extends Seeder
             'akuntansi.journal-posting.view', 'akuntansi.journal-posting.post',
             'akuntansi.buku-besar.view', 'akuntansi.buku-besar.export',
             'akuntansi.laporan.view', 'akuntansi.laporan.export',
+            
+            // Tutup Buku - View & Dashboard for Staff Akuntansi
+            'closing-period.view', 'closing-period.view-dashboard',
             
             // Kas - Full Access (Sesuai dengan routes)
             'kas.cash-management.view', 'kas.cash-management.daily-entry', 'kas.cash-management.reconcile',

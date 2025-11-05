@@ -12,6 +12,8 @@ import { ArrowLeft, BookOpen, Calculator, Loader2, Plus, Save, Trash2 } from 'lu
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
+import { useRevisionDialog } from '@/hooks/use-revision-dialog';
+import { RevisionReasonDialog } from '@/components/closing-period/revision-reason-dialog';
 
 interface DaftarAkun {
     id: number;
@@ -88,6 +90,24 @@ export default function EditJurnal() {
     const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState<Errors>({});
 
+    // Use revision dialog hook
+    const {
+        showDialog,
+        revisionData,
+        makeRequest,
+        submitWithRevision,
+        closeDialog,
+    } = useRevisionDialog({
+        onSuccess: () => {
+            toast.success('Jurnal berhasil diupdate');
+            setProcessing(false);
+        },
+        onError: (errors) => {
+            setErrors(errors);
+            setProcessing(false);
+        },
+    });
+
     const [formData, setFormData] = useState({
         nomor_jurnal: jurnal.nomor_jurnal,
         tanggal_transaksi: jurnal.tanggal_transaksi,
@@ -146,20 +166,8 @@ export default function EditJurnal() {
             details: validDetails,
         };
 
-        router.put(route('akuntansi.jurnal.update', jurnal.id), submitData as any, {
-            onSuccess: () => {
-                toast.success('Jurnal berhasil diupdate');
-                router.visit(route('akuntansi.jurnal.index'));
-            },
-            onError: (responseErrors) => {
-                setErrors(responseErrors);
-                toast.error('Gagal mengupdate jurnal. Periksa data yang dimasukkan.');
-                setProcessing(false);
-            },
-            onFinish: () => {
-                setProcessing(false);
-            },
-        });
+        // Use makeRequest instead of router.put to handle revision dialog
+        makeRequest('put', route('akuntansi.jurnal.update', jurnal.id), submitData);
     };
 
     const addDetail = () => {
@@ -444,6 +452,16 @@ export default function EditJurnal() {
                     </div>
                 </form>
             </div>
+
+            {/* Revision Reason Dialog */}
+            <RevisionReasonDialog
+                open={showDialog}
+                onOpenChange={closeDialog}
+                onSubmit={submitWithRevision}
+                periodName={revisionData?.period_name}
+                actionType="edit"
+                isLoading={processing}
+            />
         </AppLayout>
     );
 }

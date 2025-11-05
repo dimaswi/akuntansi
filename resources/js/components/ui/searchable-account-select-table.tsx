@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +33,7 @@ export function SearchableAccountSelectTable({
     const [open, setOpen] = React.useState(false);
     const [searchValue, setSearchValue] = React.useState("");
     const [highlightedIndex, setHighlightedIndex] = React.useState(-1);
+    const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
     const inputRef = React.useRef<HTMLInputElement>(null);
     const listRef = React.useRef<HTMLDivElement>(null);
 
@@ -105,10 +107,48 @@ export function SearchableAccountSelectTable({
         }
     }, [highlightedIndex]);
 
+    // Update dropdown position when opening
+    React.useEffect(() => {
+        if (open && inputRef.current) {
+            const rect = inputRef.current.getBoundingClientRect();
+            setDropdownPosition({
+                top: rect.bottom + window.scrollY,
+                left: rect.left + window.scrollX,
+                width: Math.max(rect.width, 300)
+            });
+        }
+    }, [open]);
+
+    // Update position on scroll/resize
+    React.useEffect(() => {
+        if (!open) return;
+
+        const updatePosition = () => {
+            if (inputRef.current) {
+                const rect = inputRef.current.getBoundingClientRect();
+                setDropdownPosition({
+                    top: rect.bottom + window.scrollY,
+                    left: rect.left + window.scrollX,
+                    width: Math.max(rect.width, 300)
+                });
+            }
+        };
+
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+        return () => {
+            window.removeEventListener('scroll', updatePosition, true);
+            window.removeEventListener('resize', updatePosition);
+        };
+    }, [open]);
+
     // Close dropdown when clicking outside
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (inputRef.current && !inputRef.current.closest('.relative')?.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (inputRef.current && 
+                !inputRef.current.closest('.relative')?.contains(target) &&
+                !listRef.current?.contains(target)) {
                 setOpen(false);
                 setSearchValue("");
                 setHighlightedIndex(-1);
@@ -188,14 +228,14 @@ export function SearchableAccountSelectTable({
                 </div>
             </div>
 
-            {open && !disabled && (
+            {open && !disabled && createPortal(
                 <div 
                     ref={listRef}
-                    className="fixed z-[9999] max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-2xl"
+                    className="absolute z-[9999] max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg"
                     style={{
-                        top: inputRef.current ? `${inputRef.current.getBoundingClientRect().bottom + window.scrollY + 2}px` : '0',
-                        left: inputRef.current ? `${inputRef.current.getBoundingClientRect().left + window.scrollX}px` : '0',
-                        width: inputRef.current ? `${Math.max(inputRef.current.getBoundingClientRect().width, 300)}px` : 'auto',
+                        top: `${dropdownPosition.top + 2}px`,
+                        left: `${dropdownPosition.left}px`,
+                        width: `${dropdownPosition.width}px`,
                         minWidth: '300px'
                     }}
                 >
@@ -240,7 +280,8 @@ export function SearchableAccountSelectTable({
                             </div>
                         ))
                     )}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

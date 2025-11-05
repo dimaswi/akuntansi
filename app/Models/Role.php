@@ -12,6 +12,11 @@ class Role extends Model
         'name',
         'display_name',
         'description',
+        'notification_settings',
+    ];
+
+    protected $casts = [
+        'notification_settings' => 'array',
     ];
 
     public function users(): HasMany
@@ -41,5 +46,17 @@ class Role extends Model
     public function revokePermissionTo($permission): void
     {
         $this->permissions()->detach($permission);
+    }
+
+    public function shouldReceiveNotification(string $type): bool
+    {
+        $settings = $this->notification_settings ?? [];
+        return $settings[$type] ?? false;
+    }
+
+    public function getEnabledNotifications(): array
+    {
+        $settings = $this->notification_settings ?? [];
+        return array_keys(array_filter($settings));
     }
 }

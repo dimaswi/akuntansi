@@ -25,6 +25,8 @@ import { toast } from 'sonner';
 import { ArrowLeft, Edit, CheckCircle, RotateCcw, Trash2, BookOpen, Calculator } from 'lucide-react';
 import { BreadcrumbItem, SharedData } from '@/types';
 import { route } from "ziggy-js";
+import { useRevisionDialog } from '@/hooks/use-revision-dialog';
+import { RevisionReasonDialog } from '@/components/closing-period/revision-reason-dialog';
 
 interface DaftarAkun {
     id: number;
@@ -127,6 +129,31 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
         open: boolean;
         type: 'post' | 'unpost' | 'reverse' | 'delete' | null;
     }>({ open: false, type: null });
+    
+    const [currentActionType, setCurrentActionType] = useState<'edit' | 'delete' | 'unpost' | 'reverse'>('delete');
+
+    // Use revision dialog hook
+    const {
+        showDialog,
+        revisionData,
+        makeRequest,
+        submitWithRevision,
+        closeDialog: closeRevisionDialog,
+    } = useRevisionDialog({
+        onSuccess: () => {
+            if (currentActionType === 'delete') {
+                toast.success('Jurnal penyesuaian berhasil dihapus');
+                router.visit(route('akuntansi.jurnal-penyesuaian.index'));
+            } else if (currentActionType === 'unpost') {
+                toast.success('Posting jurnal penyesuaian berhasil dibatalkan');
+            } else if (currentActionType === 'reverse') {
+                toast.success('Jurnal penyesuaian berhasil dibalik');
+            }
+        },
+        onError: (errors) => {
+            toast.error('Gagal memproses jurnal penyesuaian');
+        },
+    });
 
     const openDialog = (type: 'post' | 'unpost' | 'reverse' | 'delete') => {
         setDialogState({ open: true, type });
@@ -142,6 +169,7 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
 
         switch (type) {
             case 'post':
+                // Post tidak perlu revision dialog
                 router.post(route('akuntansi.jurnal-penyesuaian.post', jurnal?.id), {}, {
                     onSuccess: () => {
                         toast.success('Jurnal penyesuaian berhasil diposting');
@@ -152,35 +180,16 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
                 });
                 break;
             case 'unpost':
-                router.post(route('akuntansi.jurnal-penyesuaian.unpost', jurnal?.id), {}, {
-                    onSuccess: () => {
-                        toast.success('Posting jurnal penyesuaian berhasil dibatalkan');
-                    },
-                    onError: () => {
-                        toast.error('Gagal membatalkan posting jurnal penyesuaian');
-                    },
-                });
+                setCurrentActionType('unpost');
+                makeRequest('post', route('akuntansi.jurnal-penyesuaian.unpost', jurnal?.id), {});
                 break;
             case 'reverse':
-                router.post(route('akuntansi.jurnal-penyesuaian.reverse', jurnal?.id), {}, {
-                    onSuccess: () => {
-                        toast.success('Jurnal penyesuaian berhasil dibalik');
-                    },
-                    onError: () => {
-                        toast.error('Gagal membalik jurnal penyesuaian');
-                    },
-                });
+                setCurrentActionType('reverse');
+                makeRequest('post', route('akuntansi.jurnal-penyesuaian.reverse', jurnal?.id), {});
                 break;
             case 'delete':
-                router.delete(route('akuntansi.jurnal-penyesuaian.destroy', jurnal?.id), {
-                    onSuccess: () => {
-                        toast.success('Jurnal penyesuaian berhasil dihapus');
-                        router.visit(route('akuntansi.jurnal-penyesuaian.index'));
-                    },
-                    onError: () => {
-                        toast.error('Gagal menghapus jurnal penyesuaian');
-                    },
-                });
+                setCurrentActionType('delete');
+                makeRequest('delete', route('akuntansi.jurnal-penyesuaian.destroy', jurnal?.id), {});
                 break;
         }
     };
@@ -477,6 +486,15 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Revision Reason Dialog */}
+            <RevisionReasonDialog
+                open={showDialog}
+                onOpenChange={closeRevisionDialog}
+                onSubmit={submitWithRevision}
+                periodName={revisionData?.period_name}
+                actionType={currentActionType}
+            />
         </AppLayout>
     );
 }

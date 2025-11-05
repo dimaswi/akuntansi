@@ -7,6 +7,7 @@ use App\Models\Kas\CashTransaction;
 use App\Models\Akuntansi\DaftarAkun;
 use App\Models\Akuntansi\Jurnal;
 use App\Models\Akuntansi\DetailJurnal;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -237,7 +238,8 @@ class CashTransactionController extends Controller
             return back()->withErrors(['cash_transaction_id' => 'Transaksi sudah diposting atau bukan draft.']);
         }
 
-        DB::transaction(function () use ($request, $cashTransaction, $totalDebit) {
+        $jurnal = null;
+        DB::transaction(function () use ($request, $cashTransaction, $totalDebit, &$jurnal) {
             // Generate nomor jurnal
             $nomorJurnal = $this->generateNomorJurnal();
 
@@ -279,6 +281,20 @@ class CashTransactionController extends Controller
                 'jurnal_id' => $jurnal->id
             ]);
         });
+
+        // Send notification - system will auto-filter based on each role's notification_settings
+        if ($jurnal) {
+            $notificationService = new NotificationService();
+            $notificationService->sendToAllRoles(
+                NotificationService::TYPE_KAS_POST,
+                [
+                    'title' => 'Transaksi Kas Posted ke Jurnal',
+                    'message' => "Transaksi kas {$cashTransaction->nomor_transaksi} sebesar Rp " . number_format($cashTransaction->jumlah, 0, ',', '.') . " telah diposting ke jurnal oleh " . Auth::user()->name,
+                    'action_url' => route('akuntansi.jurnal.show', $jurnal->id),
+                    'data' => ['transaction_id' => $cashTransaction->id, 'jurnal_id' => $jurnal->id]
+                ]
+            );
+        }
 
         return redirect()->route('kas.cash-transactions.index')
             ->with('success', 'Berhasil memposting transaksi kas ke jurnal.');

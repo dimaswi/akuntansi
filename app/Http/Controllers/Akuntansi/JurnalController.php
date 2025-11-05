@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Akuntansi;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Akuntansi\Traits\HandlesRevisionLogs;
 use App\Models\Akuntansi\DaftarAkun;
 use App\Models\Akuntansi\Jurnal;
 use App\Models\Akuntansi\DetailJurnal;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +15,7 @@ use Inertia\Inertia;
 
 class JurnalController extends Controller
 {
+    use HandlesRevisionLogs;
     /**
      * Display a listing of the resource.
      */
@@ -99,17 +102,23 @@ class JurnalController extends Controller
 
         // Generate nomor jurnal if not provided
         if (empty($validated['nomor_jurnal'])) {
-            $lastJurnal = Jurnal::whereYear('created_at', date('Y'))
-                ->orderBy('created_at', 'desc')
+            $tahun = date('Y');
+            $prefix = 'JE-' . $tahun . '-';
+            
+            // Get last journal number for this year with JE prefix
+            $lastJurnal = Jurnal::where('jenis_jurnal', 'umum')
+                ->where('nomor_jurnal', 'like', $prefix . '%')
+                ->orderBy('nomor_jurnal', 'desc')
                 ->first();
             
             $nextNumber = 1;
             if ($lastJurnal) {
+                // Extract the last 4 digits
                 $lastNumber = (int) substr($lastJurnal->nomor_jurnal, -4);
                 $nextNumber = $lastNumber + 1;
             }
             
-            $validated['nomor_jurnal'] = 'JE-' . date('Y') . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $validated['nomor_jurnal'] = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         }
 
         // Validate balanced journal
@@ -132,7 +141,8 @@ class JurnalController extends Controller
             }
         }
 
-        DB::transaction(function () use ($validated) {
+        $jurnal = null;
+        DB::transaction(function () use ($validated, &$jurnal) {
             $jurnal = Jurnal::create([
                 'nomor_jurnal' => $validated['nomor_jurnal'],
                 'jenis_jurnal' => 'umum',
@@ -157,8 +167,22 @@ class JurnalController extends Controller
             }
         });
 
+        // Send notification - system will auto-filter based on each role's notification_settings
+        if ($jurnal) {
+            $notificationService = new NotificationService();
+            $notificationService->sendToAllRoles(
+                NotificationService::TYPE_JURNAL_CREATED,
+                [
+                    'title' => 'Jurnal Umum Baru Dibuat',
+                    'message' => "Jurnal {$jurnal->nomor_jurnal} telah dibuat oleh " . Auth::user()->name . " dengan total Rp " . number_format($jurnal->total_debit, 0, ',', '.'),
+                    'action_url' => route('akuntansi.jurnal.show', $jurnal->id),
+                    'data' => ['jurnal_id' => $jurnal->id]
+                ]
+            );
+        }
+
         return redirect()->route('akuntansi.jurnal.index')
-            ->with('message', 'Jurnal berhasil disimpan');
+            ->with('message', 'Jurnal berhasil dibuat');
     }
 
     /**
@@ -205,8 +229,8 @@ class JurnalController extends Controller
      */
     public function update(Request $request, Jurnal $jurnal)
     {
-        // Only allow updating draft journals
-        if ($jurnal->status !== 'draft') {
+        // Only allow updating draft journals OR if it's an approved revision
+        if ($jurnal->status !== 'draft' && !$this->isAutoApprovedRevision($request)) {
             return back()->withErrors([
                 'message' => 'Hanya jurnal dengan status draft yang dapat diubah'
             ]);
@@ -244,7 +268,10 @@ class JurnalController extends Controller
             }
         }
 
-        DB::transaction(function () use ($validated, $jurnal) {
+        // Capture data before for revision log
+        $dataBefore = $request->_is_revision ? $this->prepareJurnalDataForLog($jurnal) : null;
+
+        DB::transaction(function () use ($validated, $jurnal, $request, $dataBefore) {
             // Update jurnal
             $jurnal->update([
                 'tanggal_transaksi' => $validated['tanggal_transaksi'],
@@ -268,28 +295,71 @@ class JurnalController extends Controller
                     'keterangan' => $detail['keterangan'],
                 ]);
             }
+
+            // Create revision log if this is a revision
+            if ($request->_is_revision) {
+                $jurnal->refresh(); // Reload to get updated data
+                $dataAfter = $this->prepareJurnalDataForLog($jurnal);
+                
+                $this->createRevisionLog(
+                    $request,
+                    $jurnal->id,
+                    'edit',
+                    $dataBefore,
+                    $dataAfter
+                );
+            }
         });
 
+        $message = $request->_is_revision 
+            ? ($this->requiresApproval($request) 
+                ? 'Permintaan revisi jurnal berhasil diajukan. Menunggu approval.'
+                : 'Jurnal berhasil diperbarui (revisi periode tertutup).')
+            : 'Jurnal berhasil diperbarui';
+
         return redirect()->route('akuntansi.jurnal.show', $jurnal)
-            ->with('message', 'Jurnal berhasil diperbarui');
+            ->with('message', $message);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Jurnal $jurnal)
+    public function destroy(Request $request, Jurnal $jurnal)
     {
-        // Only allow deleting draft journals
-        if ($jurnal->status !== 'draft') {
+        // Only allow deleting draft journals OR if it's an approved revision
+        if ($jurnal->status !== 'draft' && !$this->isAutoApprovedRevision($request)) {
             return back()->withErrors([
                 'message' => 'Hanya jurnal dengan status draft yang dapat dihapus'
             ]);
         }
 
-        $jurnal->delete();
+        // Capture data before for revision log
+        $dataBefore = $request->_is_revision ? $this->prepareJurnalDataForLog($jurnal) : null;
+        $jurnalId = $jurnal->id;
+
+        DB::transaction(function () use ($jurnal, $request, $dataBefore, $jurnalId) {
+            // Create revision log before deletion if this is a revision
+            if ($request->_is_revision) {
+                $this->createRevisionLog(
+                    $request,
+                    $jurnalId,
+                    'delete',
+                    $dataBefore,
+                    null
+                );
+            }
+
+            $jurnal->delete();
+        });
+
+        $message = $request->_is_revision 
+            ? ($this->requiresApproval($request) 
+                ? 'Permintaan penghapusan jurnal berhasil diajukan. Menunggu approval.'
+                : 'Jurnal berhasil dihapus (revisi periode tertutup).')
+            : 'Jurnal berhasil dihapus';
 
         return redirect()->route('akuntansi.jurnal.index')
-            ->with('message', 'Jurnal berhasil dihapus');
+            ->with('message', $message);
     }
 
     /**
@@ -315,38 +385,89 @@ class JurnalController extends Controller
     /**
      * Unpost journal entry (cancel posting)
      */
-    public function unpost(Jurnal $jurnal)
+    public function unpost(Request $request, Jurnal $jurnal)
     {
-        if ($jurnal->status !== 'posted') {
+        if ($jurnal->status !== 'posted' && !$this->isAutoApprovedRevision($request)) {
             return back()->withErrors([
                 'message' => 'Hanya jurnal dengan status posted yang dapat dibatalkan postingnya'
             ]);
         }
 
-        $jurnal->update([
-            'status' => 'draft',
-            'diposting_oleh' => null,
-            'tanggal_posting' => null,
-        ]);
+        // Capture data before for revision log
+        $dataBefore = $request->_is_revision ? $this->prepareJurnalDataForLog($jurnal) : null;
 
-        return back()->with('message', 'Posting jurnal berhasil dibatalkan');
+        DB::transaction(function () use ($jurnal, $request, $dataBefore) {
+            $jurnal->update([
+                'status' => 'draft',
+                'diposting_oleh' => null,
+                'tanggal_posting' => null,
+            ]);
+
+            // Create revision log if this is a revision
+            if ($request->_is_revision) {
+                $jurnal->refresh();
+                $dataAfter = $this->prepareJurnalDataForLog($jurnal);
+                
+                $this->createRevisionLog(
+                    $request,
+                    $jurnal->id,
+                    'unpost',
+                    $dataBefore,
+                    $dataAfter
+                );
+            }
+        });
+
+        $message = $request->_is_revision 
+            ? ($this->requiresApproval($request) 
+                ? 'Permintaan unpost jurnal berhasil diajukan. Menunggu approval.'
+                : 'Posting jurnal berhasil dibatalkan (revisi periode tertutup).')
+            : 'Posting jurnal berhasil dibatalkan';
+
+        return back()->with('message', $message);
     }
 
     /**
      * Reverse journal entry
      */
-    public function reverse(Jurnal $jurnal)
+    public function reverse(Request $request, Jurnal $jurnal)
     {
-        if ($jurnal->status !== 'posted') {
+        if ($jurnal->status !== 'posted' && !$this->isAutoApprovedRevision($request)) {
             return back()->withErrors([
                 'message' => 'Hanya jurnal dengan status posted yang dapat direverse'
             ]);
         }
 
-        $jurnal->update([
-            'status' => 'reversed',
-        ]);
+        // Capture data before for revision log
+        $dataBefore = $request->_is_revision ? $this->prepareJurnalDataForLog($jurnal) : null;
 
-        return back()->with('message', 'Jurnal berhasil direverse');
+        DB::transaction(function () use ($jurnal, $request, $dataBefore) {
+            $jurnal->update([
+                'status' => 'reversed',
+            ]);
+
+            // Create revision log if this is a revision
+            if ($request->_is_revision) {
+                $jurnal->refresh();
+                $dataAfter = $this->prepareJurnalDataForLog($jurnal);
+                
+                $this->createRevisionLog(
+                    $request,
+                    $jurnal->id,
+                    'reverse',
+                    $dataBefore,
+                    $dataAfter
+                );
+            }
+        });
+
+        $message = $request->_is_revision 
+            ? ($this->requiresApproval($request) 
+                ? 'Permintaan reverse jurnal berhasil diajukan. Menunggu approval.'
+                : 'Jurnal berhasil direverse (revisi periode tertutup).')
+            : 'Jurnal berhasil direverse';
+
+        return back()->with('message', $message);
     }
 }
+

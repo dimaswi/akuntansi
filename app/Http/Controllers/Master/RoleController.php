@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -45,9 +46,11 @@ class RoleController extends Controller
     public function create()
     {
         $permissions = Permission::all();
+        $notificationTypes = NotificationService::getAvailableTypes();
 
         return Inertia::render('master/role/create', [
             'permissions' => $permissions,
+            'notificationTypes' => $notificationTypes,
         ]);
     }
 
@@ -61,6 +64,7 @@ class RoleController extends Controller
             'description' => 'nullable|string',
             'permission_ids' => 'array',
             'permission_ids.*' => 'exists:permissions,id',
+            'notification_settings' => 'nullable|array',
         ], [
             'display_name.required' => 'Display name wajib diisi',
         ]);
@@ -73,6 +77,7 @@ class RoleController extends Controller
                 'name' => $name,
                 'display_name' => $request->display_name,
                 'description' => $request->description,
+                'notification_settings' => $request->notification_settings ?? [],
             ]);
 
             if ($request->permission_ids) {
@@ -101,11 +106,13 @@ class RoleController extends Controller
     public function edit(Role $role)
     {
         $permissions = Permission::all();
+        $notificationTypes = NotificationService::getAvailableTypes();
         $role->load(['permissions']);
 
         return Inertia::render('master/role/edit', [
             'role' => $role,
             'permissions' => $permissions,
+            'notificationTypes' => $notificationTypes,
         ]);
     }
 
@@ -119,6 +126,7 @@ class RoleController extends Controller
             'description' => 'nullable|string',
             'permission_ids' => 'array',
             'permission_ids.*' => 'exists:permissions,id',
+            'notification_settings' => 'nullable|array',
         ], [
             'display_name.required' => 'Display name wajib diisi',
         ]);
@@ -131,6 +139,7 @@ class RoleController extends Controller
                 'name' => $name,
                 'display_name' => $request->display_name,
                 'description' => $request->description,
+                'notification_settings' => $request->notification_settings ?? [],
             ]);
 
             $role->permissions()->sync($request->permission_ids ?? []);

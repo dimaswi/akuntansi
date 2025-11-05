@@ -67,11 +67,11 @@ Route::middleware('auth')->group(function () {
     
     Route::put('akuntansi/jurnal/{jurnal}', [JurnalController::class, 'update'])
         ->name('akuntansi.jurnal.update')
-        ->middleware('permission:akuntansi.jurnal.edit');
+        ->middleware(['permission:akuntansi.jurnal.edit', 'check.period']);
     
     Route::delete('akuntansi/jurnal/{jurnal}', [JurnalController::class, 'destroy'])
         ->name('akuntansi.jurnal.destroy')
-        ->middleware('permission:akuntansi.jurnal.delete');
+        ->middleware(['permission:akuntansi.jurnal.delete', 'check.period']);
 
     // Jurnal Actions
     Route::post('akuntansi/jurnal/{jurnal}/post', [JurnalController::class, 'post'])
@@ -80,11 +80,11 @@ Route::middleware('auth')->group(function () {
     
     Route::post('akuntansi/jurnal/{jurnal}/unpost', [JurnalController::class, 'unpost'])
         ->name('akuntansi.jurnal.unpost')
-        ->middleware('permission:akuntansi.jurnal.edit');
+        ->middleware(['permission:akuntansi.jurnal.edit', 'check.period']);
     
     Route::post('akuntansi/jurnal/{jurnal}/reverse', [JurnalController::class, 'reverse'])
         ->name('akuntansi.jurnal.reverse')
-        ->middleware('permission:akuntansi.jurnal.reverse');
+        ->middleware(['permission:akuntansi.jurnal.reverse', 'check.period']);
 
     // Jurnal Penyesuaian Management
     Route::get('akuntansi/jurnal-penyesuaian', [JurnalPenyesuaianController::class, 'index'])
@@ -109,11 +109,11 @@ Route::middleware('auth')->group(function () {
     
     Route::put('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}', [JurnalPenyesuaianController::class, 'update'])
         ->name('akuntansi.jurnal-penyesuaian.update')
-        ->middleware('permission:akuntansi.jurnal-penyesuaian.edit');
+        ->middleware(['permission:akuntansi.jurnal-penyesuaian.edit', 'check.period']);
     
     Route::delete('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}', [JurnalPenyesuaianController::class, 'destroy'])
         ->name('akuntansi.jurnal-penyesuaian.destroy')
-        ->middleware('permission:akuntansi.jurnal-penyesuaian.delete');
+        ->middleware(['permission:akuntansi.jurnal-penyesuaian.delete', 'check.period']);
     
     Route::post('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}/post', [JurnalPenyesuaianController::class, 'post'])
         ->name('akuntansi.jurnal-penyesuaian.post')
@@ -121,11 +121,11 @@ Route::middleware('auth')->group(function () {
     
     Route::post('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}/unpost', [JurnalPenyesuaianController::class, 'unpost'])
         ->name('akuntansi.jurnal-penyesuaian.unpost')
-        ->middleware('permission:akuntansi.jurnal-penyesuaian.edit');
+        ->middleware(['permission:akuntansi.jurnal-penyesuaian.edit', 'check.period']);
     
     Route::post('akuntansi/jurnal-penyesuaian/{jurnalPenyesuaian}/reverse', [JurnalPenyesuaianController::class, 'reverse'])
         ->name('akuntansi.jurnal-penyesuaian.reverse')
-        ->middleware('permission:akuntansi.jurnal-penyesuaian.edit');
+        ->middleware(['permission:akuntansi.jurnal-penyesuaian.edit', 'check.period']);
 
     // Buku Besar Management
     Route::get('akuntansi/buku-besar', [BukuBesarController::class, 'index'])

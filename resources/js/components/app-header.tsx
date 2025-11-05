@@ -1,5 +1,6 @@
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Icon } from '@/components/icon';
+import { NotificationBell } from '@/components/notification-bell';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -11,7 +12,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Box, Tag } from 'lucide-react';
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Box, Tag, Settings, FileCheck } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -111,6 +112,12 @@ const mainNavItems: NavItem[] = [
                 icon: BarChart,
                 permission: 'akuntansi.laporan.view',
             },
+            {
+                title: 'Periode Tutup Buku',
+                href: '/settings/closing-periods/list',
+                icon: BookOpenCheck,
+                permission: 'closing-period.view',
+            },
         ],
     },
     {
@@ -185,6 +192,18 @@ const mainNavItems: NavItem[] = [
                 icon: Key,
                 permission: 'permission.view',
             },
+            {
+                title: 'Konfigurasi Global Tutup Buku',
+                href: '/settings/closing-periods',
+                icon: Settings,
+                permission: 'closing-period.manage-settings',
+            },
+            {
+                title: 'Approval Revisi Jurnal',
+                href: '/settings/revision-approvals',
+                icon: FileCheck,
+                permission: 'closing-period.approve-revision',
+            },
         ],
     },
 ];
@@ -216,6 +235,50 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     
     // Get pathname without query string for route matching
     const currentPath = page.url.split('?')[0];
+
+    // Collect all possible child paths from all menu items for comparison
+    const allChildPaths: string[] = [];
+    mainNavItems.forEach(item => {
+        if (item.children) {
+            item.children.forEach(child => {
+                allChildPaths.push(child.href.split('?')[0]);
+            });
+        }
+    });
+
+    // Helper function to check if menu item is active
+    const isMenuActive = (item: NavItem): boolean => {
+        // Check exact match for parent
+        if (currentPath === item.href) return true;
+        
+        // For items with children
+        if (item.children) {
+            // Check each child
+            for (const child of item.children) {
+                const childPath = child.href.split('?')[0];
+                
+                // Exact match - always activate
+                if (currentPath === childPath) return true;
+                
+                // StartsWith match - but only if no other child path is MORE specific
+                if (currentPath.startsWith(childPath + '/')) {
+                    // Check if there's a MORE specific path that also matches
+                    const hasMoreSpecificMatch = allChildPaths.some(otherPath => 
+                        otherPath !== childPath && 
+                        otherPath.startsWith(childPath) && 
+                        currentPath.startsWith(otherPath)
+                    );
+                    
+                    // Only activate if this is the most specific match
+                    if (!hasMoreSpecificMatch) return true;
+                }
+            }
+            return false;
+        }
+        
+        // For items without children
+        return currentPath.startsWith(item.href + '/');
+    };
 
     // Filter navigation items based on permissions
     const filteredNavItems = mainNavItems.map(item => {
@@ -329,7 +392,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                 <DropdownMenuTrigger
                                                     className={cn(
                                                         "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground",
-                                                        (currentPath === item.href || currentPath.startsWith(item.href + '/')) && activeItemStyles,
+                                                        isMenuActive(item) && activeItemStyles,
                                                         'h-9 cursor-pointer px-3',
                                                     )}
                                                 >
@@ -356,7 +419,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                         </DropdownMenuItem>
                                                     ))}
                                                 </DropdownMenuContent>
-                                                {(currentPath === item.href || currentPath.startsWith(item.href + '/')) && (
+                                                {isMenuActive(item) && (
                                                     <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
                                                 )}
                                             </DropdownMenu>
@@ -366,15 +429,15 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                     href={item.href}
                                                     className={cn(
                                                         "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground",
-                                                        (currentPath === item.href || currentPath.startsWith(item.href + '/')) && activeItemStyles,
+                                                        isMenuActive(item) && activeItemStyles,
                                                         'h-9 cursor-pointer px-3',
                                                     )}
                                                 >
                                                     {item.icon && <Icon iconNode={item.icon} className="mr-2 h-4 w-4" />}
                                                     {item.title}
                                                 </Link>
-                                                {(currentPath === item.href || currentPath.startsWith(item.href + '/')) && (
-                                                    <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
+                                                {isMenuActive(item) && (
+                                                    <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white rounded-t-sm"></div>
                                                 )}
                                             </>
                                         )}
@@ -411,6 +474,9 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                 ))}
                             </div>
                         </div> */}
+
+                        {/* Notification Bell */}
+                        <NotificationBell />
 
                         {/* AUTH */}
                         <DropdownMenu>

@@ -25,6 +25,8 @@ import { toast } from 'sonner';
 import { ArrowLeft, Edit, CheckCircle, RotateCcw, Trash2, BookOpen, Calculator } from 'lucide-react';
 import { BreadcrumbItem, SharedData } from '@/types';
 import { route } from "ziggy-js";
+import { useRevisionDialog } from '@/hooks/use-revision-dialog';
+import { RevisionReasonDialog } from '@/components/closing-period/revision-reason-dialog';
 
 interface DaftarAkun {
     id: number;
@@ -127,6 +129,31 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
         open: boolean;
         type: 'post' | 'unpost' | 'reverse' | 'delete' | null;
     }>({ open: false, type: null });
+    
+    const [currentActionType, setCurrentActionType] = useState<'edit' | 'delete' | 'unpost' | 'reverse'>('delete');
+
+    // Use revision dialog hook
+    const {
+        showDialog,
+        revisionData,
+        makeRequest,
+        submitWithRevision,
+        closeDialog: closeRevisionDialog,
+    } = useRevisionDialog({
+        onSuccess: () => {
+            if (currentActionType === 'delete') {
+                toast.success('Jurnal berhasil dihapus');
+                router.visit(route('akuntansi.jurnal.index'));
+            } else if (currentActionType === 'unpost') {
+                toast.success('Posting jurnal berhasil dibatalkan');
+            } else if (currentActionType === 'reverse') {
+                toast.success('Jurnal berhasil dibalik');
+            }
+        },
+        onError: (errors) => {
+            toast.error('Gagal memproses jurnal');
+        },
+    });
 
     const openDialog = (type: 'post' | 'unpost' | 'reverse' | 'delete') => {
         setDialogState({ open: true, type });
@@ -142,6 +169,7 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
 
         switch (type) {
             case 'post':
+                // Post tidak perlu revision dialog karena tidak termasuk periode tutup buku
                 router.post(route('akuntansi.jurnal.post', jurnal?.id), {}, {
                     onSuccess: () => {
                         toast.success('Jurnal berhasil diposting');
@@ -152,35 +180,16 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
                 });
                 break;
             case 'unpost':
-                router.post(route('akuntansi.jurnal.unpost', jurnal?.id), {}, {
-                    onSuccess: () => {
-                        toast.success('Posting jurnal berhasil dibatalkan');
-                    },
-                    onError: () => {
-                        toast.error('Gagal membatalkan posting jurnal');
-                    },
-                });
+                setCurrentActionType('unpost');
+                makeRequest('post', route('akuntansi.jurnal.unpost', jurnal?.id), {});
                 break;
             case 'reverse':
-                router.post(route('akuntansi.jurnal.reverse', jurnal?.id), {}, {
-                    onSuccess: () => {
-                        toast.success('Jurnal berhasil dibalik');
-                    },
-                    onError: () => {
-                        toast.error('Gagal membalik jurnal');
-                    },
-                });
+                setCurrentActionType('reverse');
+                makeRequest('post', route('akuntansi.jurnal.reverse', jurnal?.id), {});
                 break;
             case 'delete':
-                router.delete(route('akuntansi.jurnal.destroy', jurnal?.id), {
-                    onSuccess: () => {
-                        toast.success('Jurnal berhasil dihapus');
-                        router.visit(route('akuntansi.jurnal.index'));
-                    },
-                    onError: () => {
-                        toast.error('Gagal menghapus jurnal');
-                    },
-                });
+                setCurrentActionType('delete');
+                makeRequest('delete', route('akuntansi.jurnal.destroy', jurnal?.id), {});
                 break;
         }
     };
@@ -474,6 +483,15 @@ export default function JurnalShow({ jurnal }: JurnalPageProps) {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+
+                {/* Revision Reason Dialog */}
+                <RevisionReasonDialog
+                    open={showDialog}
+                    onOpenChange={closeRevisionDialog}
+                    onSubmit={submitWithRevision}
+                    periodName={revisionData?.period_name}
+                    actionType={currentActionType}
+                />
             </div>
         </AppLayout>
     );

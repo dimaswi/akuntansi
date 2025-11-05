@@ -52,6 +52,10 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
                 'permissions' => $user ? $user->getAllPermissions() : [],
             ],
+            'notifications' => [
+                'unread_count' => $user ? $user->unreadNotifications()->count() : 0,
+                'notifications' => $user ? $user->unreadNotifications()->take(5)->get() : [],
+            ],
             'ziggy' => fn (): array => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
