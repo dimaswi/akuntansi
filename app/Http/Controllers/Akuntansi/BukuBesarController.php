@@ -65,7 +65,7 @@ class BukuBesarController extends Controller
                     return [
                         'id' => $detail->id,
                         'tanggal' => $detail->jurnal->tanggal_transaksi,
-                        'keterangan' => $detail->jurnal->keterangan,
+                        'keterangan' => $detail->keterangan, // Keterangan per akun dari detail jurnal
                         'referensi' => $detail->jurnal->nomor_jurnal,
                         'debet' => $detail->jumlah_debit,
                         'kredit' => $detail->jumlah_kredit,
@@ -166,7 +166,7 @@ class BukuBesarController extends Controller
                 return [
                     'id' => $detail->id,
                     'tanggal' => $detail->jurnal->tanggal_transaksi,
-                    'keterangan' => $detail->jurnal->keterangan,
+                    'keterangan' => $detail->keterangan, // Keterangan per akun dari detail jurnal
                     'referensi' => $detail->jurnal->nomor_jurnal,
                     'debet' => $detail->jumlah_debit,
                     'kredit' => $detail->jumlah_kredit,
