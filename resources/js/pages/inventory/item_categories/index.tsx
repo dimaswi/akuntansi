@@ -10,7 +10,7 @@ import { usePermission } from '@/hooks/use-permission';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, SharedData } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Edit3, Loader2, Package, PlusCircle, Search, Trash, X, Filter, Home } from 'lucide-react';
+import { Edit3, Loader2, Package, PlusCircle, Search, Trash, X, Filter, Home, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
@@ -221,10 +221,12 @@ export default function ItemCategoryIndex() {
                                 <Filter className="h-4 w-4" />
                                 {isFilterExpanded ? 'Hide Filters' : 'Show Filters'}
                             </Button>
-                            <Button onClick={() => router.visit('/item-categories/create')} className="gap-2">
-                                <PlusCircle className="h-4 w-4" />
-                                Tambah Kategori
-                            </Button>
+                            {hasPermission('inventory.categories.create') && (
+                                <Button onClick={() => router.visit('/item-categories/create')} className="gap-2">
+                                    <PlusCircle className="h-4 w-4" />
+                                    Tambah Kategori
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </CardHeader>
@@ -347,7 +349,18 @@ export default function ItemCategoryIndex() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center justify-center gap-1">
-                                                    {hasPermission('item_category.edit') && (
+                                                    {hasPermission('inventory.categories.view') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => router.visit(route('item_categories.show', category.id))}
+                                                            className="h-8 w-8 p-0"
+                                                            title="Lihat Detail"
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                    {hasPermission('inventory.categories.edit') && (
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
@@ -358,7 +371,7 @@ export default function ItemCategoryIndex() {
                                                             <Edit3 className="h-4 w-4" />
                                                         </Button>
                                                     )}
-                                                    {hasPermission('item_category.delete') && (
+                                                    {hasPermission('inventory.categories.delete') && (
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
