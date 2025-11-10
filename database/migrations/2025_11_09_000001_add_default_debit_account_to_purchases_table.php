@@ -15,7 +15,6 @@ return new class extends Migration
             // Add default kas account for journal entry
             $table->foreignId('akun_kas_id')
                 ->nullable()
-                ->after('ap_outstanding')
                 ->constrained('daftar_akun')
                 ->nullOnDelete();
         });
