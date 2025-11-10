@@ -71,15 +71,21 @@ interface Props {
     item: Item;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Inventory", href: "#" },
-    { title: "Items", href: "/items" },
-    { title: "Edit Item", href: "#" },
-];
-
 export default function EditItem() {
     const { item }: Props = usePage().props as any;
     const [inventoryType, setInventoryType] = useState<'pharmacy' | 'general'>(item.inventory_type);
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: <Package className="h-4 w-4" />, href: '#' },
+        {
+            title: 'Items',
+            href: '/items',
+        },
+        {
+            title: 'Edit Barang',
+            href: '#',
+        },
+    ];
 
     const { data, setData, put, processing, errors } = useForm<{
         code: string;

@@ -69,27 +69,54 @@ class Item extends Model
         return $this->hasOne(GeneralItemDetail::class, 'item_id');
     }
 
-    // Relasi dengan stock per departemen
-    public function departmentStocks()
+    // ============================================================
+    // STOCK RELATIONS (NEW SYSTEM - item_stocks only)
+    // ============================================================
+    
+    // Relasi dengan stock terpusat (Central + Department dalam 1 table)
+    public function stocks()
     {
-        return $this->hasMany(ItemDepartmentStock::class);
+        return $this->hasMany(ItemStock::class);
     }
 
-    public function stockForDepartment($departmentId)
+    // Get central warehouse stock (department_id = NULL)
+    public function centralStock()
     {
-        return $this->departmentStocks()->where('department_id', $departmentId)->first();
+        return $this->stocks()->whereNull('department_id')->first();
     }
 
-    public function getAvailableStockForDepartment($departmentId)
+    // Get department stock (department_id = specific id)
+    public function departmentStock($departmentId)
     {
-        $stock = $this->stockForDepartment($departmentId);
-        return $stock ? $stock->available_stock : 0;
+        return $this->stocks()->where('department_id', $departmentId)->first();
     }
 
-    public function getCurrentStockForDepartment($departmentId)
+    // Get central warehouse quantity
+    public function getCentralQuantity()
     {
-        $stock = $this->stockForDepartment($departmentId);
-        return $stock ? $stock->current_stock : 0;
+        $stock = $this->centralStock();
+        return $stock ? $stock->quantity_on_hand : 0;
+    }
+
+    // Get central warehouse available quantity
+    public function getCentralAvailable()
+    {
+        $stock = $this->centralStock();
+        return $stock ? $stock->available_quantity : 0;
+    }
+
+    // Get department quantity
+    public function getDepartmentQuantity($departmentId)
+    {
+        $stock = $this->departmentStock($departmentId);
+        return $stock ? $stock->quantity_on_hand : 0;
+    }
+
+    // Get department available quantity
+    public function getDepartmentAvailable($departmentId)
+    {
+        $stock = $this->departmentStock($departmentId);
+        return $stock ? $stock->available_quantity : 0;
     }
 
     // Scope untuk filter aktif/nonaktif

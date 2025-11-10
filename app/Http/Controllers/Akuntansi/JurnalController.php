@@ -102,23 +102,7 @@ class JurnalController extends Controller
 
         // Generate nomor jurnal if not provided
         if (empty($validated['nomor_jurnal'])) {
-            $tahun = date('Y');
-            $prefix = 'JE-' . $tahun . '-';
-            
-            // Get last journal number for this year with JE prefix
-            $lastJurnal = Jurnal::where('jenis_jurnal', 'umum')
-                ->where('nomor_jurnal', 'like', $prefix . '%')
-                ->orderBy('nomor_jurnal', 'desc')
-                ->first();
-            
-            $nextNumber = 1;
-            if ($lastJurnal) {
-                // Extract the last 4 digits
-                $lastNumber = (int) substr($lastJurnal->nomor_jurnal, -4);
-                $nextNumber = $lastNumber + 1;
-            }
-            
-            $validated['nomor_jurnal'] = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $validated['nomor_jurnal'] = $this->generateNomorJurnal();
         }
 
         // Validate balanced journal
@@ -468,6 +452,38 @@ class JurnalController extends Controller
             : 'Jurnal berhasil direverse';
 
         return back()->with('message', $message);
+    }
+
+    /**
+     * Generate nomor jurnal dengan format JE/YYYY/MM/XXXX
+     * Nomor akan reset setiap bulan baru
+     */
+    private function generateNomorJurnal()
+    {
+        $tahun = date('Y');
+        $bulan = date('m');
+
+        // Format: JE/YYYY/MM/XXXX
+        $prefix = "JE/{$tahun}/{$bulan}/";
+
+        // Cari nomor terakhir di bulan ini
+        $lastJurnal = Jurnal::where(function($q) {
+                $q->where('jenis_jurnal', 'umum')
+                  ->orWhereNull('jenis_jurnal');
+            })
+            ->where('nomor_jurnal', 'like', $prefix . '%')
+            ->orderBy('nomor_jurnal', 'desc')
+            ->first();
+
+        if ($lastJurnal) {
+            // Extract nomor urut
+            $lastNumber = (int) substr($lastJurnal->nomor_jurnal, -4);
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+
+        return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 }
 

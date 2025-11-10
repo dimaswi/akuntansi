@@ -15,7 +15,6 @@ interface PurchaseRepositoryInterface
     // Purchase specific methods
     public function findByNumber($number);
     public function getByStatus($status);
-    public function getByDepartment($departmentId);
     public function getBySupplier($supplierId);
     public function getPendingApprovals();
     public function getReadyToReceive();

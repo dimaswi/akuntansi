@@ -19,6 +19,16 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -122,6 +132,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function ItemsIndex() {
     const { items, filters, categories, departments, suppliers }: Props = usePage().props as any;
     const [searchValue, setSearchValue] = useState(filters?.search || '');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<number | null>(null);
 
     const handleSearch = (value: string) => {
         router.get('/items', {
@@ -215,15 +227,20 @@ export default function ItemsIndex() {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('Apakah Anda yakin ingin menghapus item ini?')) {
-            return;
-        }
+        setItemToDelete(id);
+        setDeleteDialogOpen(true);
+    };
 
-        try {
-            await router.delete(route('items.destroy', id));
-            toast.success('Item berhasil dihapus');
-        } catch (error) {
-            toast.error('Gagal menghapus item');
+    const confirmDelete = async () => {
+        if (itemToDelete) {
+            try {
+                await router.delete(route('items.destroy', itemToDelete));
+                toast.success('Item berhasil dihapus');
+                setDeleteDialogOpen(false);
+                setItemToDelete(null);
+            } catch (error) {
+                toast.error('Gagal menghapus item');
+            }
         }
     };
 
@@ -526,6 +543,24 @@ export default function ItemsIndex() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus Item?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Apakah Anda yakin ingin menghapus item ini? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setItemToDelete(null)}>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Hapus
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     );
 }

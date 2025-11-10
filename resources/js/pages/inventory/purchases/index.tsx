@@ -19,12 +19,21 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DepartmentSearchableDropdown } from '@/components/ui/department-searchable-dropdown';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { SupplierSearchableDropdown } from '@/components/ui/supplier-searchable-dropdown';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ShoppingCart, Plus, Edit, Trash2, Eye, Search, Filter, CheckCircle, Clock, XCircle, Truck, Package, BanknoteIcon } from 'lucide-react';
+import { ShoppingCart, Plus, Edit, Trash2, Eye, Search, Filter, CheckCircle, Clock, XCircle, Truck, Package } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
@@ -42,10 +51,6 @@ interface Purchase {
         id: number;
         name: string;
     };
-    department: {
-        id: number;
-        name: string;
-    };
     creator: {
         id: number;
         name: string;
@@ -57,12 +62,6 @@ interface Purchase {
     approved_at?: string;
     completed_at?: string;
     items_count?: number;
-}
-
-interface Department {
-    id: number;
-    name: string;
-    is_active?: boolean;
 }
 
 interface Supplier {
@@ -80,21 +79,27 @@ interface Props extends PageProps {
     filters: {
         search?: string;
         status?: string;
-        department_id?: number;
         supplier_id?: number;
         date_from?: string;
         date_to?: string;
         perPage?: number;
     };
-    departments: Department[];
     suppliers: Supplier[];
     statusOptions: { value: string; label: string }[];
+    statistics: {
+        draft: number;
+        pending: number;
+        approved: number;
+        ordered: number;
+        partial: number;
+        completed: number;
+        cancelled: number;
+    };
 }
 
 const breadcrumbItems: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Inventory', href: '/inventory' },
-    { title: 'Purchase Orders', href: '' }
+    { title: <Package className="h-4 w-4" />, href: '#' },
+    { title: 'Purchase Orders', href: '#' }
 ];
 
 const getStatusBadge = (status: string) => {
@@ -120,24 +125,20 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function PurchaseIndex() {
-    const { purchases, filters, departments, suppliers, statusOptions } = usePage<Props>().props;
-    const [searchTerm, setSearchTerm] = useState(filters.search || '');
-    const [selectedStatus, setSelectedStatus] = useState(filters.status || 'all');
-    const [selectedDepartment, setSelectedDepartment] = useState<number | null>(
-        filters.department_id ? parseInt(filters.department_id.toString()) : null
-    );
-    const [selectedSupplier, setSelectedSupplier] = useState<number | null>(
-        filters.supplier_id ? parseInt(filters.supplier_id.toString()) : null
-    );
-    const [dateFrom, setDateFrom] = useState(filters.date_from || '');
-    const [dateTo, setDateTo] = useState(filters.date_to || '');
+    const { purchases, suppliers, statistics, statusOptions } = usePage<Props>().props;
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedStatus, setSelectedStatus] = useState<string>('all');
+    const [selectedSupplier, setSelectedSupplier] = useState<number | null>(null);
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
     const [showFilters, setShowFilters] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [purchaseToDelete, setPurchaseToDelete] = useState<number | null>(null);
 
     const handleSearch = () => {
         router.get(route('purchases.index'), {
             search: searchTerm,
-            status: selectedStatus,
-            department_id: selectedDepartment,
+            status: selectedStatus !== 'all' ? selectedStatus : undefined,
             supplier_id: selectedSupplier,
             date_from: dateFrom,
             date_to: dateTo,
@@ -149,19 +150,28 @@ export default function PurchaseIndex() {
 
     const handleClearFilters = () => {
         setSearchTerm('');
-        setSelectedStatus('');
-        setSelectedDepartment(null);
+        setSelectedStatus('all');
         setSelectedSupplier(null);
         setDateFrom('');
         setDateTo('');
-        router.get(route('purchases.index'));
+        router.get(route('purchases.index'), {}, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this purchase order?')) {
-            router.delete(route('purchases.destroy', id), {
+        setPurchaseToDelete(id);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (purchaseToDelete) {
+            router.delete(route('purchases.destroy', purchaseToDelete), {
                 onSuccess: () => {
                     toast.success('Purchase order deleted successfully');
+                    setDeleteDialogOpen(false);
+                    setPurchaseToDelete(null);
                 },
                 onError: () => {
                     toast.error('Failed to delete purchase order');
@@ -185,71 +195,68 @@ export default function PurchaseIndex() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title="Purchase Orders" />
 
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <BanknoteIcon className="h-6 w-6" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Pembelian Barang</h1>
-                                <p className="text-sm text-gray-600">Kelola data pembelian barang inventory farmasi dan umum</p>
-                            </div>
+            <Card className='mt-6'>
+                <CardHeader>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <ShoppingCart className="h-5 w-5" />
+                                Purchase Orders Management
+                            </CardTitle>
+                            <CardDescription>
+                                Manage and track all purchase orders for inventory items
+                            </CardDescription>
                         </div>
-                        <Button 
-                            onClick={() => router.visit(route('purchases.create'))}
-                            className="flex items-center gap-2"
-                        >
-                            <Plus className="h-4 w-4" />
-                            Tambah Pembelian
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Search and Filters */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                <Search className="h-4 w-4" />
-                                <CardTitle>Search & Filter</CardTitle>
-                            </div>
+                        <div className="flex gap-2">
                             <Button
                                 variant="outline"
-                                size="sm"
                                 onClick={() => setShowFilters(!showFilters)}
+                                className="gap-2"
                             >
-                                <Filter className="mr-2 h-4 w-4" />
+                                <Filter className="h-4 w-4" />
                                 {showFilters ? 'Hide Filters' : 'Show Filters'}
                             </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {/* Search Bar */}
-                        <div className="flex items-center space-x-2">
-                            <div className="flex-1">
-                                <Input
-                                    placeholder="Search by purchase number or supplier..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                />
-                            </div>
-                            <Button onClick={handleSearch}>
-                                <Search className="h-4 w-4" />
+                            <Button
+                                onClick={() => router.visit(route('purchases.create'))}
+                                className="gap-2"
+                            >
+                                <Plus className="h-4 w-4" />
+                                New Purchase
                             </Button>
-                            {(searchTerm || selectedStatus || selectedDepartment || selectedSupplier || dateFrom || dateTo) && (
-                                <Button variant="outline" onClick={handleClearFilters}>
-                                    Clear
-                                </Button>
-                            )}
                         </div>
+                    </div>
+                </CardHeader>
 
-                        {/* Advanced Filters */}
-                        {showFilters && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t">
+                <CardContent className="space-y-4">
+                    {/* Search Bar */}
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Search by purchase number or supplier..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10"
+                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                            />
+                        </div>
+                        <Button onClick={handleSearch} className="gap-2">
+                            <Search className="h-4 w-4" />
+                            Search
+                        </Button>
+                        {(searchTerm || selectedStatus !== 'all' || selectedSupplier || dateFrom || dateTo) && (
+                            <Button variant="outline" onClick={handleClearFilters}>
+                                Clear
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* Collapsible Filters */}
+                    {showFilters && (
+                        <div className="p-4 border rounded-lg bg-gray-50">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="status">Status</Label>
+                                    <Label>Status</Label>
                                     <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="All Status" />
@@ -266,17 +273,7 @@ export default function PurchaseIndex() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="department">Department</Label>
-                                    <DepartmentSearchableDropdown
-                                        value={selectedDepartment}
-                                        onValueChange={setSelectedDepartment}
-                                        placeholder="All Departments"
-                                        departments={departments.map(d => ({...d, is_active: d.is_active ?? true}))}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="supplier">Supplier</Label>
+                                    <Label>Supplier</Label>
                                     <SupplierSearchableDropdown
                                         value={selectedSupplier}
                                         onValueChange={setSelectedSupplier}
@@ -286,7 +283,7 @@ export default function PurchaseIndex() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="dateFrom">Date From</Label>
+                                    <Label>Date From</Label>
                                     <Input
                                         type="date"
                                         value={dateFrom}
@@ -295,7 +292,7 @@ export default function PurchaseIndex() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="dateTo">Date To</Label>
+                                    <Label>Date To</Label>
                                     <Input
                                         type="date"
                                         value={dateTo}
@@ -303,40 +300,27 @@ export default function PurchaseIndex() {
                                     />
                                 </div>
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
+                        </div>
+                    )}
 
-                {/* Purchase Orders Table */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <ShoppingCart className="h-5 w-5" />
-                            Purchase Orders ({purchases?.meta?.total})
-                        </CardTitle>
-                        <CardDescription>
-                            List of all purchase orders in the system
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Purchase Number</TableHead>
-                                        <TableHead>Supplier</TableHead>
-                                        <TableHead>Department</TableHead>
-                                        <TableHead>Purchase Date</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Total Amount</TableHead>
-                                        <TableHead>Items</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
+                    {/* Purchase Orders Table */}
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Purchase Number</TableHead>
+                                    <TableHead>Supplier</TableHead>
+                                    <TableHead>Purchase Date</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Total Amount</TableHead>
+                                    <TableHead>Items</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                     {purchases.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="text-center py-8">
+                                            <TableCell colSpan={7} className="text-center py-8">
                                                 <div className="flex flex-col items-center gap-2">
                                                     <ShoppingCart className="h-8 w-8 text-muted-foreground" />
                                                     <p className="text-muted-foreground">No purchase orders found</p>
@@ -350,7 +334,6 @@ export default function PurchaseIndex() {
                                                     {purchase.purchase_number}
                                                 </TableCell>
                                                 <TableCell>{purchase.supplier.name}</TableCell>
-                                                <TableCell>{purchase.department.name}</TableCell>
                                                 <TableCell>{formatDate(purchase.purchase_date)}</TableCell>
                                                 <TableCell>{getStatusBadge(purchase.status)}</TableCell>
                                                 <TableCell>{formatCurrency(purchase.total_amount)}</TableCell>
@@ -421,7 +404,24 @@ export default function PurchaseIndex() {
                         )}
                     </CardContent>
                 </Card>
-            </div>
-        </AppLayout>
-    );
-}
+
+                {/* Delete Confirmation Dialog */}
+                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the purchase order and remove the data from the server.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setPurchaseToDelete(null)}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </AppLayout>
+        );
+    }

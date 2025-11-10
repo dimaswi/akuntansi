@@ -24,9 +24,15 @@ import { route } from 'ziggy-js';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Inventory", href: "#" },
-    { title: "Items", href: "/items" },
-    { title: "Tambah Item", href: "#" },
+    { title: <Package className="h-4 w-4" />, href: '#' },
+    {
+        title: "Items",
+        href: '/items',
+    },
+    {
+        title: 'Tambah Barang',
+        href: '#',
+    },
 ];
 
 export default function CreateItem() {

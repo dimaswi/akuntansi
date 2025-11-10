@@ -80,12 +80,12 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->hasRole('admin');
+        return $this->hasRole('administrator');
     }
 
     public function isLogistics(): bool
     {
-        return $this->hasRole('Logistik') || $this->hasRole('admin');
+        return $this->hasRole('logistics') || $this->hasRole('administrator');
     }
 
     public function notifications()

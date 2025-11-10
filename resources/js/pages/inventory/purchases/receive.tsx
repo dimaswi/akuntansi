@@ -49,10 +49,6 @@ interface Purchase {
         id: number;
         name: string;
     };
-    department: {
-        id: number;
-        name: string;
-    };
     items: PurchaseItem[];
 }
 
@@ -90,8 +86,7 @@ export default function PurchaseReceive() {
     const [processing, setProcessing] = useState(false);
 
     const breadcrumbItems: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Inventory', href: '/inventory' },
+        { title: <Package className="h-4 w-4" />, href: '#' },
         { title: 'Purchase Orders', href: route('purchases.index') },
         { title: purchase.purchase_number, href: route('purchases.show', purchase.id) },
         { title: 'Receive Items', href: '' }
@@ -187,7 +182,7 @@ export default function PurchaseReceive() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title={`Receive Items - ${purchase.purchase_number}`} />
 
-            <div className="space-y-6">
+            <div className="space-y-6 mt-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
@@ -214,10 +209,6 @@ export default function PurchaseReceive() {
                             <div>
                                 <h4 className="font-medium text-sm text-muted-foreground">Supplier</h4>
                                 <p className="font-medium">{purchase.supplier.name}</p>
-                            </div>
-                            <div>
-                                <h4 className="font-medium text-sm text-muted-foreground">Department</h4>
-                                <p>{purchase.department.name}</p>
                             </div>
                             <div>
                                 <h4 className="font-medium text-sm text-muted-foreground">Purchase Date</h4>

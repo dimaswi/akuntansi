@@ -6,7 +6,7 @@ use App\Models\Inventory\Purchase;
 use App\Models\Inventory\PurchaseItem;
 use App\Models\Inventory\StockMovement;
 use App\Models\Inventory\Item;
-use App\Models\Inventory\ItemDepartmentStock;
+use App\Services\Inventory\ItemStockService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,14 +14,14 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 {
     public function all()
     {
-        return Purchase::with(['supplier', 'department', 'creator', 'items.item'])
-            ->orderBy('created_at', 'desc')
+        return Purchase::with(['supplier', 'creator', 'items.item'])
+            ->orderBy('purchase_date', 'desc')
             ->get();
     }
 
     public function find($id)
     {
-        return Purchase::with(['supplier', 'department', 'creator', 'approver', 'items.item'])
+        return Purchase::with(['supplier', 'creator', 'approver', 'items.item'])
             ->findOrFail($id);
     }
 
@@ -46,7 +46,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             $this->calculateTotals($purchase->id);
             
             DB::commit();
-            return $purchase->fresh(['supplier', 'department', 'items.item']);
+            return $purchase->fresh(['supplier', 'items.item']);
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
@@ -80,7 +80,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             $this->calculateTotals($purchase->id);
             
             DB::commit();
-            return $purchase->fresh(['supplier', 'department', 'items.item']);
+            return $purchase->fresh(['supplier', 'items.item']);
         } catch (\Exception $e) {
             DB::rollback();
             throw $e;
@@ -114,7 +114,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
     public function paginate(array $filters = [])
     {
-        $query = Purchase::with(['supplier', 'department', 'creator']);
+        $query = Purchase::with(['supplier', 'creator']);
 
         // Apply filters
         if (!empty($filters['search'])) {
@@ -129,10 +129,6 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
-        }
-
-        if (!empty($filters['department_id'])) {
-            $query->where('department_id', $filters['department_id']);
         }
 
         if (!empty($filters['supplier_id'])) {
@@ -154,7 +150,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
     public function search($query, $limit = 10)
     {
-        return Purchase::with(['supplier', 'department'])
+        return Purchase::with(['supplier'])
             ->where(function ($q) use ($query) {
                 $q->where('purchase_number', 'LIKE', "%{$query}%")
                   ->orWhereHas('supplier', function ($sq) use ($query) {
@@ -168,14 +164,14 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
     public function findByNumber($number)
     {
-        return Purchase::with(['supplier', 'department', 'creator', 'items.item'])
+        return Purchase::with(['supplier', 'creator', 'items.item'])
             ->where('purchase_number', $number)
             ->first();
     }
 
     public function getByStatus($status)
     {
-        return Purchase::with(['supplier', 'department', 'creator'])
+        return Purchase::with(['supplier', 'creator'])
             ->where('status', $status)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -191,7 +187,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
     public function getBySupplier($supplierId)
     {
-        return Purchase::with(['department', 'creator'])
+        return Purchase::with(['creator'])
             ->where('supplier_id', $supplierId)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -199,7 +195,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
     public function getPendingApprovals()
     {
-        return Purchase::with(['supplier', 'department', 'creator'])
+        return Purchase::with(['supplier', 'creator'])
             ->where('status', 'pending')
             ->orderBy('created_at', 'asc')
             ->get();
@@ -207,7 +203,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
     public function getReadyToReceive()
     {
-        return Purchase::with(['supplier', 'department', 'items.item'])
+        return Purchase::with(['supplier', 'items.item'])
             ->whereIn('status', ['ordered', 'partial'])
             ->orderBy('expected_delivery_date', 'asc')
             ->get();
@@ -318,34 +314,21 @@ class PurchaseRepository implements PurchaseRepositoryInterface
                 Auth::id() ?? $purchase->created_by
             );
 
-            // Update item stock in logistics department (purchase always goes to logistics)
-            $logisticsDepartment = \App\Models\Inventory\Department::where(function($query) {
-                $query->where('name', 'like', '%logistic%')
-                      ->orWhere('code', 'like', '%log%');
-            })->first();
-
-            if ($logisticsDepartment) {
-                $departmentStock = ItemDepartmentStock::firstOrCreate(
-                    [
-                        'item_id' => $purchaseItem->item_id,
-                        'department_id' => $logisticsDepartment->id
-                    ],
-                    [
-                        'current_stock' => 0,
-                        'reserved_stock' => 0,
-                        'available_stock' => 0,
-                        'minimum_stock' => $purchaseItem->item->reorder_level ?? 0,
-                        'maximum_stock' => $purchaseItem->item->max_level ?? 0,
-                    ]
-                );
-                
-                $departmentStock->addStock($receivedQuantity);
-            }
-
-            // Update global item stock for backward compatibility
-            $item = $purchaseItem->item;
-            $item->current_stock = ($item->current_stock ?? 0) + $receivedQuantity;
-            $item->save();
+            // ============================================================
+            // NEW FLOW: Receive to CENTRAL WAREHOUSE (not department)
+            // ============================================================
+            $itemStockService = app(ItemStockService::class);
+            
+            // Add stock to central warehouse
+            $itemStockService->addToCentral(
+                itemId: $purchaseItem->item_id,
+                quantity: $receivedQuantity,
+                unitCost: $purchaseItem->unit_price,
+                userId: Auth::id() ?? $purchase->created_by,
+                referenceType: Purchase::class,
+                referenceId: $purchase->id,
+                notes: "Purchase receive from PO #{$purchase->purchase_number}"
+            );
 
             // Check if all items are fully received
             $this->updatePurchaseStatus($purchase->id);

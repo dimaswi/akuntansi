@@ -6,7 +6,9 @@ use App\Http\Controllers\Inventory\DepartmentController;
 use App\Http\Controllers\Inventory\ItemCategoryController;
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Inventory\PurchaseController;
-use App\Http\Controllers\Inventory\RequisitionController;
+use App\Http\Controllers\Inventory\StockRequestController;
+use App\Http\Controllers\Inventory\DepartmentStockController;
+use App\Http\Controllers\Inventory\CentralWarehouseController;
 
 Route::middleware(['auth'])->group(function () {
     
@@ -85,6 +87,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [PurchaseController::class, 'index'])->name('index')->middleware('permission:inventory.purchases.view');
         Route::get('/create', [PurchaseController::class, 'create'])->name('create')->middleware('permission:inventory.purchases.create');
         Route::post('/', [PurchaseController::class, 'store'])->name('store')->middleware('permission:inventory.purchases.create');
+        
+        // Accounting integration routes - mengikuti pola kas (query param) - HARUS SEBELUM {id} routes
+        Route::get('/post-to-journal', [PurchaseController::class, 'showPostToJournal'])->name('showPostToJournal')->middleware('permission:inventory.purchases.post-to-journal');
+        Route::post('/post-to-journal', [PurchaseController::class, 'postToJournal'])->name('postToJournal')->middleware('permission:inventory.purchases.post-to-journal');
+        
+        // API endpoints - HARUS SEBELUM {id} routes
+        Route::get('/api/search', [PurchaseController::class, 'search'])->name('search')->middleware('permission:inventory.purchases.view');
+        
+        // Routes dengan parameter {id} - HARUS PALING BAWAH
         Route::get('/{id}', [PurchaseController::class, 'show'])->name('show')->middleware('permission:inventory.purchases.view');
         Route::get('/{id}/edit', [PurchaseController::class, 'edit'])->name('edit')->middleware('permission:inventory.purchases.edit');
         Route::put('/{id}', [PurchaseController::class, 'update'])->name('update')->middleware('permission:inventory.purchases.edit');
@@ -93,41 +104,54 @@ Route::middleware(['auth'])->group(function () {
         // Workflow actions
         Route::post('/{id}/submit', [PurchaseController::class, 'submit'])->name('submit')->middleware('permission:inventory.purchases.submit');
         Route::post('/{id}/approve', [PurchaseController::class, 'approve'])->name('approve')->middleware('permission:inventory.purchases.approve');
+        Route::post('/{id}/mark-as-ordered', [PurchaseController::class, 'markAsOrdered'])->name('markAsOrdered')->middleware('permission:inventory.purchases.edit');
         Route::post('/{id}/cancel', [PurchaseController::class, 'cancel'])->name('cancel')->middleware('permission:inventory.purchases.cancel');
         
         // Receiving actions
         Route::get('/{id}/receive', [PurchaseController::class, 'receive'])->name('receive')->middleware('permission:inventory.purchases.receive');
         Route::post('/items/{purchaseItemId}/receive', [PurchaseController::class, 'receiveItem'])->name('receiveItem')->middleware('permission:inventory.purchases.receive');
-        
-        // Special views
-        Route::get('/pending/approvals', [PurchaseController::class, 'pendingApprovals'])->name('pendingApprovals')->middleware('permission:inventory.purchases.approve');
-        Route::get('/ready/receive', [PurchaseController::class, 'readyToReceive'])->name('readyToReceive')->middleware('permission:inventory.purchases.receive');
-        
-        // API endpoints
-        Route::get('/api/search', [PurchaseController::class, 'search'])->name('search')->middleware('permission:inventory.purchases.view');
     });
 
-    // Requisitions routes
-    Route::prefix('requisitions')->group(function () {
-        Route::get('/', [RequisitionController::class, 'index'])->name('requisitions.index')->middleware('permission:inventory.requisitions.view');
-        Route::get('/create', [RequisitionController::class, 'create'])->name('requisitions.create')->middleware('permission:inventory.requisitions.create');
-        Route::post('/', [RequisitionController::class, 'store'])->name('requisitions.store')->middleware('permission:inventory.requisitions.create');
-        Route::get('/{requisition}', [RequisitionController::class, 'show'])->name('requisitions.show')->middleware('permission:inventory.requisitions.view');
-        Route::get('/{requisition}/edit', [RequisitionController::class, 'edit'])->name('requisitions.edit')->middleware('permission:inventory.requisitions.edit');
-        Route::put('/{requisition}', [RequisitionController::class, 'update'])->name('requisitions.update')->middleware('permission:inventory.requisitions.edit');
-        Route::delete('/{requisition}', [RequisitionController::class, 'destroy'])->name('requisitions.destroy')->middleware('permission:inventory.requisitions.delete');
+    // =============================================
+    // Permintaan Stok ROUTES (NEW - Central Warehouse System)
+    // =============================================
+    Route::prefix('stock-requests')->name('stock-requests.')->group(function () {
+        // Main CRUD routes
+        Route::get('/', [StockRequestController::class, 'index'])->name('index')->middleware('permission:inventory.stock-requests.view');
+        Route::get('/create', [StockRequestController::class, 'create'])->name('create')->middleware('permission:inventory.stock-requests.create');
+        Route::post('/', [StockRequestController::class, 'store'])->name('store')->middleware('permission:inventory.stock-requests.create');
+        
+        // Detail & Edit routes
+        Route::get('/{stockRequest}', [StockRequestController::class, 'show'])->name('show')->middleware('permission:inventory.stock-requests.view');
+        Route::get('/{stockRequest}/edit', [StockRequestController::class, 'edit'])->name('edit')->middleware('permission:inventory.stock-requests.edit');
+        Route::put('/{stockRequest}', [StockRequestController::class, 'update'])->name('update')->middleware('permission:inventory.stock-requests.edit');
+        Route::delete('/{stockRequest}', [StockRequestController::class, 'destroy'])->name('destroy')->middleware('permission:inventory.stock-requests.delete');
         
         // Workflow actions
-        Route::put('/{requisition}/submit', [RequisitionController::class, 'submit'])->name('requisitions.submit')->middleware('permission:inventory.requisitions.create');
-        Route::put('/{requisition}/approve', [RequisitionController::class, 'approve'])->name('requisitions.approve')->middleware('permission:inventory.requisitions.approve');
-        Route::put('/{requisition}/reject', [RequisitionController::class, 'reject'])->name('requisitions.reject')->middleware('permission:inventory.requisitions.approve');
-        Route::put('/{requisition}/cancel', [RequisitionController::class, 'cancel'])->name('requisitions.cancel')->middleware('permission:inventory.requisitions.cancel');
+        Route::post('/{stockRequest}/submit', [StockRequestController::class, 'submit'])->name('submit')->middleware('permission:inventory.stock-requests.submit');
         
-        // Special views for workflows
-        Route::get('/pending/approvals', [RequisitionController::class, 'pendingApprovals'])->name('requisitions.pendingApprovals')->middleware('permission:inventory.requisitions.approve');
-        Route::get('/my/requests', [RequisitionController::class, 'myRequests'])->name('requisitions.myRequests')->middleware('permission:inventory.requisitions.view');
+        // Approval routes
+        Route::get('/{stockRequest}/approve', [StockRequestController::class, 'approvalForm'])->name('approve')->middleware('permission:inventory.stock-requests.approve');
+        Route::post('/{stockRequest}/approve', [StockRequestController::class, 'approve'])->name('approve.store')->middleware('permission:inventory.stock-requests.approve');
+        Route::post('/{stockRequest}/reject', [StockRequestController::class, 'reject'])->name('reject')->middleware('permission:inventory.stock-requests.approve');
         
-        // API endpoints
-        Route::get('/api/search', [RequisitionController::class, 'search'])->name('requisitions.search')->middleware('permission:inventory.requisitions.view');
+        // Issue/Complete routes
+        Route::post('/{stockRequest}/complete', [StockRequestController::class, 'complete'])->name('complete')->middleware('permission:inventory.stock-requests.complete');
+        Route::post('/{stockRequest}/cancel', [StockRequestController::class, 'cancel'])->name('cancel')->middleware('permission:inventory.stock-requests.cancel');
+    });
+
+    // =============================================
+    // DEPARTMENT STOCKS ROUTES
+    // =============================================
+    Route::prefix('department-stocks')->name('department-stocks.')->group(function () {
+        Route::get('/', [DepartmentStockController::class, 'index'])->name('index')->middleware('permission:inventory.items.view');
+        Route::get('/{department}', [DepartmentStockController::class, 'show'])->name('show')->middleware('permission:inventory.items.view');
+    });
+
+    // =============================================
+    // CENTRAL WAREHOUSE ROUTES
+    // =============================================
+    Route::prefix('central-warehouse')->name('central-warehouse.')->group(function () {
+        Route::get('/', [CentralWarehouseController::class, 'index'])->name('index')->middleware('permission:inventory.items.view');
     });
 });

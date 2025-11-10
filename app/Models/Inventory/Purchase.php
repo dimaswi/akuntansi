@@ -14,13 +14,21 @@ class Purchase extends Model
     protected $fillable = [
         'purchase_number',
         'supplier_id',
-        'department_id',
         'created_by',
         'approved_by',
         'purchase_date',
         'expected_delivery_date',
         'actual_delivery_date',
         'status',
+        'jurnal_id',
+        'jurnal_posted',
+        'jurnal_posted_at',
+        'ap_account_id',
+        'ap_amount',
+        'ap_paid_amount',
+        'ap_outstanding',
+        'akun_kas_id',
+        'tax_included',
         'subtotal',
         'tax_amount',
         'discount_amount',
@@ -38,11 +46,17 @@ class Purchase extends Model
         'purchase_date' => 'date',
         'expected_delivery_date' => 'date',
         'actual_delivery_date' => 'date',
+        'jurnal_posted' => 'boolean',
+        'jurnal_posted_at' => 'datetime',
+        'tax_included' => 'boolean',
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'ap_amount' => 'decimal:2',
+        'ap_paid_amount' => 'decimal:2',
+        'ap_outstanding' => 'decimal:2',
         'delivery_address' => 'array',
         'approved_at' => 'datetime',
         'ordered_at' => 'datetime',
@@ -61,11 +75,6 @@ class Purchase extends Model
         return $this->belongsTo(Supplier::class);
     }
 
-    public function department()
-    {
-        return $this->belongsTo(Department::class);
-    }
-
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -79,6 +88,33 @@ class Purchase extends Model
     public function items()
     {
         return $this->hasMany(PurchaseItem::class);
+    }
+
+    // New accounting relations
+    public function jurnal()
+    {
+        return $this->belongsTo(\App\Models\Akuntansi\Jurnal::class, 'jurnal_id');
+    }
+
+    public function akunKas()
+    {
+        return $this->belongsTo(\App\Models\Akuntansi\DaftarAkun::class, 'akun_kas_id');
+    }
+
+    public function apAccount()
+    {
+        return $this->belongsTo(\App\Models\Akuntansi\DaftarAkun::class, 'ap_account_id');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(PurchasePayment::class);
+    }
+
+    public function inventoryTransactions()
+    {
+        return $this->hasMany(InventoryTransaction::class, 'reference_id')
+            ->where('reference_type', 'purchase');
     }
 
     // Scopes
@@ -120,7 +156,7 @@ class Purchase extends Model
 
     public function canReceiveItems()
     {
-        return in_array($this->status, ['ordered', 'partial']);
+        return in_array($this->status, ['approved', 'ordered', 'partial']);
     }
 
     public function isCompleted()
@@ -146,7 +182,37 @@ class Purchase extends Model
     {
         $this->subtotal = $this->items->sum('total_price');
         $this->total_amount = $this->subtotal + $this->tax_amount + $this->shipping_cost - $this->discount_amount;
+        
+        // Update AP amount if jurnal posted
+        if ($this->jurnal_posted && $this->ap_amount == 0) {
+            $this->ap_amount = $this->total_amount;
+            $this->ap_outstanding = $this->total_amount - $this->ap_paid_amount;
+        }
+        
         $this->save();
+    }
+
+    // Accounting methods
+    public function canPostToJournal(): bool
+    {
+        // Allow posting if status is 'approved', 'ordered', 'partial', or 'completed'
+        // Karena posting jurnal bisa dilakukan kapan saja selama belum pernah di-post
+        return in_array($this->status, ['approved', 'ordered', 'partial', 'completed']) && !$this->jurnal_posted;
+    }
+
+    public function isFullyPaid(): bool
+    {
+        return $this->ap_paid_amount >= $this->ap_amount && $this->ap_amount > 0;
+    }
+
+    public function hasOutstandingPayment(): bool
+    {
+        return $this->ap_outstanding > 0 && $this->jurnal_posted;
+    }
+
+    public function getOutstandingAmountAttribute(): float
+    {
+        return $this->ap_outstanding;
     }
 
     // Generate purchase number
@@ -155,13 +221,36 @@ class Purchase extends Model
         $year = date('Y');
         $month = date('m');
         
-        $lastPurchase = static::whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->orderBy('id', 'desc')
+        // Format: PO/YYYY/MM/XXXX (konsisten dengan sistem lain)
+        $prefix = "PO/{$year}/{$month}/";
+        
+        // Use pessimistic locking to prevent race conditions
+        $lastPurchase = static::where('purchase_number', 'like', $prefix . '%')
+            ->lockForUpdate()
+            ->orderBy('purchase_number', 'desc')
             ->first();
             
-        $sequence = $lastPurchase ? (int) substr($lastPurchase->purchase_number, -3) + 1 : 1;
+        if ($lastPurchase) {
+            $lastNum = (int) substr($lastPurchase->purchase_number, -4);
+            $sequence = $lastNum + 1;
+        } else {
+            $sequence = 1;
+        }
         
-        return "PO-{$year}{$month}-" . str_pad($sequence, 3, '0', STR_PAD_LEFT);
+        $purchaseNumber = $prefix . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+        
+        // Check if number already exists (safety check)
+        $attempts = 0;
+        while (static::where('purchase_number', $purchaseNumber)->exists() && $attempts < 10) {
+            $sequence++;
+            $purchaseNumber = $prefix . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+            $attempts++;
+        }
+        
+        if ($attempts >= 10) {
+            throw new \Exception('Unable to generate unique purchase number after 10 attempts');
+        }
+        
+        return $purchaseNumber;
     }
 }

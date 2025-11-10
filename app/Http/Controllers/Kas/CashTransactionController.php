@@ -240,8 +240,10 @@ class CashTransactionController extends Controller
 
         $jurnal = null;
         DB::transaction(function () use ($request, $cashTransaction, $totalDebit, &$jurnal) {
-            // Generate nomor jurnal
-            $nomorJurnal = $this->generateNomorJurnal();
+            // Generate nomor jurnal - gunakan nomor transaksi sebagai referensi
+            // Format: JKS dari nomor transaksi KAS-YYYY-MM-XXXX menjadi JKS/YYYY/MM/XXXX
+            $nomorJurnal = str_replace('KAS-', 'JKS/', $cashTransaction->nomor_transaksi);
+            $nomorJurnal = str_replace('-', '/', $nomorJurnal);
 
             // Buat keterangan jurnal dari transaksi kas
             $keteranganJurnal = $cashTransaction->keterangan . ' - ' . $cashTransaction->pihak_terkait;
@@ -335,8 +337,10 @@ class CashTransactionController extends Controller
             ->orderBy('kode_akun')
             ->get(['id', 'kode_akun', 'nama_akun', 'jenis_akun']);
 
-        // Generate nomor jurnal preview
-        $nomorJurnal = $this->generateNomorJurnal();
+        // Generate nomor jurnal preview - gunakan nomor transaksi sebagai referensi
+        // Format: JKS dari nomor transaksi KAS-YYYY-MM-XXXX menjadi JKS/YYYY/MM/XXXX
+        $nomorJurnal = str_replace('KAS-', 'JKS/', $cashTransaction->nomor_transaksi);
+        $nomorJurnal = str_replace('-', '/', $nomorJurnal);
 
         return Inertia::render('kas/cash-transactions/post-to-journal', [
             'cashTransaction' => $cashTransaction->load('daftarAkunKas', 'user'),
@@ -347,8 +351,10 @@ class CashTransactionController extends Controller
 
     private function generateJurnal(CashTransaction $cashTransaction, $daftarAkunLawanId)
     {
-        // Generate nomor jurnal
-        $nomorJurnal = $this->generateNomorJurnal();
+        // Generate nomor jurnal - gunakan nomor transaksi sebagai referensi
+        // Format: JKS dari nomor transaksi KAS-YYYY-MM-XXXX menjadi JKS/YYYY/MM/XXXX
+        $nomorJurnal = str_replace('KAS-', 'JKS/', $cashTransaction->nomor_transaksi);
+        $nomorJurnal = str_replace('-', '/', $nomorJurnal);
 
         // Buat jurnal header
         $jurnal = Jurnal::create([

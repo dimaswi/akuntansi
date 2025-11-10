@@ -17,6 +17,12 @@ class NotificationService
     const TYPE_REVISION_APPROVAL = 'revision_approval';
     const TYPE_PERIOD_REMINDER = 'period_reminder';
     const TYPE_SYSTEM = 'system';
+    
+    // Inventory Accounting Types
+    const TYPE_PURCHASE_POSTED = 'purchase_posted_to_jurnal';
+    const TYPE_PAYMENT_CREATED = 'purchase_payment_created';
+    const TYPE_PURCHASE_APPROVED = 'purchase_approved';
+    const TYPE_PURCHASE_OUTSTANDING = 'purchase_outstanding_reminder';
 
     /**
      * Send notification to ALL users whose roles have this notification type enabled
@@ -116,6 +122,10 @@ class NotificationService
             self::TYPE_CLOSING_PERIOD => 'closing_period',
             self::TYPE_REVISION_APPROVAL => 'revision_approval',
             self::TYPE_PERIOD_REMINDER => 'period_reminder',
+            self::TYPE_PURCHASE_POSTED => 'system',
+            self::TYPE_PAYMENT_CREATED => 'system',
+            self::TYPE_PURCHASE_APPROVED => 'system',
+            self::TYPE_PURCHASE_OUTSTANDING => 'period_reminder',
             default => 'system',
         };
     }
@@ -131,6 +141,10 @@ class NotificationService
             self::TYPE_CLOSING_PERIOD => 'Closing Period',
             self::TYPE_REVISION_APPROVAL => 'Persetujuan Revisi',
             self::TYPE_PERIOD_REMINDER => 'Pengingat Periode',
+            self::TYPE_PURCHASE_POSTED => 'Purchase Order Posted to Journal',
+            self::TYPE_PAYMENT_CREATED => 'Pembuatan Purchase Payment',
+            self::TYPE_PURCHASE_APPROVED => 'Persetujuan Purchase Order',
+            self::TYPE_PURCHASE_OUTSTANDING => 'Pengingat Purchase Outstanding',
             self::TYPE_SYSTEM => 'Notifikasi Sistem',
         ];
     }

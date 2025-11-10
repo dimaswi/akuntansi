@@ -134,6 +134,9 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'inventory.purchases.approve', 'display_name' => 'Approve Purchase', 'description' => 'Dapat approve purchase order', 'module' => 'Inventory'],
             ['name' => 'inventory.purchases.cancel', 'display_name' => 'Cancel Purchase', 'description' => 'Dapat cancel purchase order', 'module' => 'Inventory'],
             ['name' => 'inventory.purchases.receive', 'display_name' => 'Receive Purchase', 'description' => 'Dapat receive barang purchase', 'module' => 'Inventory'],
+            ['name' => 'inventory.purchases.post-to-journal', 'display_name' => 'Post Purchase to Journal', 'description' => 'Dapat posting purchase ke jurnal', 'module' => 'Inventory'],
+            ['name' => 'inventory.purchases.create-payment', 'display_name' => 'Create Purchase Payment', 'description' => 'Dapat membuat pembayaran purchase', 'module' => 'Inventory'],
+            ['name' => 'inventory.purchases.view-ap', 'display_name' => 'View Accounts Payable', 'description' => 'Dapat melihat outstanding accounts payable', 'module' => 'Inventory'],
             
             // Inventory - Requisitions
             ['name' => 'inventory.requisitions.view', 'display_name' => 'Lihat Requisitions', 'description' => 'Dapat melihat daftar requisitions', 'module' => 'Inventory'],
@@ -196,7 +199,7 @@ class RolePermissionSeeder extends Seeder
 
         // Create Roles
         $adminRole = Role::firstOrCreate(
-            ['name' => 'admin'],
+            ['name' => 'administrator'],
             [
                 'display_name' => 'Administrator',
                 'description' => 'Administrator dengan akses penuh ke semua fitur sistem'
@@ -263,6 +266,7 @@ class RolePermissionSeeder extends Seeder
             // Inventory - View and Limited Management
             'inventory.items.view', 'inventory.categories.view', 'inventory.departments.view',
             'inventory.suppliers.view', 'inventory.purchases.view', 'inventory.purchases.approve',
+            'inventory.purchases.view-ap',
             'inventory.requisitions.view', 'inventory.requisitions.approve',
             
             // Kas - View and Approval (Sesuai dengan routes)
@@ -294,6 +298,9 @@ class RolePermissionSeeder extends Seeder
             // Tutup Buku - View & Dashboard for Staff Akuntansi
             'closing-period.view', 'closing-period.view-dashboard',
             
+            // Inventory - Accounting Integration
+            'inventory.purchases.view', 'inventory.purchases.view-ap',
+            
             // Kas - Full Access (Sesuai dengan routes)
             'kas.cash-management.view', 'kas.cash-management.daily-entry', 'kas.cash-management.reconcile',
             'kas.cash-transaction.delete', 'kas.bank-transaction.delete',
@@ -321,6 +328,7 @@ class RolePermissionSeeder extends Seeder
             'inventory.suppliers.view', 'inventory.suppliers.create', 'inventory.suppliers.edit', 'inventory.suppliers.delete', 'inventory.suppliers.toggle-status',
             'inventory.purchases.view', 'inventory.purchases.create', 'inventory.purchases.edit', 'inventory.purchases.delete',
             'inventory.purchases.submit', 'inventory.purchases.approve', 'inventory.purchases.cancel', 'inventory.purchases.receive',
+            'inventory.purchases.post-to-journal', 'inventory.purchases.create-payment', 'inventory.purchases.view-ap',
             'inventory.requisitions.view', 'inventory.requisitions.create', 'inventory.requisitions.edit', 'inventory.requisitions.delete',
             'inventory.requisitions.approve', 'inventory.requisitions.cancel'
         ])->pluck('id');

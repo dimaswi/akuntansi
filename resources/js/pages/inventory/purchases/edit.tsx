@@ -11,7 +11,6 @@ import {
     SelectContent,
     SelectItem,
 } from '@/components/ui/select';
-import { DepartmentSearchableDropdown } from '@/components/ui/department-searchable-dropdown';
 import { SupplierSearchableDropdown } from '@/components/ui/supplier-searchable-dropdown';
 import {
     Table,
@@ -25,16 +24,10 @@ import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ShoppingCart, Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Plus, Trash2, Save, ArrowLeft, Package } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
-
-interface Department {
-    id: number;
-    name: string;
-    is_active?: boolean;
-}
 
 interface Supplier {
     id: number;
@@ -64,7 +57,6 @@ interface Purchase {
     id: number;
     purchase_number: string;
     supplier_id: number;
-    department_id: number;
     purchase_date: string;
     expected_delivery_date?: string;
     notes?: string;
@@ -84,18 +76,16 @@ interface Purchase {
 
 interface Props extends PageProps {
     purchase: Purchase;
-    departments: Department[];
     suppliers: Supplier[];
     items: Item[];
 }
 
 export default function PurchaseEdit() {
-    const { purchase, departments, suppliers, items } = usePage<Props>().props;
+    const { purchase, suppliers, items } = usePage<Props>().props;
     const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
     const [selectedItemId, setSelectedItemId] = useState<string>('');
     const [formData, setFormData] = useState({
         supplier_id: purchase.supplier_id.toString(),
-        department_id: purchase.department_id.toString(),
         purchase_date: purchase.purchase_date,
         expected_delivery_date: purchase.expected_delivery_date || '',
         notes: purchase.notes || '',
@@ -104,8 +94,7 @@ export default function PurchaseEdit() {
     const [errors, setErrors] = useState<any>({});
 
     const breadcrumbItems: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Inventory', href: '/inventory' },
+        { title: <Package className="h-4 w-4" />, href: '#' },
         { title: 'Purchase Orders', href: route('purchases.index') },
         { title: purchase.purchase_number, href: route('purchases.show', purchase.id) },
         { title: 'Edit', href: '' }
@@ -255,21 +244,6 @@ export default function PurchaseEdit() {
                                     />
                                     {errors.supplier_id && (
                                         <p className="text-sm text-red-500">{errors.supplier_id}</p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="department_id">Department *</Label>
-                                    <DepartmentSearchableDropdown
-                                        value={formData.department_id ? parseInt(formData.department_id) : null}
-                                        onValueChange={(value) => setFormData({...formData, department_id: value ? value.toString() : ''})}
-                                        placeholder="Pilih department..."
-                                        error={!!errors.department_id}
-                                        departments={departments.map(d => ({...d, is_active: d.is_active ?? true}))}
-                                        className={errors.department_id ? 'border-red-500' : ''}
-                                    />
-                                    {errors.department_id && (
-                                        <p className="text-sm text-red-500">{errors.department_id}</p>
                                     )}
                                 </div>
 

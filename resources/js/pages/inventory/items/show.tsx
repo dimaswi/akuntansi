@@ -70,9 +70,15 @@ export default function ShowItem() {
     const { item }: Props = usePage().props as any;
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: "Inventory", href: "#" },
-        { title: "Items", href: "/items" },
-        { title: item.name, href: "#" },
+        { title: <Package className="h-4 w-4" />, href: '#' },
+        {
+            title: 'Items',
+            href: '/items',
+        },
+        {
+            title: item.name,
+            href: '#',
+        },
     ];
 
     const formatCurrency = (amount: number) => {

@@ -2,10 +2,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle, Clock, Edit, Package, Send, ShoppingCart, Trash2, Truck, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Edit, Package, Send, ShoppingCart, Trash2, Truck, XCircle, BookOpen } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
 
@@ -42,10 +53,6 @@ interface Purchase {
         name: string;
         phone?: string;
         email?: string;
-    };
-    department: {
-        id: number;
-        name: string;
     };
     creator: {
         id: number;
@@ -103,10 +110,17 @@ const getItemStatusBadge = (status: string) => {
 
 export default function PurchaseShow() {
     const { purchase, canEdit, canApprove, canReceive } = usePage<Props>().props;
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+
+    // Debug log
+    console.log('Purchase Status:', purchase.status);
+    console.log('canReceive:', canReceive);
+    console.log('canEdit:', canEdit);
+    console.log('canApprove:', canApprove);
 
     const breadcrumbItems: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/dashboard' },
-        { title: 'Inventory', href: '/inventory' },
+        { title: <Package className="h-4 w-4" />, href: '#' },
         { title: 'Purchase Orders', href: route('purchases.index') },
         { title: purchase.purchase_number, href: '' },
     ];
@@ -123,16 +137,15 @@ export default function PurchaseShow() {
     };
 
     const handleDelete = () => {
-        if (confirm('Are you sure you want to delete this purchase order?')) {
-            router.delete(route('purchases.destroy', purchase.id), {
-                onSuccess: () => {
-                    toast.success('Purchase order deleted successfully');
-                },
-                onError: () => {
-                    toast.error('Failed to delete purchase order');
-                },
-            });
-        }
+        router.delete(route('purchases.destroy', purchase.id), {
+            onSuccess: () => {
+                toast.success('Purchase order deleted successfully');
+                setDeleteDialogOpen(false);
+            },
+            onError: () => {
+                toast.error('Failed to delete purchase order');
+            },
+        });
     };
 
     const handleSubmit = () => {
@@ -165,21 +178,35 @@ export default function PurchaseShow() {
         );
     };
 
-    const handleCancel = () => {
-        if (confirm('Are you sure you want to cancel this purchase order?')) {
-            router.post(
-                route('purchases.cancel', purchase.id),
-                {},
-                {
-                    onSuccess: () => {
-                        toast.success('Purchase order cancelled successfully');
-                    },
-                    onError: () => {
-                        toast.error('Failed to cancel purchase order');
-                    },
+    const handleMarkAsOrdered = () => {
+        router.post(
+            route('purchases.markAsOrdered', purchase.id),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Purchase order marked as ordered');
                 },
-            );
-        }
+                onError: () => {
+                    toast.error('Failed to mark as ordered');
+                },
+            },
+        );
+    };
+
+    const handleCancel = () => {
+        router.post(
+            route('purchases.cancel', purchase.id),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Purchase order cancelled successfully');
+                    setCancelDialogOpen(false);
+                },
+                onError: () => {
+                    toast.error('Failed to cancel purchase order');
+                },
+            },
+        );
     };
 
     return (
@@ -224,6 +251,13 @@ export default function PurchaseShow() {
                                 </Button>
                             )}
 
+                            {purchase.status === 'approved' && (
+                                <Button onClick={handleMarkAsOrdered} className="flex items-center gap-2">
+                                    <Truck className="mr-2 h-4 w-4" />
+                                    Mark as Ordered
+                                </Button>
+                            )}
+
                             {canReceive && (purchase.status === 'approved' || purchase.status === 'ordered' || purchase.status === 'partial') && (
                                 <Button onClick={() => router.visit(route('purchases.receive', purchase.id))} className="flex items-center gap-2">
                                     <Package className="mr-2 h-4 w-4" />
@@ -231,13 +265,24 @@ export default function PurchaseShow() {
                                 </Button>
                             )}
 
+                            {purchase.status === 'completed' && (
+                                <Button 
+                                    onClick={() => router.visit(route('purchases.showPostToJournal') + '?id=' + purchase.id)}
+                                    className="flex items-center gap-2"
+                                    variant="default"
+                                >
+                                    <BookOpen className="mr-2 h-4 w-4" />
+                                    Post to Journal
+                                </Button>
+                            )}
+
                             {(purchase.status === 'draft' || purchase.status === 'pending') && canEdit && (
                                 <>
-                                    <Button variant="outline" onClick={handleCancel}>
+                                    <Button variant="outline" onClick={() => setCancelDialogOpen(true)}>
                                         <XCircle className="mr-2 h-4 w-4" />
                                         Cancel
                                     </Button>
-                                    <Button variant="destructive" onClick={handleDelete}>
+                                    <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete
                                     </Button>
@@ -338,16 +383,12 @@ export default function PurchaseShow() {
                             </CardContent>
                         </Card>
 
-                        {/* Department & Approval Info */}
+                        {/* Approval Info */}
                         <Card className='mb-6'>
                             <CardHeader>
-                                <CardTitle>Department & Approval</CardTitle>
+                                <CardTitle>Approval Information</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div>
-                                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Department</h4>
-                                    <p className="font-medium">{purchase.department.name}</p>
-                                </div>
                                 <div>
                                     <h4 className="text-sm font-medium text-muted-foreground mb-1">Created By</h4>
                                     <p>{purchase.creator.name}</p>
@@ -433,6 +474,42 @@ export default function PurchaseShow() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the purchase order and remove the data from the server.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Cancel Confirmation Dialog */}
+            <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Cancel Purchase Order?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to cancel this purchase order? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>No, Keep It</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleCancel}>
+                            Yes, Cancel Order
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     );
 }

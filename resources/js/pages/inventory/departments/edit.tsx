@@ -14,7 +14,7 @@ import { DepartmentSearchableDropdown } from '@/components/ui/department-searcha
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage, useForm } from '@inertiajs/react';
-import { Building2, Save, ArrowLeft, X } from 'lucide-react';
+import { Building2, Save, ArrowLeft, X, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
 
@@ -32,9 +32,15 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Inventory", href: "#" },
-    { title: "Departemen", href: "/departments" },
-    { title: "Edit Departemen", href: "#" },
+    { title: <Package className="h-4 w-4" />, href: '#' },
+    {
+        title: "Departments",
+        href: '/departments',
+    },
+    {
+        title: 'Edit Departemen',
+        href: '#',
+    },
 ];
 
 export default function EditDepartment() {

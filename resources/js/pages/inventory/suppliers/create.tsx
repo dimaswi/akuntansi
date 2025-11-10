@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, useForm, router } from '@inertiajs/react';
-import { Truck, Save, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Truck, Save, ArrowLeft, AlertCircle, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
 
@@ -21,9 +21,15 @@ interface SupplierFormData {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Inventory", href: "#" },
-    { title: "Suppliers", href: "/suppliers" },
-    { title: "Tambah Supplier", href: "/suppliers/create" },
+    { title: <Package className="h-4 w-4" />, href: '#' },
+    {
+        title: 'Data Supplier',
+        href: '/suppliers',
+    },
+    {
+        title: 'Tambah Supplier',
+        href: '#',
+    },
 ];
 
 export default function SuppliersCreate() {

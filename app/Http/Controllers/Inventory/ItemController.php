@@ -313,13 +313,13 @@ class ItemController extends Controller
 
                 // Add department stock information if department_id is provided
                 if ($departmentId) {
-                    $stock = $item->stockForDepartment($departmentId);
+                    $stock = $item->departmentStock($departmentId);
                     $data['department_stock'] = [
-                        'current_stock' => $stock ? $stock->current_stock : 0,
-                        'available_stock' => $stock ? $stock->available_stock : 0,
-                        'reserved_stock' => $stock ? $stock->reserved_stock : 0,
-                        'minimum_stock' => $stock ? $stock->minimum_stock : 0,
-                        'stock_status' => $stock ? $stock->stock_status : 'no_stock',
+                        'current_stock' => $stock ? $stock->quantity_on_hand : 0,
+                        'available_stock' => $stock ? $stock->available_quantity : 0,
+                        'reserved_stock' => $stock ? $stock->reserved_quantity : 0,
+                        'minimum_stock' => $item->reorder_level,
+                        'stock_status' => $stock && $stock->quantity_on_hand > 0 ? 'in_stock' : 'no_stock',
                     ];
                 }
 
@@ -349,20 +349,20 @@ class ItemController extends Controller
             $items = $this->itemRepository->search($search, $limit, $departmentId);
 
             $formattedItems = $items->map(function ($item) use ($departmentId) {
-                $stock = $item->stockForDepartment($departmentId);
+                $stock = $item->departmentStock($departmentId);
                 
                 return [
                     'id' => $item->id,
                     'code' => $item->code,
                     'name' => $item->name,
                     'unit_of_measure' => $item->unit_of_measure,
-                    'current_stock' => $stock ? $stock->current_stock : 0,
-                    'available_stock' => $stock ? $stock->available_stock : 0,
-                    'reserved_stock' => $stock ? $stock->reserved_stock : 0,
-                    'minimum_stock' => $stock ? $stock->minimum_stock : 0,
-                    'maximum_stock' => $stock ? $stock->maximum_stock : 0,
-                    'stock_status' => $stock ? $stock->stock_status : 'no_stock',
-                    'is_low_stock' => $stock ? $stock->isLowStock() : true,
+                    'current_stock' => $stock ? $stock->quantity_on_hand : 0,
+                    'available_stock' => $stock ? $stock->available_quantity : 0,
+                    'reserved_stock' => $stock ? $stock->reserved_quantity : 0,
+                    'minimum_stock' => $item->reorder_level,
+                    'maximum_stock' => $item->safety_stock,
+                    'stock_status' => $stock && $stock->quantity_on_hand > 0 ? 'in_stock' : 'no_stock',
+                    'is_low_stock' => $stock ? ($stock->quantity_on_hand <= $item->reorder_level) : true,
                 ];
             });
 

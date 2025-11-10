@@ -66,31 +66,29 @@ class LaporanKeuanganController extends Controller
     public function neraca(Request $request)
     {
         $request->validate([
-            'tanggal' => 'nullable|date',
             'periode_dari' => 'nullable|date',
             'periode_sampai' => 'nullable|date|after_or_equal:periode_dari',
             'include_penyesuaian' => 'nullable|boolean',
         ]);
 
-        $tanggal = $request->tanggal ? Carbon::parse($request->tanggal) : Carbon::now();
         $includePenyesuaian = $request->boolean('include_penyesuaian', false);
         
-        // Periode untuk laba rugi (default: awal tahun sampai tanggal neraca)
-        $periodeDari = $request->periode_dari ? Carbon::parse($request->periode_dari) : Carbon::create($tanggal->year, 1, 1);
-        $periodeSampai = $request->periode_sampai ? Carbon::parse($request->periode_sampai) : $tanggal;
+        // Gunakan periode_dari dan periode_sampai untuk neraca
+        // Default: awal bulan sampai akhir bulan ini
+        $periodeDari = $request->periode_dari ? Carbon::parse($request->periode_dari) : Carbon::now()->startOfMonth();
+        $periodeSampai = $request->periode_sampai ? Carbon::parse($request->periode_sampai) : Carbon::now()->endOfMonth();
 
         // Ambil semua akun aset, kewajiban, dan modal
         $akunAset = DaftarAkun::where('jenis_akun', 'aset')->aktif()->orderBy('kode_akun')->get();
         $akunKewajiban = DaftarAkun::where('jenis_akun', 'kewajiban')->aktif()->orderBy('kode_akun')->get();
         $akunEkuitas = DaftarAkun::where('jenis_akun', 'modal')->aktif()->orderBy('kode_akun')->get();
 
-        // Hitung saldo masing-masing akun
-        $dataAset = $this->hitungSaldoAkun($akunAset, $tanggal, $includePenyesuaian);
-        $dataKewajiban = $this->hitungSaldoAkun($akunKewajiban, $tanggal, $includePenyesuaian);
-        $dataEkuitas = $this->hitungSaldoAkun($akunEkuitas, $tanggal, $includePenyesuaian);
+        // Hitung saldo masing-masing akun sampai periode_sampai
+        $dataAset = $this->hitungSaldoAkun($akunAset, $periodeSampai, $includePenyesuaian);
+        $dataKewajiban = $this->hitungSaldoAkun($akunKewajiban, $periodeSampai, $includePenyesuaian);
+        $dataEkuitas = $this->hitungSaldoAkun($akunEkuitas, $periodeSampai, $includePenyesuaian);
 
         // Hitung laba rugi berjalan berdasarkan periode yang dipilih
-        // Ini akan konsisten dengan laporan laba rugi
         $labaRugiBerjalan = $this->hitungLabaRugiPeriode($periodeDari, $periodeSampai, $includePenyesuaian);
 
         $totalAset = collect($dataAset)->sum('saldo');
@@ -98,7 +96,6 @@ class LaporanKeuanganController extends Controller
         $totalEkuitas = collect($dataEkuitas)->sum('saldo') + $labaRugiBerjalan;
 
         return Inertia::render('akuntansi/laporan-keuangan/neraca', [
-            'tanggal' => $tanggal->format('Y-m-d'),
             'periode_dari' => $periodeDari->format('Y-m-d'),
             'periode_sampai' => $periodeSampai->format('Y-m-d'),
             'include_penyesuaian' => $includePenyesuaian,

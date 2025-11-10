@@ -40,12 +40,9 @@ type ItemCategoryForm = {
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
+    { title: <Package className="h-4 w-4" />, href: '#' },
     {
-        title: <Package className="h-4 w-4" />,
-        href: '/inventory',
-    },
-    {
-        title: 'Kategori Barang',
+        title: "Item Categories",
         href: '/item-categories',
     },
     {

@@ -26,10 +26,10 @@ class Department extends Model
         return $this->hasMany(Item::class, 'department_id');
     }
 
-    // Relasi dengan stock departemen
+    // Relasi dengan stock departemen (NEW SYSTEM - item_stocks)
     public function itemStocks()
     {
-        return $this->hasMany(ItemDepartmentStock::class);
+        return $this->hasMany(ItemStock::class);
     }
 
     public function stocksWithItems()

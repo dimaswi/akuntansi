@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, useForm, router, usePage } from '@inertiajs/react';
-import { Truck, Save, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Truck, Save, ArrowLeft, AlertCircle, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
 
@@ -35,14 +35,24 @@ interface Props {
     supplier: Supplier;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Inventory", href: "#" },
-    { title: "Suppliers", href: "/suppliers" },
-    { title: "Edit Supplier", href: "/suppliers/edit" },
-];
-
 export default function SuppliersEdit() {
     const { supplier }: Props = usePage().props as any;
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: <Package className="h-4 w-4" />, href: '#' },
+        {
+            title: 'Data Supplier',
+            href: '/suppliers',
+        },
+        {
+            title: supplier.name,
+            href: route('suppliers.show', supplier.id),
+        },
+        {
+            title: 'Edit Supplier',
+            href: '#',
+        },
+    ];
     
     const { data, setData, put, processing, errors, reset } = useForm<SupplierFormData>({
         name: supplier.name || '',

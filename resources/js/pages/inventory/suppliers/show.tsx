@@ -2,6 +2,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -19,6 +29,7 @@ import {
     PowerOff,
     AlertCircle
 } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
 
@@ -34,7 +45,6 @@ interface Supplier {
         id: number;
         name: string;
         code: string;
-        stock: number;
     }>;
     created_at: string;
     updated_at: string;
@@ -45,13 +55,21 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: "Inventory", href: "#" },
-    { title: "Suppliers", href: "/suppliers" },
-    { title: "Detail Supplier", href: "/suppliers/show" },
+    { title: <Package className="h-4 w-4" />, href: '#' },
+    {
+        title: 'Suppliers',
+        href: route('suppliers.index'),
+    },
+    {
+        title: 'Detail Supplier',
+        href: '',
+    },
 ];
 
 export default function SuppliersShow() {
     const { supplier }: Props = usePage().props as any;
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [toggleDialogOpen, setToggleDialogOpen] = useState(false);
 
     const handleBack = () => {
         router.visit(route('suppliers.index'));
@@ -62,14 +80,11 @@ export default function SuppliersShow() {
     };
 
     const handleDelete = async () => {
-        if (!confirm('Apakah Anda yakin ingin menghapus supplier ini?')) {
-            return;
-        }
-
         try {
             router.delete(route('suppliers.destroy', supplier.id), {
                 onSuccess: () => {
                     toast.success('Supplier berhasil dihapus');
+                    setDeleteDialogOpen(false);
                     router.visit(route('suppliers.index'));
                 },
                 onError: (errors) => {
@@ -83,23 +98,20 @@ export default function SuppliersShow() {
     };
 
     const handleToggleStatus = async () => {
-        const action = supplier.is_active ? 'menonaktifkan' : 'mengaktifkan';
-        if (!confirm(`Apakah Anda yakin ingin ${action} supplier ini?`)) {
-            return;
-        }
-
+        const action = supplier.is_active ? 'dinonaktifkan' : 'diaktifkan';
         try {
             router.post(route('suppliers.toggle-status', supplier.id), {}, {
                 onSuccess: () => {
-                    toast.success(`Supplier berhasil ${supplier.is_active ? 'dinonaktifkan' : 'diaktifkan'}`);
+                    toast.success(`Supplier berhasil ${action}`);
+                    setToggleDialogOpen(false);
                 },
                 onError: (errors) => {
                     console.error('Toggle status errors:', errors);
-                    toast.error(`Gagal ${action} supplier`);
+                    toast.error(`Gagal ${action === 'diaktifkan' ? 'mengaktifkan' : 'menonaktifkan'} supplier`);
                 },
             });
         } catch (error) {
-            toast.error(`Gagal ${action} supplier`);
+            toast.error(`Gagal ${action === 'diaktifkan' ? 'mengaktifkan' : 'menonaktifkan'} supplier`);
         }
     };
 
@@ -160,7 +172,7 @@ export default function SuppliersShow() {
                             </Button>
                             <Button 
                                 variant={supplier.is_active ? "outline" : "default"}
-                                onClick={handleToggleStatus}
+                                onClick={() => setToggleDialogOpen(true)}
                                 className="flex items-center gap-2"
                             >
                                 {supplier.is_active ? (
@@ -177,7 +189,7 @@ export default function SuppliersShow() {
                             </Button>
                             <Button 
                                 variant="destructive"
-                                onClick={handleDelete}
+                                onClick={() => setDeleteDialogOpen(true)}
                                 className="flex items-center gap-2"
                             >
                                 <Trash2 className="h-4 w-4" />
@@ -309,9 +321,6 @@ export default function SuppliersShow() {
                                                     <p className="font-medium">{item.name}</p>
                                                     <p className="text-sm text-muted-foreground">Kode: {item.code}</p>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="font-medium">Stok: {item.stock}</p>
-                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -362,7 +371,7 @@ export default function SuppliersShow() {
                                 <Button 
                                     variant="outline" 
                                     className="w-full justify-start"
-                                    onClick={handleToggleStatus}
+                                    onClick={() => setToggleDialogOpen(true)}
                                 >
                                     {supplier.is_active ? (
                                         <>
@@ -380,7 +389,7 @@ export default function SuppliersShow() {
                                 <Button 
                                     variant="destructive" 
                                     className="w-full justify-start"
-                                    onClick={handleDelete}
+                                    onClick={() => setDeleteDialogOpen(true)}
                                 >
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Hapus Supplier
@@ -390,6 +399,42 @@ export default function SuppliersShow() {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus Supplier?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Apakah Anda yakin ingin menghapus supplier ini? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Hapus
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Toggle Status Confirmation Dialog */}
+            <AlertDialog open={toggleDialogOpen} onOpenChange={setToggleDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{supplier.is_active ? 'Nonaktifkan' : 'Aktifkan'} Supplier?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Apakah Anda yakin ingin {supplier.is_active ? 'menonaktifkan' : 'mengaktifkan'} supplier ini?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleToggleStatus}>
+                            {supplier.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     );
 }

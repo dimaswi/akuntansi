@@ -446,8 +446,10 @@ class BankTransactionController extends Controller
         // Use provided account or existing one
         $akunLawanId = $daftarAkunLawanId ?? $bankTransaction->daftar_akun_lawan_id;
         
-        // Generate nomor jurnal
-        $nomorJurnal = $this->generateNomorJurnal();
+        // Generate nomor jurnal - gunakan nomor transaksi sebagai referensi
+        // Format: JBT dari nomor transaksi BKT-YYYY-MM-XXXX menjadi JBT/YYYY/MM/XXXX
+        $nomorJurnal = str_replace('BKT-', 'JBT/', $bankTransaction->nomor_transaksi);
+        $nomorJurnal = str_replace('-', '/', $nomorJurnal);
 
         // Create journal header
         $jurnal = Jurnal::create([

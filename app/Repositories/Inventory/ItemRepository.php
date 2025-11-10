@@ -72,30 +72,24 @@ class ItemRepository implements ItemRepositoryInterface
     {
         $query = Item::with(['category', 'department', 'supplier', 'pharmacyDetail', 'generalDetail']);
 
-        // If user is from logistics department, show all items
-        // Otherwise, filter by items that have stock records for the user's department
-        if (!empty($filters['department_id']) && empty($filters['is_logistics'])) {
-            $query->whereHas('departmentStocks', function (Builder $q) use ($filters) {
-                $q->where('department_id', $filters['department_id']);
-            });
-            
-            // Load department stocks for the specific department
-            $query->with(['departmentStocks' => function ($q) use ($filters) {
-                $q->where('department_id', $filters['department_id']);
+        // ALWAYS load stocks (central for logistics, department for others)
+        if (!empty($filters['is_logistics'])) {
+            // Logistics: Load central warehouse stock only
+            $query->with(['stocks' => function ($q) {
+                $q->whereNull('department_id'); // Central warehouse stock
             }]);
         } else {
-            // For logistics users, load all department stocks or filtered by department
-            if (!empty($filters['department_id']) && !empty($filters['is_logistics'])) {
-                $query->whereHas('departmentStocks', function (Builder $q) use ($filters) {
-                    $q->where('department_id', $filters['department_id']);
-                });
-                
-                $query->with(['departmentStocks' => function ($q) use ($filters) {
+            // Non-logistics: Load their department stock
+            if (!empty($filters['department_id'])) {
+                $query->with(['stocks' => function ($q) use ($filters) {
                     $q->where('department_id', $filters['department_id']);
                 }]);
-            } else {
-                // Load all department stocks for logistics
-                $query->with('departmentStocks.department');
+                
+                // Only show items that have stock in their department
+                $query->whereHas('stocks', function (Builder $q) use ($filters) {
+                    $q->where('department_id', $filters['department_id'])
+                      ->where('quantity_on_hand', '>', 0);
+                });
             }
         }
 
@@ -187,8 +181,11 @@ class ItemRepository implements ItemRepositoryInterface
      */
     public function getLowStock(): Collection
     {
-        return Item::with(['category', 'department', 'supplier', 'pharmacyDetail', 'generalDetail'])
-            ->whereRaw('COALESCE(current_stock, 0) <= reorder_level')
+        // Get items that have stocks below reorder level
+        return Item::with(['category', 'department', 'supplier', 'pharmacyDetail', 'generalDetail', 'stocks'])
+            ->whereHas('stocks', function (Builder $q) {
+                $q->whereRaw('quantity_on_hand <= (SELECT reorder_level FROM items WHERE items.id = item_stocks.item_id)');
+            })
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -205,7 +202,7 @@ class ItemRepository implements ItemRepositoryInterface
 
         // Filter by department if specified
         if ($departmentId !== null) {
-            $queryBuilder->whereHas('departmentStocks', function (Builder $q) use ($departmentId) {
+            $queryBuilder->whereHas('stocks', function (Builder $q) use ($departmentId) {
                 $q->where('department_id', $departmentId);
             });
         }

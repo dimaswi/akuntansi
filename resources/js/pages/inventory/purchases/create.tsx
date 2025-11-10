@@ -1,26 +1,20 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DepartmentSearchableDropdown } from '@/components/ui/department-searchable-dropdown';
 import { Input } from '@/components/ui/input';
 import { ItemSearchableDropdown } from '@/components/ui/item-searchable-dropdown';
 import { Label } from '@/components/ui/label';
 import { SupplierSearchableDropdown } from '@/components/ui/supplier-searchable-dropdown';
+import { SearchableAccountSelect } from '@/components/ui/searchable-account-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage, useForm } from '@inertiajs/react';
-import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Package, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
-
-interface Department {
-    id: number;
-    name: string;
-    is_active?: boolean;
-}
 
 interface Supplier {
     id: number;
@@ -39,6 +33,13 @@ interface Item {
     safety_stock: number;
 }
 
+interface Akun {
+    id: number;
+    kode_akun: string;
+    nama_akun: string;
+    jenis_akun: string;
+}
+
 interface PurchaseItem {
     item_id: number;
     quantity_ordered: number;
@@ -47,28 +48,27 @@ interface PurchaseItem {
 }
 
 interface Props extends PageProps {
-    departments: Department[];
     suppliers: Supplier[];
     items: Item[];
+    akunKas: Akun[];
 }
 
 const breadcrumbItems: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Inventory', href: '/inventory' },
+    { title: <Package className="h-4 w-4" />, href: '#' },
     { title: 'Purchase Orders', href: route('purchases.index') },
     { title: 'Create Purchase Order', href: '' },
 ];
 
 export default function PurchaseCreate() {
-    const { departments, suppliers, items } = usePage<Props>().props;
+    const { suppliers, items, akunKas } = usePage<Props>().props;
     const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
     
     const { data, setData, post, processing, errors } = useForm({
         supplier_id: '',
-        department_id: '',
         purchase_date: new Date().toISOString().split('T')[0],
         expected_delivery_date: '',
+        akun_kas_id: '',
         notes: '',
     });
 
@@ -120,7 +120,7 @@ export default function PurchaseCreate() {
         }).format(amount);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         if (purchaseItems.length === 0) {
@@ -128,68 +128,53 @@ export default function PurchaseCreate() {
             return;
         }
 
-        // Create form data with items array in the correct format
-        const submitData = {
-            supplier_id: data.supplier_id,
-            department_id: data.department_id,
-            purchase_date: data.purchase_date,
-            expected_delivery_date: data.expected_delivery_date,
-            notes: data.notes,
-            items: purchaseItems.map(item => ({
-                item_id: item.item_id,
-                quantity_ordered: item.quantity_ordered,
-                unit_price: item.unit_price,
-                notes: item.notes || ''
-            }))
-        };
+        if (!data.supplier_id) {
+            toast.error('Please select a supplier');
+            return;
+        }
 
-        console.log('Submitting data:', submitData);
+        if (!data.akun_kas_id) {
+            toast.error('Please select account (Akun Inventory/Beban)');
+            return;
+        }
 
-        try {
-            const response = await fetch(route('purchases.store'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
+        // Use Inertia router.post directly
+        router.post(
+            route('purchases.store'),
+            {
+                supplier_id: parseInt(data.supplier_id),
+                purchase_date: data.purchase_date,
+                expected_delivery_date: data.expected_delivery_date || null,
+                akun_kas_id: parseInt(data.akun_kas_id),
+                notes: data.notes || null,
+                items: purchaseItems.map(item => ({
+                    item_id: item.item_id,
+                    quantity_ordered: parseFloat(item.quantity_ordered.toString()),
+                    unit_price: parseFloat(item.unit_price.toString()),
+                    notes: item.notes || null
+                }))
+            },
+            {
+                onSuccess: () => {
+                    toast.success('Purchase order created successfully');
                 },
-                body: JSON.stringify(submitData),
-            });
-
-            const responseData = await response.json();
-            
-            if (response.ok) {
-                toast.success('Purchase order created successfully');
-                router.visit(route('purchases.index'));
-            } else {
-                console.log('Response errors:', responseData);
-                
-                if (responseData.errors) {
-                    // Handle Laravel validation errors
-                    const errors = responseData.errors;
+                onError: (errors) => {
+                    console.log('Validation errors:', errors);
                     if (errors.supplier_id) {
-                        toast.error('Supplier: ' + errors.supplier_id[0]);
-                    } else if (errors.department_id) {
-                        toast.error('Department: ' + errors.department_id[0]);
+                        toast.error('Supplier: ' + errors.supplier_id);
+                    } else if (errors.akun_kas_id) {
+                        toast.error('Akun Inventory/Beban: ' + errors.akun_kas_id);
                     } else if (errors.items) {
-                        toast.error('Items: ' + errors.items[0]);
+                        toast.error('Items: ' + errors.items);
                     } else if (errors.purchase_date) {
-                        toast.error('Purchase Date: ' + errors.purchase_date[0]);
+                        toast.error('Purchase Date: ' + errors.purchase_date);
                     } else {
-                        // Show first error found
                         const firstError = Object.keys(errors)[0];
-                        const errorMessage = Array.isArray(errors[firstError]) ? errors[firstError][0] : errors[firstError];
-                        toast.error(`${firstError}: ${errorMessage}`);
+                        toast.error(`${firstError}: ${errors[firstError]}`);
                     }
-                } else {
-                    toast.error('Failed to create purchase order: ' + (responseData.message || 'Unknown error'));
                 }
             }
-        } catch (error) {
-            console.error('Network error:', error);
-            toast.error('Network error occurred');
-        }
+        );
     };
 
     return (
@@ -234,16 +219,14 @@ export default function PurchaseCreate() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="department_id">Department *</Label>
-                                    <DepartmentSearchableDropdown
-                                        value={data.department_id ? parseInt(data.department_id) : null}
-                                        onValueChange={(value) => setData('department_id', value ? value.toString() : '')}
-                                        placeholder="Pilih department..."
-                                        error={!!errors.department_id}
-                                        departments={departments.map((d) => ({ ...d, is_active: d.is_active ?? true }))}
-                                        className={errors.department_id ? 'border-red-500' : ''}
+                                    <Label htmlFor="akun_kas_id">Akun Inventory/Beban *</Label>
+                                    <SearchableAccountSelect
+                                        accounts={akunKas}
+                                        value={data.akun_kas_id ? data.akun_kas_id.toString() : ''}
+                                        onValueChange={(value) => setData('akun_kas_id', value ? value : '')}
+                                        placeholder="Pilih akun inventory atau beban..."
                                     />
-                                    {errors.department_id && <p className="text-sm text-red-500">{errors.department_id}</p>}
+                                    {errors.akun_kas_id && <p className="text-sm text-red-500">{errors.akun_kas_id}</p>}
                                 </div>
 
                                 <div className="space-y-2">

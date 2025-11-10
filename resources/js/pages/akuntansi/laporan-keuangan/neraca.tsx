@@ -44,7 +44,6 @@ interface AkunSaldo {
 }
 
 interface Props {
-    tanggal: string;
     periode_dari: string;
     periode_sampai: string;
     include_penyesuaian: boolean;
@@ -59,7 +58,6 @@ interface Props {
 }
 
 export default function Neraca({ 
-    tanggal,
     periode_dari,
     periode_sampai,
     include_penyesuaian,
@@ -72,7 +70,6 @@ export default function Neraca({
     totalEkuitas,
     balanced
 }: Props) {
-    const [selectedDate, setSelectedDate] = useState(tanggal);
     const [periodeDari, setPeriodeDari] = useState(periode_dari);
     const [periodeSampai, setPeriodeSampai] = useState(periode_sampai);
     const [includePenyesuaian, setIncludePenyesuaian] = useState(include_penyesuaian);
@@ -82,10 +79,9 @@ export default function Neraca({
     useEffect(() => {
         if (includePenyesuaian !== include_penyesuaian) {
             router.get(route('akuntansi.laporan.neraca'), { 
-                tanggal: selectedDate,
                 periode_dari: periodeDari,
                 periode_sampai: periodeSampai,
-                include_penyesuaian: includePenyesuaian ? 1 : 0  // Convert boolean ke 1/0
+                include_penyesuaian: includePenyesuaian ? 1 : 0
             }, {
                 preserveState: true,
                 preserveScroll: true,
@@ -121,10 +117,9 @@ export default function Neraca({
 
     const handleDateChange = () => {
         router.get(route('akuntansi.laporan.neraca'), { 
-            tanggal: selectedDate,
             periode_dari: periodeDari,
             periode_sampai: periodeSampai,
-            include_penyesuaian: includePenyesuaian ? 1 : 0  // Convert boolean ke 1/0
+            include_penyesuaian: includePenyesuaian ? 1 : 0
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -138,7 +133,7 @@ export default function Neraca({
 
     return (
         <AppLayout>
-            <Head title={`Neraca - ${formatDate(tanggal)}`} />
+            <Head title={`Neraca - ${formatDate(periode_sampai)}`} />
             
             <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
                 <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
@@ -155,7 +150,7 @@ export default function Neraca({
                                 <div>
                                     <h1 className="text-3xl font-bold mb-2">Neraca</h1>
                                     <p className="text-lg text-gray-600 dark:text-gray-400">
-                                        Per {formatDate(tanggal)}
+                                        Per {formatDate(periode_sampai)}
                                     </p>
                                 </div>
                             </div>
@@ -172,22 +167,13 @@ export default function Neraca({
                             <div className="mb-4">
                                 <h3 className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
                                     <Calendar className="h-5 w-5 mr-2" />
-                                    Pilih Tanggal Neraca dan Periode Laba Rugi
+                                    Pilih Periode Neraca
                                 </h3>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                    Periode laba rugi menentukan perhitungan laba/rugi berjalan yang ditampilkan di neraca
+                                    Neraca akan menampilkan posisi keuangan per tanggal sampai, dan laba/rugi berjalan untuk periode yang dipilih
                                 </p>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div>
-                                    <Label htmlFor="tanggal">Tanggal Neraca</Label>
-                                    <Input
-                                        id="tanggal"
-                                        type="date"
-                                        value={selectedDate}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                    />
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <Label htmlFor="periode_dari">Periode Dari</Label>
                                     <Input

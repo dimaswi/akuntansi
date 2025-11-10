@@ -10,7 +10,7 @@ import { usePermission } from '@/hooks/use-permission';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, SharedData } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Edit3, Loader2, Package, PlusCircle, Search, Trash, X } from 'lucide-react';
+import { Edit3, Loader2, Package, PlusCircle, Search, Trash, X, Filter, Home } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
@@ -50,13 +50,10 @@ interface Props extends SharedData {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
+    { title: <Package className="h-4 w-4" />, href: '#' },
     {
-        title: <Package className="h-4 w-4" />,
-        href: '/inventory',
-    },
-    {
-        title: 'Kategori Barang',
-        href: '/item-categories',
+        title: "Item Categories",
+        href: '#',
     },
 ];
 
@@ -76,6 +73,7 @@ export default function ItemCategoryIndex() {
     const { categories, filters } = usePage<Props>().props;
     const { hasPermission } = usePermission();
     const [search, setSearch] = useState(filters.search);
+    const [isFilterExpanded, setIsFilterExpanded] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState<{
         open: boolean;
         category: ItemCategory | null;
@@ -215,6 +213,14 @@ export default function ItemCategoryIndex() {
                             <CardDescription>Kelola kategori barang untuk farmasi, umum, dan alat kesehatan</CardDescription>
                         </div>
                         <div className="flex gap-2">
+                            <Button 
+                                variant="outline"
+                                onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                                className="gap-2"
+                            >
+                                <Filter className="h-4 w-4" />
+                                {isFilterExpanded ? 'Hide Filters' : 'Show Filters'}
+                            </Button>
                             <Button onClick={() => router.visit('/item-categories/create')} className="gap-2">
                                 <PlusCircle className="h-4 w-4" />
                                 Tambah Kategori
@@ -223,72 +229,63 @@ export default function ItemCategoryIndex() {
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {/* Filters */}
-                    <div className="flex flex-col gap-4 md:flex-row md:items-end">
-                        <div className="flex-1">
-                            <Label htmlFor="search">Cari</Label>
-                            <form onSubmit={handleSearchSubmit} className="flex gap-2">
-                                <Input
-                                    id="search"
-                                    placeholder="Cari kode atau nama kategori..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="flex-1"
-                                />
-                                <Button type="submit" variant="outline" size="icon">
-                                    <Search className="h-4 w-4" />
-                                </Button>
-                                {search && (
-                                    <Button type="button" variant="outline" size="icon" onClick={handleClearSearch}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                )}
-                            </form>
+                    {/* Search Bar */}
+                    <form onSubmit={handleSearchSubmit} className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                id="search"
+                                placeholder="Cari kode atau nama kategori..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="pl-10"
+                            />
                         </div>
-                        <div className="flex gap-2">
-                            <div>
-                                <Label>Tipe</Label>
-                                <Select value={filters.category_type || 'all'} onValueChange={handleCategoryTypeChange}>
-                                    <SelectTrigger className="w-40">
-                                        <SelectValue placeholder="Tipe" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Semua</SelectItem>
-                                        <SelectItem value="pharmacy">Farmasi</SelectItem>
-                                        <SelectItem value="general">Umum</SelectItem>
-                                        <SelectItem value="medical">Alat Kesehatan</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div>
-                                <Label>Status</Label>
-                                <Select value={filters.is_active || 'all'} onValueChange={handleStatusChange}>
-                                    <SelectTrigger className="w-32">
-                                        <SelectValue placeholder="Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Semua</SelectItem>
-                                        <SelectItem value="1">Aktif</SelectItem>
-                                        <SelectItem value="0">Nonaktif</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div>
-                                <Label>Per halaman</Label>
-                                <Select value={(filters?.perPage || 15).toString()} onValueChange={(value) => handlePerPageChange(parseInt(value))}>
-                                    <SelectTrigger className="w-20">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="15">15</SelectItem>
-                                        <SelectItem value="25">25</SelectItem>
-                                        <SelectItem value="50">50</SelectItem>
-                                        <SelectItem value="100">100</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                        <Button type="submit" className="gap-2">
+                            <Search className="h-4 w-4" />
+                            Search
+                        </Button>
+                        {search && (
+                            <Button type="button" variant="outline" onClick={handleClearSearch}>
+                                Clear
+                            </Button>
+                        )}
+                    </form>
+
+                    {/* Collapsible Filters */}
+                    {isFilterExpanded && (
+                        <div className="p-4 border rounded-lg bg-gray-50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Tipe</Label>
+                                    <Select value={filters.category_type || 'all'} onValueChange={handleCategoryTypeChange}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Tipe" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Semua</SelectItem>
+                                            <SelectItem value="pharmacy">Farmasi</SelectItem>
+                                            <SelectItem value="general">Umum</SelectItem>
+                                            <SelectItem value="medical">Alat Kesehatan</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Status</Label>
+                                    <Select value={filters.is_active || 'all'} onValueChange={handleStatusChange}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Semua</SelectItem>
+                                            <SelectItem value="1">Aktif</SelectItem>
+                                            <SelectItem value="0">Tidak Aktif</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Table */}
                     <div className="rounded-md border">

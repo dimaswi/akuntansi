@@ -91,11 +91,17 @@ class StockMovement extends Model
     public static function createFromPurchase($purchaseItem, $receivedQuantity, $unitCost, $userId)
     {
         $item = $purchaseItem->item;
-        $currentStock = $item->current_stock ?? 0;
+        
+        // Get current stock from central warehouse (item_stocks table)
+        $centralStock = \App\Models\Inventory\ItemStock::where('item_id', $item->id)
+            ->where('department_id', null)
+            ->first();
+        
+        $currentStock = $centralStock ? $centralStock->quantity_on_hand : 0;
         
         return static::create([
             'item_id' => $item->id,
-            'department_id' => $purchaseItem->purchase->department_id,
+            'department_id' => null, // Purchase receive to central warehouse (no department)
             'user_id' => $userId,
             'reference_type' => Purchase::class,
             'reference_id' => $purchaseItem->purchase_id,

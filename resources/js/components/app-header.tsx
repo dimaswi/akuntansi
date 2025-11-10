@@ -12,7 +12,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Box, Tag, Settings, FileCheck } from 'lucide-react';
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Box, Tag, Settings, FileCheck, Warehouse } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -150,10 +150,22 @@ const mainNavItems: NavItem[] = [
                 permission: 'inventory.purchases.view',
             },
             {
-                title: 'Permintaan',
-                href: '/requisitions',
-                icon: FileText,
-                permission: 'inventory.requisitions.view',
+                title: 'Permintaan Stok',
+                href: '/stock-requests',
+                icon: FileCheck,
+                permission: 'inventory.stock-requests.view',
+            },
+            {
+                title: 'Gudang Pusat',
+                href: '/central-warehouse',
+                icon: Warehouse,
+                permission: 'inventory.items.view',
+            },
+            {
+                title: 'Stok Department',
+                href: '/department-stocks',
+                icon: Building2,
+                permission: 'inventory.items.view',
             },
             {
                 title: 'Departemen',
