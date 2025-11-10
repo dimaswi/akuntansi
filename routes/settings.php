@@ -54,7 +54,7 @@ Route::middleware('auth')->group(function () {
         
         return back()->with('message', 'Settings berhasil diupdate');
     })
-        ->name('settings.closing-periods.update')
+        //->name('settings.closing-periods.update')
         ->middleware('permission:closing-period.manage-settings');
     
     // ===== CLOSING PERIOD MANAGEMENT =====
