@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddCsrfTokenHeader;
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\CheckPeriodStatus;
 use App\Http\Middleware\HandleAppearance;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            AddCsrfTokenHeader::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
