@@ -67,10 +67,9 @@ class RolePermissionSeeder extends Seeder
             // Akuntansi - Jurnal Penyesuaian
             ['name' => 'akuntansi.jurnal-penyesuaian.view', 'display_name' => 'Lihat Jurnal Penyesuaian', 'description' => 'Dapat melihat jurnal penyesuaian', 'module' => 'Akuntansi'],
             ['name' => 'akuntansi.jurnal-penyesuaian.create', 'display_name' => 'Tambah Jurnal Penyesuaian', 'description' => 'Dapat menambah jurnal penyesuaian', 'module' => 'Akuntansi'],
-            ['name' => 'akuntansi.jurnal-penyesuaian.edit', 'display_name' => 'Edit Jurnal Penyesuaian', 'description' => 'Dapat mengedit jurnal penyesuaian draft', 'module' => 'Akuntansi'],
-            ['name' => 'akuntansi.jurnal-penyesuaian.delete', 'display_name' => 'Hapus Jurnal Penyesuaian', 'description' => 'Dapat menghapus jurnal penyesuaian draft', 'module' => 'Akuntansi'],
-            ['name' => 'akuntansi.jurnal-penyesuaian.show', 'display_name' => 'Lihat Jurnal Penyesuaian', 'description' => 'Dapat melihat jurnal penyesuaian', 'module' => 'Akuntansi'],
             ['name' => 'akuntansi.jurnal-penyesuaian.edit', 'display_name' => 'Edit Jurnal Penyesuaian', 'description' => 'Dapat mengedit jurnal penyesuaian', 'module' => 'Akuntansi'],
+            ['name' => 'akuntansi.jurnal-penyesuaian.delete', 'display_name' => 'Hapus Jurnal Penyesuaian', 'description' => 'Dapat menghapus jurnal penyesuaian', 'module' => 'Akuntansi'],
+            ['name' => 'akuntansi.jurnal-penyesuaian.post', 'display_name' => 'Post Jurnal Penyesuaian', 'description' => 'Dapat memposting jurnal penyesuaian', 'module' => 'Akuntansi'],
             
             // Akuntansi - Journal Posting (dari Kas/Bank ke Jurnal)
             ['name' => 'akuntansi.journal-posting.view', 'display_name' => 'Lihat Journal Posting', 'description' => 'Dapat melihat halaman posting ke jurnal', 'module' => 'Akuntansi'],
@@ -138,7 +137,17 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'inventory.purchases.create-payment', 'display_name' => 'Create Purchase Payment', 'description' => 'Dapat membuat pembayaran purchase', 'module' => 'Inventory'],
             ['name' => 'inventory.purchases.view-ap', 'display_name' => 'View Accounts Payable', 'description' => 'Dapat melihat outstanding accounts payable', 'module' => 'Inventory'],
             
-            // Inventory - Requisitions
+            // Inventory - Stock Requests (Central Warehouse System)
+            ['name' => 'inventory.stock-requests.view', 'display_name' => 'Lihat Permintaan Stok', 'description' => 'Dapat melihat daftar permintaan stok', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-requests.create', 'display_name' => 'Tambah Permintaan Stok', 'description' => 'Dapat membuat permintaan stok baru', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-requests.edit', 'display_name' => 'Edit Permintaan Stok', 'description' => 'Dapat mengedit permintaan stok', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-requests.delete', 'display_name' => 'Hapus Permintaan Stok', 'description' => 'Dapat menghapus permintaan stok', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-requests.submit', 'display_name' => 'Submit Permintaan Stok', 'description' => 'Dapat submit permintaan stok untuk approval', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-requests.approve', 'display_name' => 'Approve Permintaan Stok', 'description' => 'Dapat approve/reject permintaan stok', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-requests.complete', 'display_name' => 'Complete Permintaan Stok', 'description' => 'Dapat menyelesaikan permintaan stok (issue items)', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-requests.cancel', 'display_name' => 'Cancel Permintaan Stok', 'description' => 'Dapat membatalkan permintaan stok', 'module' => 'Inventory'],
+            
+            // Inventory - Requisitions (OLD - Keep for backward compatibility)
             ['name' => 'inventory.requisitions.view', 'display_name' => 'Lihat Requisitions', 'description' => 'Dapat melihat daftar requisitions', 'module' => 'Inventory'],
             ['name' => 'inventory.requisitions.create', 'display_name' => 'Tambah Requisitions', 'description' => 'Dapat menambah requisition baru', 'module' => 'Inventory'],
             ['name' => 'inventory.requisitions.edit', 'display_name' => 'Edit Requisitions', 'description' => 'Dapat mengedit requisitions', 'module' => 'Inventory'],
@@ -205,152 +214,9 @@ class RolePermissionSeeder extends Seeder
                 'description' => 'Administrator dengan akses penuh ke semua fitur sistem'
             ]
         );
-
-        $managerRole = Role::firstOrCreate(
-            ['name' => 'manager'],
-            [
-                'display_name' => 'Manager',
-                'description' => 'Manager dengan akses terbatas ke fitur manajemen'
-            ]
-        );
-
-        $akuntansiRole = Role::firstOrCreate(
-            ['name' => 'akuntansi'],
-            [
-                'display_name' => 'Akuntansi',
-                'description' => 'Staff akuntansi dengan akses ke modul akuntansi dan kas'
-            ]
-        );
-
-        $logisticsRole = Role::firstOrCreate(
-            ['name' => 'logistics'],
-            [
-                'display_name' => 'Logistics',
-                'description' => 'Staff logistics dengan akses ke modul inventory dan purchase'
-            ]
-        );
-
-        $userRole = Role::firstOrCreate(
-            ['name' => 'user'],
-            [
-                'display_name' => 'User',
-                'description' => 'User biasa dengan akses terbatas'
-            ]
-        );
-
         // Assign permissions to Admin (all permissions)
         $allPermissions = Permission::all();
         $adminRole->permissions()->sync($allPermissions->pluck('id'));
-
-        // Assign permissions to Manager (management permissions)
-        $managerPermissions = Permission::whereIn('name', [
-            // User Management
-            'user.view', 'user.create', 'user.edit', 'user.department.manage',
-            'role.view', 'permission.view',
-            'dashboard.view', 'settings.view',
-            
-            // Module Access
-            'akuntansi.view', 'inventory.view', 'kas.view',
-            
-            // Akuntansi - View and Reports
-            'akuntansi.daftar-akun.view', 'akuntansi.jurnal.view', 
-            'akuntansi.buku-besar.view', 'akuntansi.buku-besar.export',
-            'akuntansi.laporan.view', 'akuntansi.laporan.export',
-            'akuntansi.journal-posting.view', 'akuntansi.journal-posting.post',
-            
-            // Tutup Buku - Full Access for Manager
-            'closing-period.view', 'closing-period.create', 'closing-period.edit', 'closing-period.delete',
-            'closing-period.soft-close', 'closing-period.hard-close', 'closing-period.reopen',
-            'closing-period.manage-settings', 'closing-period.approve-revision', 'closing-period.view-dashboard',
-            
-            // Inventory - View and Limited Management
-            'inventory.items.view', 'inventory.categories.view', 'inventory.departments.view',
-            'inventory.suppliers.view', 'inventory.purchases.view', 'inventory.purchases.approve',
-            'inventory.purchases.view-ap',
-            'inventory.requisitions.view', 'inventory.requisitions.approve',
-            
-            // Kas - View and Approval (Sesuai dengan routes)
-            'kas.cash-management.view', 'kas.cash-management.reconcile',
-            'kas.bank-account.view',
-            'kas.giro-transaction.view', 'kas.giro-transaction.post', 'kas.giro-transaction.clear', 'kas.giro-transaction.reject',
-            'kas.transfer.view', 'kas.transfer.approve',
-            'laporan.cash-flow.view', 'laporan.cash-flow.export',
-            'laporan.giro-report.view', 'laporan.giro-report.export'
-        ])->pluck('id');
-        $managerRole->permissions()->sync($managerPermissions);
-
-        // Assign permissions to Akuntansi (accounting and cash management)
-        $akuntansiPermissions = Permission::whereIn('name', [
-            'dashboard.view',
-            
-            // Module Access
-            'akuntansi.view', 'kas.view',
-            
-            // Akuntansi - Full Access
-            'akuntansi.daftar-akun.view', 'akuntansi.daftar-akun.create', 'akuntansi.daftar-akun.edit', 'akuntansi.daftar-akun.delete',
-            'akuntansi.daftar-akun.import', 'akuntansi.daftar-akun.export', 'akuntansi.daftar-akun.activate', 'akuntansi.daftar-akun.deactivate',
-            'akuntansi.jurnal.view', 'akuntansi.jurnal.create', 'akuntansi.jurnal.edit', 'akuntansi.jurnal.delete',
-            'akuntansi.jurnal.post', 'akuntansi.jurnal.reverse',
-            'akuntansi.journal-posting.view', 'akuntansi.journal-posting.post',
-            'akuntansi.buku-besar.view', 'akuntansi.buku-besar.export',
-            'akuntansi.laporan.view', 'akuntansi.laporan.export',
-            
-            // Tutup Buku - View & Dashboard for Staff Akuntansi
-            'closing-period.view', 'closing-period.view-dashboard',
-            
-            // Inventory - Accounting Integration
-            'inventory.purchases.view', 'inventory.purchases.view-ap',
-            
-            // Kas - Full Access (Sesuai dengan routes)
-            'kas.cash-management.view', 'kas.cash-management.daily-entry', 'kas.cash-management.reconcile',
-            'kas.cash-transaction.delete', 'kas.bank-transaction.delete',
-            'kas.bank-account.view', 'kas.bank-account.create', 'kas.bank-account.edit', 'kas.bank-account.delete',
-            'kas.giro-transaction.view', 'kas.giro-transaction.create', 'kas.giro-transaction.edit', 'kas.giro-transaction.delete',
-            'kas.giro-transaction.post', 'kas.giro-transaction.clear', 'kas.giro-transaction.reject',
-            'kas.transfer.view', 'kas.transfer.create', 'kas.transfer.edit', 'kas.transfer.delete',
-            'kas.transfer.approve', 'kas.transfer.reverse',
-            'laporan.cash-flow.view', 'laporan.cash-flow.export',
-            'laporan.giro-report.view', 'laporan.giro-report.export'
-        ])->pluck('id');
-        $akuntansiRole->permissions()->sync($akuntansiPermissions);
-
-        // Assign permissions to Logistics (inventory and purchase management)
-        $logisticsPermissions = Permission::whereIn('name', [
-            'dashboard.view',
-            
-            // Module Access
-            'inventory.view',
-            
-            // Inventory - Full Access
-            'inventory.items.view', 'inventory.items.create', 'inventory.items.edit', 'inventory.items.delete', 'inventory.items.upload-image',
-            'inventory.categories.view', 'inventory.categories.create', 'inventory.categories.edit', 'inventory.categories.delete',
-            'inventory.departments.view', 'inventory.departments.create', 'inventory.departments.edit', 'inventory.departments.delete',
-            'inventory.suppliers.view', 'inventory.suppliers.create', 'inventory.suppliers.edit', 'inventory.suppliers.delete', 'inventory.suppliers.toggle-status',
-            'inventory.purchases.view', 'inventory.purchases.create', 'inventory.purchases.edit', 'inventory.purchases.delete',
-            'inventory.purchases.submit', 'inventory.purchases.approve', 'inventory.purchases.cancel', 'inventory.purchases.receive',
-            'inventory.purchases.post-to-journal', 'inventory.purchases.create-payment', 'inventory.purchases.view-ap',
-            'inventory.requisitions.view', 'inventory.requisitions.create', 'inventory.requisitions.edit', 'inventory.requisitions.delete',
-            'inventory.requisitions.approve', 'inventory.requisitions.cancel'
-        ])->pluck('id');
-        $logisticsRole->permissions()->sync($logisticsPermissions);
-
-        // Assign permissions to User (read-only access)
-        $userPermissions = Permission::whereIn('name', [
-            'dashboard.view',
-            
-            // Module Access
-            'akuntansi.view', 'inventory.view', 'kas.view',
-            
-            // Read-only permissions
-            'akuntansi.daftar-akun.view', 'akuntansi.jurnal.view',
-            'akuntansi.buku-besar.view', 'akuntansi.laporan.view',
-            'inventory.items.view', 'inventory.categories.view', 'inventory.departments.view', 'inventory.suppliers.view',
-            'inventory.requisitions.view', 'inventory.requisitions.create',
-            'kas.cash-management.view', 'kas.bank-account.view',
-            'kas.giro-transaction.view', 'kas.transfer.view',
-            'laporan.cash-flow.view', 'laporan.giro-report.view'
-        ])->pluck('id');
-        $userRole->permissions()->sync($userPermissions);
 
         $this->command->info('Roles and permissions created successfully!');
     }
