@@ -55,6 +55,15 @@ class ItemCategoryController extends Controller
         ]);
     }
 
+    public function show($id)
+    {
+        $category = $this->repo->find($id);
+        
+        return Inertia::render('inventory/item_categories/show', [
+            'category' => $category,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -113,8 +122,25 @@ class ItemCategoryController extends Controller
 
     public function destroy($id)
     {
-        $this->repo->delete($id);
-        return redirect()->route('item_categories.index')->with('success', 'Kategori berhasil dihapus');
+        try {
+            // Check if category has items
+            $category = $this->repo->find($id);
+            
+            if ($category->items()->count() > 0) {
+                return back()->withErrors(['error' => 'Kategori tidak dapat dihapus karena masih digunakan oleh ' . $category->items()->count() . ' item(s)']);
+            }
+            
+            // Check if category has child categories
+            $childCount = \App\Models\Inventory\ItemCategory::where('parent_id', $id)->count();
+            if ($childCount > 0) {
+                return back()->withErrors(['error' => 'Kategori tidak dapat dihapus karena masih memiliki ' . $childCount . ' sub-kategori']);
+            }
+            
+            $this->repo->delete($id);
+            return redirect()->route('item_categories.index')->with('success', 'Kategori berhasil dihapus');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Gagal menghapus kategori: ' . $e->getMessage()]);
+        }
     }
 
     /**

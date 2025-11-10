@@ -58,7 +58,7 @@ export default function ItemCategoryShow({ category }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Detail Kategori - ${category.name}`} />
 
-            <div className="space-y-6">
+            <div className="space-y-6 mt-6">
                 {/* Header */}
                 <Card>
                     <CardHeader>

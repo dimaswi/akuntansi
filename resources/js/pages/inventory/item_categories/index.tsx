@@ -181,21 +181,18 @@ export default function ItemCategoryIndex() {
 
         setDeleteDialog((prev) => ({ ...prev, loading: true }));
 
-        try {
-            router.delete(route('item_categories.destroy', deleteDialog.category.id), {
-                onSuccess: () => {
-                    toast.success('Kategori berhasil dihapus');
-                    setDeleteDialog({ open: false, category: null, loading: false });
-                },
-                onError: () => {
-                    toast.error('Gagal menghapus kategori');
-                    setDeleteDialog((prev) => ({ ...prev, loading: false }));
-                },
-            });
-        } catch (error) {
-            toast.error('Terjadi kesalahan');
-            setDeleteDialog((prev) => ({ ...prev, loading: false }));
-        }
+        router.delete(route('item_categories.destroy', deleteDialog.category.id), {
+            onSuccess: () => {
+                toast.success('Kategori berhasil dihapus');
+                setDeleteDialog({ open: false, category: null, loading: false });
+            },
+            onError: (errors) => {
+                // Inertia sends validation errors in errors object
+                const errorMessage = errors.error || Object.values(errors)[0] || 'Gagal menghapus kategori';
+                toast.error(errorMessage);
+                setDeleteDialog({ open: false, category: null, loading: false });
+            },
+        });
     };
 
     return (
