@@ -27,6 +27,12 @@ class StockTransferController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         
+        // Check if user has department assigned (for non-logistics users)
+        if (!$user->isLogistics() && !$user->department_id) {
+            return redirect()->back()
+                ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
+        }
+        
         $query = StockTransfer::with(['item', 'fromDepartment', 'toDepartment', 'approvedBy', 'receivedBy'])
             ->orderBy('created_at', 'desc');
 
@@ -118,9 +124,19 @@ class StockTransferController extends Controller
 
     public function create()
     {
-        $departments = Department::where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'code', 'name']);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Check if user has department assigned
+        if (!$user->isLogistics() && !$user->department_id) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
+        }
+        
+        // Only show user's department (unless logistics)
+        $departments = $user->isLogistics() 
+            ? Department::where('is_active', true)->orderBy('name')->get(['id', 'code', 'name'])
+            : Department::where('id', $user->department_id)->get(['id', 'code', 'name']);
 
         // Load items that have stock in ANY department (NOT central warehouse)
         // We need items that have at least one item_stock record where department_id IS NOT NULL
@@ -160,6 +176,12 @@ class StockTransferController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+        
+        // Check if user has department assigned
+        if (!$user->isLogistics() && !$user->department_id) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
+        }
         
         $validated = $request->validate([
             'tanggal_transfer' => 'required|date',

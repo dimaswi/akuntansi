@@ -29,6 +29,12 @@ class StockRequestController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         
+        // Check if user has department assigned (for non-logistics users)
+        if (!$user->isLogistics() && !$user->department_id) {
+            return redirect()->back()
+                ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
+        }
+        
         $query = StockRequest::with(['department', 'requestedByUser', 'approvedByUser', 'items'])
             ->orderBy('created_at', 'desc');
         
@@ -101,7 +107,20 @@ class StockRequestController extends Controller
      */
     public function create()
     {
-        $departments = Department::orderBy('name')->get();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Check if user has department assigned
+        if (!$user->isLogistics() && !$user->department_id) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
+        }
+        
+        // Only show user's department (unless logistics)
+        $departments = $user->isLogistics() 
+            ? Department::where('is_active', true)->orderBy('name')->get()
+            : Department::where('id', $user->department_id)->get();
+        
         $items = Item::orderBy('name')->get()->map(function($item) {
             $centralStock = $this->itemStockService->getCentralStock($item->id);
             return [
@@ -132,6 +151,12 @@ class StockRequestController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+        
+        // Check if user has department assigned
+        if (!$user->isLogistics() && !$user->department_id) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
+        }
         
         // Check if department has completed stock opname for PREVIOUS month
         if (!\App\Models\Inventory\StockOpname::hasPreviousMonthOpname($user->department_id)) {

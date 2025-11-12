@@ -24,7 +24,7 @@ class InventoryDashboardController extends Controller
         
         // Check if user has department assigned (for non-logistics users)
         if (!$user->hasRole(['logistik', 'super_admin']) && !$user->department_id) {
-            return redirect()->route('dashboard')
+            return redirect()->back()
                 ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
         }
         
