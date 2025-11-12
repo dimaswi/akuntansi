@@ -66,10 +66,16 @@ class User extends Authenticatable
 
     public function hasRole($role): bool
     {
+        if (is_array($role)) {
+            // Check if user's role name is in the array
+            return in_array($this->role?->name, $role);
+        }
+        
         if (is_string($role)) {
             return $this->role?->name === $role;
         }
         
+        // If it's an object with id
         return $this->role?->id === $role->id;
     }
 

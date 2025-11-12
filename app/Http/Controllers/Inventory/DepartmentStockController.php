@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\Department;
 use App\Services\Inventory\ItemStockService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class DepartmentStockController extends Controller
@@ -22,7 +23,16 @@ class DepartmentStockController extends Controller
      */
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
         $query = Department::query()->with(['itemStocks.item']);
+
+        // Department-level access control: Only logistics role can see all departments
+        if (!$user->isLogistics()) {
+            // Non-logistics users can only see their own department stocks
+            $query->where('id', $user->department_id);
+        }
 
         // Filter by department if specified
         if ($request->filled('department_id')) {
@@ -66,6 +76,16 @@ class DepartmentStockController extends Controller
      */
     public function show(Request $request, Department $department)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($department->id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock department ini');
+            }
+        }
+        
         $query = $department->itemStocks()->with(['item']);
 
         // Search by item name or code

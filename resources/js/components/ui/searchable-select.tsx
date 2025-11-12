@@ -45,25 +45,26 @@ export function SearchableSelect({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className={cn('w-full justify-between', className)}
+                    className={cn('w-full justify-between h-auto text-left', className)}
                 >
-                    {selectedOption ? selectedOption.label : placeholder}
+                    <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
+            <PopoverContent className="w-full p-0" align="start" style={{ width: 'var(--radix-popover-trigger-width)' }}>
                 <Command>
-                    <CommandInput placeholder={searchPlaceholder} />
+                    <CommandInput placeholder={searchPlaceholder} className="h-10" />
                     <CommandEmpty>{emptyText}</CommandEmpty>
-                    <CommandGroup className="max-h-[300px] overflow-auto">
+                    <CommandGroup className="max-h-[400px] overflow-auto">
                         {options.map((option) => (
                             <CommandItem
                                 key={option.value}
-                                value={option.value}
-                                onSelect={(currentValue) => {
-                                    onValueChange(currentValue === value ? '' : currentValue);
+                                value={`${option.value} ${option.label}`}
+                                onSelect={() => {
+                                    onValueChange(option.value);
                                     setOpen(false);
                                 }}
+                                className="py-3"
                             >
                                 <Check
                                     className={cn(
@@ -71,7 +72,7 @@ export function SearchableSelect({
                                         value === option.value ? 'opacity-100' : 'opacity-0'
                                     )}
                                 />
-                                {option.label}
+                                <span className="flex-1">{option.label}</span>
                             </CommandItem>
                         ))}
                     </CommandGroup>

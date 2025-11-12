@@ -68,4 +68,17 @@ class BankAccount extends Model
 
         return $this->saldo_berjalan;
     }
+
+    /**
+     * Get balance from COA (Chart of Accounts)
+     * Returns the balance calculated from detail_jurnal if linked to COA
+     */
+    public function getSaldoFromCoa()
+    {
+        if ($this->daftar_akun_id && $this->daftarAkun) {
+            return $this->daftarAkun->getBalance();
+        }
+        
+        return null;
+    }
 }

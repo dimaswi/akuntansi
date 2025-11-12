@@ -128,4 +128,63 @@ class Item extends Model
     {
         return $query->where('is_active', false);
     }
+
+    /**
+     * Check if item has low stock in central warehouse
+     */
+    public function isLowStock(): bool
+    {
+        $centralStock = $this->centralStock();
+        if (!$centralStock) {
+            return false;
+        }
+
+        // Low stock jika available quantity <= reorder level
+        return $centralStock->available_quantity <= $this->reorder_level;
+    }
+
+    /**
+     * Get stock status
+     */
+    public function getStockStatus(): string
+    {
+        $centralStock = $this->centralStock();
+        if (!$centralStock) {
+            return 'no_stock';
+        }
+
+        $available = $centralStock->available_quantity;
+
+        if ($available <= 0) {
+            return 'out_of_stock';
+        } elseif ($available <= $this->reorder_level) {
+            return 'low_stock';
+        } elseif ($available <= $this->safety_stock) {
+            return 'below_safety';
+        } else {
+            return 'normal';
+        }
+    }
+
+    /**
+     * Scope untuk item dengan low stock
+     */
+    public function scopeLowStock($query)
+    {
+        return $query->whereHas('stocks', function ($q) {
+            $q->whereNull('department_id') // Central warehouse only
+              ->whereRaw('available_quantity <= items.reorder_level');
+        });
+    }
+
+    /**
+     * Scope untuk item dengan stock habis
+     */
+    public function scopeOutOfStock($query)
+    {
+        return $query->whereHas('stocks', function ($q) {
+            $q->whereNull('department_id')
+              ->where('available_quantity', '<=', 0);
+        });
+    }
 }

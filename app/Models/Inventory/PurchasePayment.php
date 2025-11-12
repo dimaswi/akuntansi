@@ -2,11 +2,11 @@
 
 namespace App\Models\Inventory;
 
-use App\Models\Kas\BankAccount;
 use App\Models\User;
 use App\Models\Akuntansi\Jurnal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class PurchasePayment extends Model
 {
@@ -15,7 +15,7 @@ class PurchasePayment extends Model
         'payment_number',
         'payment_date',
         'payment_method',
-        'bank_account_id',
+        'kode_akun_bank',
         'amount',
         'discount_amount',
         'notes',
@@ -34,7 +34,7 @@ class PurchasePayment extends Model
         'approved_at' => 'datetime',
     ];
 
-    protected $appends = ['net_amount'];
+    protected $appends = ['net_amount', 'bank_account_name'];
 
     // Relations
     public function purchase(): BelongsTo
@@ -45,11 +45,6 @@ class PurchasePayment extends Model
     public function jurnal(): BelongsTo
     {
         return $this->belongsTo(Jurnal::class, 'jurnal_id');
-    }
-
-    public function bankAccount(): BelongsTo
-    {
-        return $this->belongsTo(BankAccount::class);
     }
 
     public function createdBy(): BelongsTo
@@ -66,6 +61,19 @@ class PurchasePayment extends Model
     public function getNetAmountAttribute(): float
     {
         return $this->amount - $this->discount_amount;
+    }
+
+    public function getBankAccountNameAttribute(): ?string
+    {
+        if (!$this->kode_akun_bank) {
+            return null;
+        }
+        
+        $account = DB::table('daftar_akun')
+            ->where('kode_akun', $this->kode_akun_bank)
+            ->first();
+        
+        return $account ? $account->nama_akun : null;
     }
 
     // Methods

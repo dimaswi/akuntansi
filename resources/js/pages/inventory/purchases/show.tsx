@@ -15,10 +15,11 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle, Clock, Edit, Package, Send, ShoppingCart, Trash2, Truck, XCircle, BookOpen } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, DollarSign, Edit, Package, Send, ShoppingCart, Trash2, Truck, XCircle, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
+import { usePermission } from '@/hooks/use-permission';
 
 interface PurchaseItem {
     id: number;
@@ -48,6 +49,10 @@ interface Purchase {
     status: 'draft' | 'pending' | 'approved' | 'ordered' | 'partial' | 'completed' | 'cancelled';
     total_amount: number;
     notes?: string;
+    jurnal_posted: boolean;
+    jurnal_id?: number;
+    ap_outstanding: number;
+    ap_paid_amount: number;
     supplier: {
         id: number;
         name: string;
@@ -65,6 +70,9 @@ interface Purchase {
     approved_at?: string;
     completed_at?: string;
     items: PurchaseItem[];
+    jurnal?: {
+        nomor_jurnal: string;
+    };
 }
 
 interface Props extends PageProps {
@@ -110,6 +118,7 @@ const getItemStatusBadge = (status: string) => {
 
 export default function PurchaseShow() {
     const { purchase, canEdit, canApprove, canReceive } = usePage<Props>().props;
+    const { hasPermission } = usePermission();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
@@ -265,14 +274,32 @@ export default function PurchaseShow() {
                                 </Button>
                             )}
 
-                            {purchase.status === 'completed' && (
+                            {/* ACCOUNTING ACTIONS */}
+                            {/* 1. POST TO JURNAL - Jika sudah approved/completed tapi BELUM diposting */}
+                            {(purchase.status === 'approved' || purchase.status === 'ordered' || purchase.status === 'partial' || purchase.status === 'completed') && 
+                             !purchase.jurnal_posted && 
+                             hasPermission('inventory.purchases.post-to-journal') && (
                                 <Button 
                                     onClick={() => router.visit(route('purchases.showPostToJournal') + '?id=' + purchase.id)}
-                                    className="flex items-center gap-2"
+                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
                                     variant="default"
                                 >
                                     <BookOpen className="mr-2 h-4 w-4" />
-                                    Post to Journal
+                                    Post to Jurnal
+                                </Button>
+                            )}
+
+                            {/* 2. CREATE PAYMENT - Jika sudah diposting dan ada outstanding AP */}
+                            {purchase.jurnal_posted && 
+                             purchase.ap_outstanding > 0 && 
+                             hasPermission('inventory.purchases.create-payment') && (
+                                <Button 
+                                    onClick={() => router.visit(route('purchase-payments.create') + '?purchase_id=' + purchase.id)}
+                                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                                    variant="default"
+                                >
+                                    <DollarSign className="mr-2 h-4 w-4" />
+                                    Create Payment
                                 </Button>
                             )}
 
@@ -398,6 +425,107 @@ export default function PurchaseShow() {
                                         <h4 className="text-sm font-medium text-muted-foreground mb-1">Approved By</h4>
                                         <p>{purchase.approver.name}</p>
                                         {purchase.approved_at && <p className="text-sm text-muted-foreground mt-1">{formatDate(purchase.approved_at)}</p>}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Accounting Status Card */}
+                        <Card className={`mb-6 ${
+                            purchase.jurnal_posted 
+                                ? (purchase.ap_outstanding > 0 ? 'border-orange-500 bg-orange-50' : 'border-green-500 bg-green-50')
+                                : 'border-blue-500 bg-blue-50'
+                        }`}>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <BookOpen className="h-5 w-5" />
+                                    Accounting Status
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {/* Jurnal Status */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Jurnal Status</h4>
+                                    {purchase.jurnal_posted ? (
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="default" className="bg-blue-600">
+                                                <CheckCircle className="mr-1 h-3 w-3" />
+                                                Posted
+                                            </Badge>
+                                            {purchase.jurnal && (
+                                                <span className="text-sm text-muted-foreground">
+                                                    #{purchase.jurnal.nomor_jurnal}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <Badge variant="secondary">
+                                            <Clock className="mr-1 h-3 w-3" />
+                                            Not Posted
+                                        </Badge>
+                                    )}
+                                </div>
+
+                                {/* AP Outstanding (only if posted) */}
+                                {purchase.jurnal_posted && (
+                                    <>
+                                        <div className="pt-3 border-t">
+                                            <h4 className="text-sm font-medium text-muted-foreground mb-1">Accounts Payable</h4>
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground">Total</p>
+                                                    <p className="text-sm font-medium">{formatCurrency(purchase.total_amount)}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground">Paid</p>
+                                                    <p className="text-sm font-medium text-green-600">{formatCurrency(purchase.ap_paid_amount || 0)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 p-2 bg-white rounded border">
+                                                <p className="text-xs text-muted-foreground">Outstanding</p>
+                                                <p className={`text-lg font-bold ${purchase.ap_outstanding > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                                    {formatCurrency(purchase.ap_outstanding)}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Payment Status */}
+                                        <div className="pt-3 border-t">
+                                            <h4 className="text-sm font-medium text-muted-foreground mb-2">Payment Status</h4>
+                                            {purchase.ap_outstanding === 0 ? (
+                                                <Badge variant="default" className="bg-green-600">
+                                                    <CheckCircle className="mr-1 h-3 w-3" />
+                                                    Fully Paid
+                                                </Badge>
+                                            ) : purchase.ap_paid_amount > 0 ? (
+                                                <Badge variant="default" className="bg-orange-500">
+                                                    <Clock className="mr-1 h-3 w-3" />
+                                                    Partially Paid
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="destructive">
+                                                    <XCircle className="mr-1 h-3 w-3" />
+                                                    Unpaid
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Info message based on status */}
+                                {!purchase.jurnal_posted && (purchase.status === 'approved' || purchase.status === 'ordered' || purchase.status === 'completed') && (
+                                    <div className="pt-3 border-t">
+                                        <p className="text-xs text-blue-600">
+                                            ℹ️ Silakan klik <strong>"Post to Jurnal"</strong> untuk mencatat hutang (AP) ke sistem akuntansi
+                                        </p>
+                                    </div>
+                                )}
+                                
+                                {purchase.jurnal_posted && purchase.ap_outstanding > 0 && (
+                                    <div className="pt-3 border-t">
+                                        <p className="text-xs text-orange-600">
+                                            💰 Ada sisa hutang. Klik <strong>"Create Payment"</strong> untuk mencatat pembayaran ke supplier
+                                        </p>
                                     </div>
                                 )}
                             </CardContent>

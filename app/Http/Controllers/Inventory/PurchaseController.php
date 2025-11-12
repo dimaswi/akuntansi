@@ -44,8 +44,39 @@ class PurchaseController extends Controller
         
         $filters = $request->only([
             'search', 'status', 'supplier_id', 
-            'date_from', 'date_to', 'perPage'
+            'date_from', 'date_to', 'perPage', 'has_outstanding'
         ]);
+
+        // If AJAX request with has_outstanding filter (for payment creation)
+        if ($request->ajax() && isset($filters['has_outstanding'])) {
+            $perPage = $request->input('per_page', 100);
+            
+            $purchases = Purchase::with('supplier')
+                ->where('status', 'approved')
+                ->where('ap_outstanding', '>', 0)
+                ->when($filters['search'] ?? null, function ($query, $search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('purchase_number', 'like', "%{$search}%")
+                          ->orWhereHas('supplier', function ($q) use ($search) {
+                              $q->where('name', 'like', "%{$search}%");
+                          });
+                    });
+                })
+                ->orderBy('purchase_date', 'desc')
+                ->limit($perPage)
+                ->get()
+                ->map(function ($purchase) {
+                    return [
+                        'id' => $purchase->id,
+                        'purchase_number' => $purchase->purchase_number,
+                        'supplier_name' => $purchase->supplier->name,
+                        'total_amount' => $purchase->total_amount,
+                        'ap_outstanding' => $purchase->ap_outstanding,
+                    ];
+                });
+
+            return response()->json(['data' => $purchases]);
+        }
 
         $purchases = $this->purchaseRepository->paginate($filters);
 
@@ -121,7 +152,12 @@ class PurchaseController extends Controller
     public function show($id)
     {
         $purchase = $this->purchaseRepository->find($id);
-        $purchase->load(['payments.jurnal', 'payments.bankAccount', 'payments.createdBy']);
+        $purchase->load([
+            'payments.jurnal', 
+            'payments.bankAccount', 
+            'payments.createdBy',
+            'jurnal' // Load jurnal relation untuk ditampilkan di frontend
+        ]);
 
         $user = request()->user();
 
@@ -130,7 +166,7 @@ class PurchaseController extends Controller
             'canEdit' => $purchase->canBeEdited() && $user->can('inventory.purchases.edit'),
             'canApprove' => $purchase->canBeApproved() && $user->can('inventory.purchases.approve'),
             'canReceive' => $purchase->canReceiveItems() && $user->can('inventory.purchases.receive'),
-            'canPostToJournal' => $purchase->canPostToJournal() && $user->can('inventory.purchases.post-to-journal'),
+            'canPostToJurnal' => $purchase->canPostToJournal() && $user->can('inventory.purchases.post-to-journal'),
             'hasOutstandingPayment' => $purchase->hasOutstandingPayment(),
             'payments' => $purchase->payments,
         ]);
@@ -358,6 +394,24 @@ class PurchaseController extends Controller
             }
 
             $purchase->update(['status' => 'pending']);
+
+            // Send notification to users who can approve (logistics role with approval permission)
+            $this->notificationService->sendToRoles(
+                NotificationService::TYPE_PURCHASE_APPROVED,
+                ['logistics', 'manager', 'administrator'],
+                [
+                    'title' => 'Purchase Order Menunggu Approval',
+                    'message' => "PO {$purchase->purchase_number} dari {$purchase->supplier->name} telah disubmit dan menunggu approval. Total: " . number_format($purchase->total_amount, 0, ',', '.'),
+                    'action_url' => route('purchases.show', $purchase->id),
+                    'data' => [
+                        'purchase_id' => $purchase->id,
+                        'purchase_number' => $purchase->purchase_number,
+                        'supplier' => $purchase->supplier->name,
+                        'total_amount' => $purchase->total_amount,
+                        'created_by' => $purchase->creator->name ?? 'System',
+                    ],
+                ]
+            );
 
             return redirect()->route('purchases.show', $id)
                 ->with('success', 'Purchase order berhasil disubmit untuk approval.');

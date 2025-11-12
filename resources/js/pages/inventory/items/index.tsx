@@ -22,7 +22,7 @@ import {
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, usePage } from "@inertiajs/react";
-import { Edit3, PlusCircle, Search, Trash, X, Loader2, Eye, Package, Filter } from "lucide-react";
+import { Edit3, PlusCircle, Search, Trash, X, Loader2, Eye, Package, Filter, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { route } from "ziggy-js";
@@ -105,6 +105,7 @@ interface Props extends SharedData {
         department_id?: string;
         supplier_id?: string;
         is_active?: string;
+        stock_status?: string;
         perPage: number;
     };
     categories: Category[];
@@ -154,6 +155,7 @@ export default function ItemsIndex() {
                 department_id: filters.department_id || '',
                 supplier_id: filters.supplier_id || '',
                 is_active: filters.is_active || '',
+                stock_status: filters.stock_status || '',
                 page: 1,
             },
             {
@@ -184,6 +186,7 @@ export default function ItemsIndex() {
                 department_id: filters.department_id || '',
                 supplier_id: filters.supplier_id || '',
                 is_active: filters.is_active || '',
+                stock_status: filters.stock_status || '',
                 page: 1,
             },
             {
@@ -204,6 +207,7 @@ export default function ItemsIndex() {
                 department_id: filters.department_id || '',
                 supplier_id: filters.supplier_id || '',
                 is_active: filters.is_active || '',
+                stock_status: filters.stock_status || '',
                 page: 1,
             },
             {
@@ -224,6 +228,7 @@ export default function ItemsIndex() {
                 department_id: department === 'all' ? '' : department,
                 supplier_id: filters.supplier_id || '',
                 is_active: filters.is_active || '',
+                stock_status: filters.stock_status || '',
                 page: 1,
             },
             {
@@ -244,6 +249,7 @@ export default function ItemsIndex() {
                 department_id: filters.department_id || '',
                 supplier_id: supplier === 'all' ? '' : supplier,
                 is_active: filters.is_active || '',
+                stock_status: filters.stock_status || '',
                 page: 1,
             },
             {
@@ -264,6 +270,28 @@ export default function ItemsIndex() {
                 department_id: filters.department_id || '',
                 supplier_id: filters.supplier_id || '',
                 is_active: status === 'all' ? '' : status,
+                stock_status: filters.stock_status || '',
+                page: 1,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handleStockStatusChange = (stockStatus: string) => {
+        router.get(
+            '/items',
+            {
+                search: filters.search || '',
+                perPage: filters.perPage,
+                inventory_type: filters.inventory_type || '',
+                category_id: filters.category_id || '',
+                department_id: filters.department_id || '',
+                supplier_id: filters.supplier_id || '',
+                is_active: filters.is_active || '',
+                stock_status: stockStatus === 'all' ? '' : stockStatus,
                 page: 1,
             },
             {
@@ -279,6 +307,7 @@ export default function ItemsIndex() {
                             (filters.department_id && filters.department_id !== '') ||
                             (filters.supplier_id && filters.supplier_id !== '') ||
                             (filters.is_active && filters.is_active !== '') ||
+                            (filters.stock_status && filters.stock_status !== '') ||
                             (filters.search && filters.search !== '');
 
     // Keep filter expanded if there are active filters
@@ -298,6 +327,7 @@ export default function ItemsIndex() {
             department_id: '',
             supplier_id: '',
             is_active: '',
+            stock_status: '',
             page: 1,
         }, {
             preserveState: true,
@@ -513,6 +543,35 @@ export default function ItemsIndex() {
                                                     {supplier.name}
                                                 </SelectItem>
                                             ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label className="text-sm font-medium">Status Stok</Label>
+                                    <Select value={filters.stock_status || 'all'} onValueChange={handleStockStatusChange}>
+                                        <SelectTrigger className="w-48">
+                                            <SelectValue placeholder="Pilih Status Stok" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Semua Status Stok</SelectItem>
+                                            <SelectItem value="out_of_stock">
+                                                <div className="flex items-center gap-2">
+                                                    <AlertTriangle className="h-4 w-4 text-red-500" />
+                                                    <span>Out of Stock</span>
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="low_stock">
+                                                <div className="flex items-center gap-2">
+                                                    <AlertTriangle className="h-4 w-4 text-orange-500" />
+                                                    <span>Low Stock</span>
+                                                </div>
+                                            </SelectItem>
+                                            <SelectItem value="below_safety">
+                                                <div className="flex items-center gap-2">
+                                                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                                    <span>Below Safety Stock</span>
+                                                </div>
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

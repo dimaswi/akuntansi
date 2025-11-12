@@ -8,6 +8,7 @@ use App\Models\Inventory\Item;
 use App\Models\Inventory\Department;
 use App\Services\Inventory\StockRequestService;
 use App\Services\Inventory\ItemStockService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -16,7 +17,8 @@ class StockRequestController extends Controller
 {
     public function __construct(
         protected StockRequestService $stockRequestService,
-        protected ItemStockService $itemStockService
+        protected ItemStockService $itemStockService,
+        protected NotificationService $notificationService
     ) {}
 
     /**
@@ -24,8 +26,17 @@ class StockRequestController extends Controller
      */
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
         $query = StockRequest::with(['department', 'requestedByUser', 'approvedByUser', 'items'])
             ->orderBy('created_at', 'desc');
+        
+        // Department-level access control: Only logistics role can see all departments
+        if (!$user->isLogistics()) {
+            // Non-logistics users can only see requests from their department
+            $query->where('department_id', $user->department_id);
+        }
         
         // Filter by status
         if ($request->filled('status')) {
@@ -72,7 +83,7 @@ class StockRequestController extends Controller
                 'can_edit' => $request->canEdit(),
                 'can_submit' => $request->canSubmit(),
                 'can_approve' => $request->canApprove(),
-                'can_complete' => $request->canComplete(),
+-                'can_complete' => $request->canComplete(),
             ];
         });
                 
@@ -119,6 +130,14 @@ class StockRequestController extends Controller
      */
     public function store(Request $request)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Check if department has completed stock opname for PREVIOUS month
+        if (!\App\Models\Inventory\StockOpname::hasPreviousMonthOpname($user->department_id)) {
+            return back()->with('error', 'Department harus menyelesaikan Stock Opname bulan lalu sebelum dapat membuat Stock Request baru');
+        }
+        
         $validated = $request->validate([
             'department_id' => 'required|exists:departments,id',
             'priority' => 'required|in:low,normal,high,urgent',
@@ -147,6 +166,16 @@ class StockRequestController extends Controller
      */
     public function show(StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         $stockRequest->load([
             'department',
             'requestedByUser',
@@ -223,6 +252,16 @@ class StockRequestController extends Controller
      */
     public function edit(StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         if (!$stockRequest->canEdit()) {
             return redirect()
                 ->route('stock-requests.show', $stockRequest)
@@ -282,6 +321,16 @@ class StockRequestController extends Controller
      */
     public function update(Request $request, StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         if (!$stockRequest->canEdit()) {
             return redirect()
                 ->route('stock-requests.show', $stockRequest)
@@ -309,8 +358,53 @@ class StockRequestController extends Controller
      */
     public function submit(StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         try {
             $this->stockRequestService->submit($stockRequest);
+            
+            // Send notification to all users in the requesting department
+            $this->notificationService->sendToDepartment(
+                $stockRequest->department_id,
+                NotificationService::TYPE_STOCK_REQUEST_SUBMITTED,
+                [
+                    'title' => 'Permintaan Stok Disubmit',
+                    'message' => "Permintaan stok {$stockRequest->request_number} telah diajukan dan menunggu persetujuan dari Logistics.",
+                    'action_url' => route('stock-requests.show', $stockRequest->id),
+                    'data' => [
+                        'request_id' => $stockRequest->id,
+                        'request_number' => $stockRequest->request_number,
+                        'department' => $stockRequest->department->name,
+                        'priority' => $stockRequest->priority,
+                    ]
+                ],
+                $user->id // Exclude the submitter
+            );
+
+            // Also notify logistics team for approval
+            $this->notificationService->sendToRoles(
+                NotificationService::TYPE_STOCK_REQUEST_SUBMITTED,
+                ['logistics'],
+                [
+                    'title' => 'Permintaan Stok Baru untuk Approval',
+                    'message' => "Permintaan stok {$stockRequest->request_number} dari {$stockRequest->department->name} menunggu persetujuan Anda.",
+                    'action_url' => route('stock-requests.show', $stockRequest->id),
+                    'data' => [
+                        'request_id' => $stockRequest->id,
+                        'request_number' => $stockRequest->request_number,
+                        'department' => $stockRequest->department->name,
+                        'priority' => $stockRequest->priority,
+                    ]
+                ]
+            );
             
             return redirect()
                 ->route('stock-requests.show', $stockRequest)
@@ -325,6 +419,16 @@ class StockRequestController extends Controller
      */
     public function approvalForm(StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         if (!$stockRequest->canApprove()) {
             return redirect()
                 ->route('stock-requests.show', $stockRequest)
@@ -381,6 +485,16 @@ class StockRequestController extends Controller
      */
     public function approve(Request $request, StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         // Parse items if it's JSON string
         $items = $request->input('items');
         if (is_string($items)) {
@@ -405,6 +519,23 @@ class StockRequestController extends Controller
                 $validated['approval_notes'] ?? null
             );
             
+            // Send notification to all users in the requesting department
+            $this->notificationService->sendToDepartment(
+                $stockRequest->department_id,
+                NotificationService::TYPE_STOCK_REQUEST_APPROVED,
+                [
+                    'title' => 'Permintaan Stok Disetujui',
+                    'message' => "Permintaan stok {$stockRequest->request_number} telah disetujui oleh Logistics.",
+                    'action_url' => route('stock-requests.show', $stockRequest->id),
+                    'data' => [
+                        'request_id' => $stockRequest->id,
+                        'request_number' => $stockRequest->request_number,
+                        'department' => $stockRequest->department->name,
+                        'approved_by' => $user->name,
+                    ]
+                ]
+            );
+            
             return redirect()
                 ->route('stock-requests.show', $stockRequest)
                 ->with('success', 'Permintaan Stok berhasil diapprove.');
@@ -418,6 +549,16 @@ class StockRequestController extends Controller
      */
     public function reject(Request $request, StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         $validated = $request->validate([
             'reason' => 'required|string',
         ]);
@@ -427,6 +568,22 @@ class StockRequestController extends Controller
                 $stockRequest,
                 Auth::id(),
                 $validated['reason']
+            );
+            
+            // Send notification
+            $this->notificationService->sendToAllRoles(
+                NotificationService::TYPE_STOCK_REQUEST_REJECTED,
+                [
+                    'title' => 'Permintaan Stok Ditolak',
+                    'message' => "Permintaan stok {$stockRequest->request_number} dari {$stockRequest->department->name} telah ditolak. Alasan: {$validated['reason']}",
+                    'action_url' => route('stock-requests.show', $stockRequest->id),
+                    'data' => [
+                        'request_id' => $stockRequest->id,
+                        'request_number' => $stockRequest->request_number,
+                        'department' => $stockRequest->department->name,
+                        'reason' => $validated['reason'],
+                    ]
+                ]
             );
             
             return redirect()
@@ -442,6 +599,16 @@ class StockRequestController extends Controller
      */
     public function complete(Request $request, StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         $validated = $request->validate([
             'issued_quantities' => 'nullable|array',
             'issued_quantities.*' => 'nullable|numeric|min:0',
@@ -452,6 +619,21 @@ class StockRequestController extends Controller
                 $stockRequest,
                 Auth::id(),
                 $validated['issued_quantities'] ?? []
+            );
+            
+            // Send notification
+            $this->notificationService->sendToAllRoles(
+                NotificationService::TYPE_STOCK_REQUEST_COMPLETED,
+                [
+                    'title' => 'Permintaan Stok Selesai',
+                    'message' => "Permintaan stok {$stockRequest->request_number} dari {$stockRequest->department->name} telah selesai dan barang sudah ditransfer.",
+                    'action_url' => route('stock-requests.show', $stockRequest->id),
+                    'data' => [
+                        'request_id' => $stockRequest->id,
+                        'request_number' => $stockRequest->request_number,
+                        'department' => $stockRequest->department->name,
+                    ]
+                ]
             );
             
             return redirect()
@@ -467,6 +649,16 @@ class StockRequestController extends Controller
      */
     public function cancel(Request $request, StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         $validated = $request->validate([
             'reason' => 'required|string',
         ]);
@@ -491,6 +683,16 @@ class StockRequestController extends Controller
      */
     public function destroy(StockRequest $stockRequest)
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Department-level access control
+        if (!$user->isLogistics()) {
+            if ($stockRequest->department_id !== $user->department_id) {
+                abort(403, 'Anda tidak memiliki akses ke stock request ini');
+            }
+        }
+        
         if (!$stockRequest->canEdit()) {
             return back()->with('error', 'Permintaan Stok tidak bisa dihapus.');
         }

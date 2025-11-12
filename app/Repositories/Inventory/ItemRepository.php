@@ -126,6 +126,22 @@ class ItemRepository implements ItemRepositoryInterface
             $query->where('is_controlled_substance', $filters['is_controlled_substance']);
         }
 
+        // Filter by stock status
+        if (!empty($filters['stock_status'])) {
+            switch ($filters['stock_status']) {
+                case 'out_of_stock':
+                    $query->outOfStock();
+                    break;
+                case 'low_stock':
+                    $query->lowStock();
+                    break;
+                case 'below_safety':
+                    $query->whereColumn('available_quantity', '<=', 'safety_stock')
+                          ->whereColumn('available_quantity', '>', 'reorder_level');
+                    break;
+            }
+        }
+
         return $query->orderBy('name')->paginate($perPage);
     }
 

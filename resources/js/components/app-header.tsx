@@ -12,7 +12,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Box, Tag, Settings, FileCheck, Warehouse } from 'lucide-react';
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Box, Tag, Settings, FileCheck, Warehouse, DollarSign, ClipboardList, ArrowRightLeft } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -150,6 +150,30 @@ const mainNavItems: NavItem[] = [
                 permission: 'inventory.purchases.view',
             },
             {
+                title: 'Pembayaran Pembelian',
+                href: '/purchase-payments',
+                icon: DollarSign,
+                permission: 'inventory.purchases.view',
+            },
+            {
+                title: 'Stock Adjustment',
+                href: '/stock-adjustments',
+                icon: ClipboardList,
+                permission: 'inventory.view',
+            },
+            {
+                title: 'Stock Opname',
+                href: '/stock-opnames',
+                icon: FileBarChart,
+                permission: 'inventory.items.view',
+            },
+            {
+                title: 'Transfer Stok',
+                href: '/stock-transfers',
+                icon: ArrowRightLeft,
+                permission: 'inventory.items.edit',
+            },
+            {
                 title: 'Permintaan Stok',
                 href: '/stock-requests',
                 icon: FileCheck,
@@ -172,6 +196,12 @@ const mainNavItems: NavItem[] = [
                 href: '/departments',
                 icon: Users,
                 permission: 'inventory.departments.view',
+            },
+            {
+                title: 'Laporan Kepatuhan Opname',
+                href: '/reports/stock-opname-compliance',
+                icon: BarChart,
+                permission: 'inventory.items.view',
             },
         ],
     },

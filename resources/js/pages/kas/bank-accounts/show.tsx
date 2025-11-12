@@ -13,6 +13,10 @@ interface DaftarAkun {
     kode_akun: string;
     nama_akun: string;
     jenis_akun: string;
+    sub_jenis?: string;
+    saldo_normal: string;
+    is_aktif: boolean;
+    induk_akun_id?: number;
 }
 
 interface BankAccount {
@@ -32,13 +36,24 @@ interface BankAccount {
     updated_at: string;
 }
 
+interface Stats {
+    total_transaksi_bank: number;
+    total_transaksi_giro: number;
+    total_setoran: number;
+    total_penarikan: number;
+    total_giro_pending: number;
+    total_giro_cair: number;
+}
+
 interface Props {
     bank_account: BankAccount;
+    saldo_coa?: number;
+    stats?: Stats;
     [key: string]: any;
 }
 
 export default function ShowBankAccount() {
-    const { bank_account } = usePage<Props>().props;
+    const { bank_account, saldo_coa, stats } = usePage<Props>().props;
 
     const breadcrumbs = [
         { title: <Building2 className="h-4 w-4" />, href: route("kas.index") },
@@ -185,20 +200,126 @@ export default function ShowBankAccount() {
                         {bank_account.daftar_akun && (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Akun Terkait</CardTitle>
+                                    <CardTitle>Detail Akun COA</CardTitle>
                                     <CardDescription>
-                                        Pemetaan ke akun dalam chart of accounts
+                                        Pemetaan ke akun dalam Chart of Accounts (COA)
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <CardContent className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                                        <div className="col-span-2">
+                                            <p className="text-sm font-medium text-muted-foreground mb-1">Kode & Nama Akun</p>
+                                            <p className="text-lg font-bold text-blue-900">
+                                                {bank_account.daftar_akun.kode_akun}
+                                            </p>
+                                            <p className="text-base font-semibold text-blue-800">
+                                                {bank_account.daftar_akun.nama_akun}
+                                            </p>
+                                        </div>
+                                        
                                         <div>
-                                            <p className="font-semibold">
-                                                {bank_account.daftar_akun.kode_akun} - {bank_account.daftar_akun.nama_akun}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
+                                            <p className="text-sm font-medium text-muted-foreground mb-1">Jenis Akun</p>
+                                            <Badge variant="secondary" className="capitalize">
                                                 {bank_account.daftar_akun.jenis_akun}
+                                            </Badge>
+                                        </div>
+                                        
+                                        {bank_account.daftar_akun.sub_jenis && (
+                                            <div>
+                                                <p className="text-sm font-medium text-muted-foreground mb-1">Sub Jenis</p>
+                                                <Badge variant="outline" className="capitalize">
+                                                    {bank_account.daftar_akun.sub_jenis.replace(/_/g, ' ')}
+                                                </Badge>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="col-span-2 pt-2 border-t border-blue-200">
+                                            <p className="text-sm font-medium text-muted-foreground mb-1">Saldo Normal</p>
+                                            <Badge variant={bank_account.daftar_akun.saldo_normal === 'debit' ? 'default' : 'secondary'}>
+                                                {bank_account.daftar_akun.saldo_normal.toUpperCase()}
+                                            </Badge>
+                                        </div>
+                                        
+                                        <div className="col-span-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium text-muted-foreground">Status Akun</span>
+                                                <Badge variant={bank_account.daftar_akun.is_aktif ? "default" : "secondary"}>
+                                                    {bank_account.daftar_akun.is_aktif ? "Aktif" : "Tidak Aktif"}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {saldo_coa !== null && saldo_coa !== undefined && (
+                                        <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                                            <p className="text-sm font-medium text-green-900 mb-2">
+                                                💰 Saldo dari COA (Chart of Accounts)
                                             </p>
+                                            <p className={`text-2xl font-bold ${
+                                                saldo_coa >= 0 ? 'text-green-600' : 'text-red-600'
+                                            }`}>
+                                                {formatCurrency(saldo_coa)}
+                                            </p>
+                                            <p className="text-xs text-green-700 mt-1">
+                                                Saldo ini dihitung dari detail jurnal yang telah di-posting
+                                            </p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Transaction Statistics */}
+                        {stats && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Statistik Transaksi</CardTitle>
+                                    <CardDescription>
+                                        Ringkasan aktivitas transaksi bank dan giro
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-3 bg-blue-50 rounded-lg">
+                                            <p className="text-xs font-medium text-muted-foreground mb-1">Total Transaksi Bank</p>
+                                            <p className="text-2xl font-bold text-blue-600">{stats.total_transaksi_bank}</p>
+                                        </div>
+                                        
+                                        <div className="p-3 bg-purple-50 rounded-lg">
+                                            <p className="text-xs font-medium text-muted-foreground mb-1">Total Transaksi Giro</p>
+                                            <p className="text-2xl font-bold text-purple-600">{stats.total_transaksi_giro}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <Separator />
+                                    
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                            <span className="text-sm font-medium text-green-900">Total Setoran</span>
+                                            <span className="text-lg font-bold text-green-600">
+                                                {formatCurrency(stats.total_setoran)}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                                            <span className="text-sm font-medium text-red-900">Total Penarikan</span>
+                                            <span className="text-lg font-bold text-red-600">
+                                                {formatCurrency(stats.total_penarikan)}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                                            <span className="text-sm font-medium text-yellow-900">Giro Pending</span>
+                                            <span className="text-lg font-bold text-yellow-600">
+                                                {formatCurrency(stats.total_giro_pending)}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
+                                            <span className="text-sm font-medium text-emerald-900">Giro Cair</span>
+                                            <span className="text-lg font-bold text-emerald-600">
+                                                {formatCurrency(stats.total_giro_cair)}
+                                            </span>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -212,6 +333,9 @@ export default function ShowBankAccount() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Informasi Saldo</CardTitle>
+                                <CardDescription>
+                                    Perbandingan saldo bank dengan saldo akun COA
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
@@ -224,13 +348,35 @@ export default function ShowBankAccount() {
                                 <Separator />
                                 
                                 <div className="space-y-2">
-                                    <p className="text-sm font-medium text-muted-foreground">Saldo Berjalan</p>
+                                    <p className="text-sm font-medium text-muted-foreground">Saldo Berjalan (Transaksi Bank)</p>
                                     <p className={`text-2xl font-bold ${
                                         bank_account.saldo_berjalan >= 0 ? 'text-green-600' : 'text-red-600'
                                     }`}>
                                         {formatCurrency(bank_account.saldo_berjalan)}
                                     </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Dihitung dari transaksi bank yang telah diposting
+                                    </p>
                                 </div>
+                                
+                                {saldo_coa !== null && saldo_coa !== undefined && (
+                                    <>
+                                        <Separator />
+                                        <div className="space-y-2 p-3 bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
+                                            <p className="text-sm font-medium text-emerald-900">💰 Saldo Akun COA</p>
+                                            <p className={`text-2xl font-bold ${
+                                                saldo_coa >= 0 ? 'text-green-600' : 'text-red-600'
+                                            }`}>
+                                                {formatCurrency(saldo_coa)}
+                                            </p>
+                                            <p className="text-xs text-emerald-700">
+                                                Dihitung dari jurnal yang telah diposting
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
+                                
+                                <Separator />
                                 
                                 <div className="space-y-2">
                                     <p className="text-sm font-medium text-muted-foreground">Mutasi</p>
@@ -241,7 +387,40 @@ export default function ShowBankAccount() {
                                     }`}>
                                         {formatCurrency(bank_account.saldo_berjalan - bank_account.saldo_awal)}
                                     </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Selisih saldo berjalan dengan saldo awal
+                                    </p>
                                 </div>
+
+                                {saldo_coa !== null && saldo_coa !== undefined && (
+                                    <>
+                                        <Separator />
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium text-muted-foreground">Selisih Saldo</p>
+                                            <p className={`text-lg font-semibold ${
+                                                Math.abs(bank_account.saldo_berjalan - saldo_coa) < 0.01
+                                                    ? 'text-green-600' 
+                                                    : 'text-amber-600'
+                                            }`}>
+                                                {formatCurrency(bank_account.saldo_berjalan - saldo_coa)}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Selisih antara saldo bank dengan saldo COA
+                                            </p>
+                                            {Math.abs(bank_account.saldo_berjalan - saldo_coa) < 0.01 ? (
+                                                <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
+                                                    <span>✓</span>
+                                                    <span>Saldo sudah sesuai</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1 text-xs text-amber-600 mt-1">
+                                                    <span>⚠</span>
+                                                    <span>Ada selisih, perlu rekonsiliasi</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </CardContent>
                         </Card>
 

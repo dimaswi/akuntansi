@@ -12,14 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('purchase_items', function (Blueprint $table) {
-            // Untuk allocate cost ke account yang sesuai
-            $table->unsignedBigInteger('inventory_account_id')->nullable()->after('notes')->comment('Account Inventory (Aset)');
-            $table->unsignedBigInteger('expense_account_id')->nullable()->after('inventory_account_id')->comment('Account Expense (jika direct expense)');
-            $table->enum('allocation_type', ['inventory', 'expense', 'asset'])->default('inventory')->after('expense_account_id');
-            
-            // Actual Cost Recording
-            $table->decimal('actual_unit_cost', 15, 2)->nullable()->after('unit_price')->comment('Harga setelah discount/adjustment');
-            $table->decimal('landed_cost', 15, 2)->nullable()->after('actual_unit_cost')->comment('Termasuk shipping, tax, etc');
+            if (!Schema::hasColumn('purchase_items', 'inventory_account_id')) {
+                $table->unsignedBigInteger('inventory_account_id')->nullable()->after('notes')->comment('Account Inventory (Aset)');
+            }
+            if (!Schema::hasColumn('purchase_items', 'expense_account_id')) {
+                $table->unsignedBigInteger('expense_account_id')->nullable()->after('inventory_account_id')->comment('Account Expense (jika direct expense)');
+            }
+            if (!Schema::hasColumn('purchase_items', 'allocation_type')) {
+                $table->enum('allocation_type', ['inventory', 'expense', 'asset'])->default('inventory')->after('expense_account_id');
+            }
+            if (!Schema::hasColumn('purchase_items', 'actual_unit_cost')) {
+                $table->decimal('actual_unit_cost', 15, 2)->nullable()->after('unit_price')->comment('Harga setelah discount/adjustment');
+            }
+            if (!Schema::hasColumn('purchase_items', 'landed_cost')) {
+                $table->decimal('landed_cost', 15, 2)->nullable()->after('actual_unit_cost')->comment('Termasuk shipping, tax, etc');
+            }
         });
     }
 

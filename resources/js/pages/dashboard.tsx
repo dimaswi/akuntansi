@@ -16,7 +16,8 @@ import {
     AlertCircle,
     ArrowUpRight,
     ArrowDownRight,
-    Calendar
+    Calendar,
+    Package
 } from 'lucide-react';
 import { 
     LineChart, 
@@ -56,6 +57,7 @@ interface TopItem {
 }
 
 interface Props {
+    tab?: string;
     bulan: string | null;
     dataHarian: DataHarian[];
     statistik: {
@@ -83,6 +85,7 @@ interface Props {
 }
 
 export default function Dashboard({ 
+    tab = 'accounting',
     bulan,
     dataHarian,
     statistik,
@@ -96,6 +99,7 @@ export default function Dashboard({
     const currentMonth = new Date().toISOString().slice(0, 7);
     const [selectedMonth, setSelectedMonth] = useState(bulan || currentMonth);
     const [isLoading, setIsLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState(tab);
 
     // Compute sign flags and safe maxima for progress bars so negative totals
     // render correctly (color + bar width) and we avoid division by zero.
@@ -136,11 +140,18 @@ export default function Dashboard({
         const newMonth = e.target.value;
         setSelectedMonth(newMonth);
         setIsLoading(true);
-        router.get(route('dashboard'), { bulan: newMonth }, {
+        router.get(route('dashboard'), { bulan: newMonth, tab: activeTab }, {
             preserveState: true,
             preserveScroll: true,
             onFinish: () => setIsLoading(false),
         });
+    };
+
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        if (value === 'inventory') {
+            router.visit(route('inventory.dashboard'));
+        }
     };    const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
@@ -161,10 +172,38 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
+                {/* Tabs */}
+                <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-full max-w-md">
+                    <button
+                        onClick={() => handleTabChange('accounting')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                            activeTab === 'accounting'
+                                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                        }`}
+                    >
+                        <BarChart3 className="h-4 w-4" />
+                        Akuntansi
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('inventory')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                            activeTab === 'inventory'
+                                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                        }`}
+                    >
+                        <Package className="h-4 w-4" />
+                        Inventory
+                    </button>
+                </div>
+
+                {activeTab === 'accounting' && (
+                    <>
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard Keuangan</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard Akuntansi</h1>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                             {isEmpty ? 'Pilih bulan untuk melihat data' : 'Ringkasan performa keuangan perusahaan'}
                         </p>
@@ -565,6 +604,8 @@ export default function Dashboard({
                     </Card>
                 </div>
                 </>
+                )}
+                    </>
                 )}
             </div>
         </AppLayout>

@@ -6,11 +6,21 @@ use App\Http\Controllers\Inventory\DepartmentController;
 use App\Http\Controllers\Inventory\ItemCategoryController;
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Inventory\PurchaseController;
+use App\Http\Controllers\Inventory\PurchasePaymentController;
 use App\Http\Controllers\Inventory\StockRequestController;
 use App\Http\Controllers\Inventory\DepartmentStockController;
 use App\Http\Controllers\Inventory\CentralWarehouseController;
+use App\Http\Controllers\Inventory\StockAdjustmentController;
+use App\Http\Controllers\Inventory\StockTransferController;
+use App\Http\Controllers\Inventory\StockOpnameController;
+use App\Http\Controllers\Inventory\InventoryDashboardController;
 
 Route::middleware(['auth'])->group(function () {
+    
+    // =============================================
+    // INVENTORY DASHBOARD
+    // =============================================
+    Route::get('/inventory/dashboard', [InventoryDashboardController::class, 'index'])->name('inventory.dashboard')->middleware('permission:inventory.view');
     
     // =============================================
     // INVENTORY ITEMS ROUTES
@@ -113,6 +123,72 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // =============================================
+    // PURCHASE PAYMENTS ROUTES
+    // =============================================
+    Route::prefix('purchase-payments')->name('purchase-payments.')->group(function () {
+        // Main CRUD routes
+        Route::get('/', [PurchasePaymentController::class, 'index'])->name('index')->middleware('permission:inventory.purchases.view');
+        Route::get('/create', [PurchasePaymentController::class, 'create'])->name('create')->middleware('permission:inventory.purchases.create-payment');
+        Route::post('/', [PurchasePaymentController::class, 'store'])->name('store')->middleware('permission:inventory.purchases.create-payment');
+        
+        // Detail & Edit routes
+        Route::get('/{id}', [PurchasePaymentController::class, 'show'])->name('show')->middleware('permission:inventory.purchases.view');
+        Route::get('/{id}/edit', [PurchasePaymentController::class, 'edit'])->name('edit')->middleware('permission:inventory.purchases.create-payment');
+        Route::put('/{id}', [PurchasePaymentController::class, 'update'])->name('update')->middleware('permission:inventory.purchases.create-payment');
+        Route::delete('/{id}', [PurchasePaymentController::class, 'destroy'])->name('destroy')->middleware('permission:inventory.purchases.delete');
+        
+        // Post to journal
+        Route::post('/{id}/post-to-journal', [PurchasePaymentController::class, 'postToJournal'])->name('postToJournal')->middleware('permission:inventory.purchases.post-to-journal');
+    });
+
+    // =============================================
+    // STOCK ADJUSTMENTS ROUTES
+    // =============================================
+    Route::prefix('stock-adjustments')->name('stock-adjustments.')->group(function () {
+        // Main CRUD routes
+        Route::get('/', [StockAdjustmentController::class, 'index'])->name('index')->middleware('permission:inventory.view');
+        Route::get('/create', [StockAdjustmentController::class, 'create'])->name('create')->middleware('permission:inventory.items.edit');
+        Route::post('/', [StockAdjustmentController::class, 'store'])->name('store')->middleware('permission:inventory.items.edit');
+        
+        // Post to Journal routes - HARUS SEBELUM {id} routes
+        Route::get('/post-to-journal', [StockAdjustmentController::class, 'showPostToJournal'])->name('showPostToJournal')->middleware('permission:inventory.purchases.post-to-journal');
+        Route::post('/post-to-journal', [StockAdjustmentController::class, 'postToJournal'])->name('postToJurnal')->middleware('permission:inventory.purchases.post-to-journal');
+        
+        // API endpoints - HARUS SEBELUM {id} routes
+        Route::get('/api/search-items', [StockAdjustmentController::class, 'searchItems'])->name('searchItems')->middleware('permission:inventory.view');
+        
+        // Detail & Edit routes
+        Route::get('/{stockAdjustment}', [StockAdjustmentController::class, 'show'])->name('show')->middleware('permission:inventory.view');
+        Route::get('/{stockAdjustment}/edit', [StockAdjustmentController::class, 'edit'])->name('edit')->middleware('permission:inventory.items.edit');
+        Route::put('/{stockAdjustment}', [StockAdjustmentController::class, 'update'])->name('update')->middleware('permission:inventory.items.edit');
+        Route::delete('/{stockAdjustment}', [StockAdjustmentController::class, 'destroy'])->name('destroy')->middleware('permission:inventory.items.delete');
+        
+        // Workflow actions
+        Route::post('/{stockAdjustment}/approve', [StockAdjustmentController::class, 'approve'])->name('approve')->middleware('permission:inventory.items.edit');
+        Route::post('/{stockAdjustment}/post-to-journal', [StockAdjustmentController::class, 'postToJournal'])->name('postToJournal')->middleware('permission:inventory.purchases.post-to-journal');
+    });
+
+    // =============================================
+    // STOCK TRANSFERS ROUTES (Transfer Antar Departemen)
+    // =============================================
+    Route::prefix('stock-transfers')->name('stock-transfers.')->group(function () {
+        // Main CRUD routes
+        Route::get('/', [StockTransferController::class, 'index'])->name('index')->middleware('permission:inventory.view');
+        Route::get('/create', [StockTransferController::class, 'create'])->name('create')->middleware('permission:inventory.items.create');
+        Route::post('/', [StockTransferController::class, 'store'])->name('store')->middleware('permission:inventory.items.create');
+        
+        // Detail & Edit routes
+        Route::get('/{stockTransfer}', [StockTransferController::class, 'show'])->name('show')->middleware('permission:inventory.view');
+        Route::get('/{stockTransfer}/edit', [StockTransferController::class, 'edit'])->name('edit')->middleware('permission:inventory.items.edit');
+        Route::put('/{stockTransfer}', [StockTransferController::class, 'update'])->name('update')->middleware('permission:inventory.items.edit');
+        Route::delete('/{stockTransfer}', [StockTransferController::class, 'destroy'])->name('destroy')->middleware('permission:inventory.items.delete');
+        
+        // Workflow actions
+        Route::post('/{stockTransfer}/approve', [StockTransferController::class, 'approve'])->name('approve')->middleware('permission:inventory.purchases.approve');
+        Route::post('/{stockTransfer}/receive', [StockTransferController::class, 'receive'])->name('receive')->middleware('permission:inventory.purchases.approve');
+    });
+
+    // =============================================
     // Permintaan Stok ROUTES (NEW - Central Warehouse System)
     // =============================================
     Route::prefix('stock-requests')->name('stock-requests.')->group(function () {
@@ -153,5 +229,36 @@ Route::middleware(['auth'])->group(function () {
     // =============================================
     Route::prefix('central-warehouse')->name('central-warehouse.')->group(function () {
         Route::get('/', [CentralWarehouseController::class, 'index'])->name('index')->middleware('permission:inventory.items.view');
+    });
+
+    // =============================================
+    // STOCK OPNAME ROUTES
+    // =============================================
+    Route::prefix('stock-opnames')->name('stock-opnames.')->group(function () {
+        Route::get('/', [StockOpnameController::class, 'index'])->name('index')->middleware('permission:inventory.items.view');
+        Route::get('/create', [StockOpnameController::class, 'create'])->name('create')->middleware('permission:inventory.items.create');
+        Route::post('/', [StockOpnameController::class, 'store'])->name('store')->middleware('permission:inventory.items.create');
+        Route::get('/{stockOpname}', [StockOpnameController::class, 'show'])->name('show')->middleware('permission:inventory.items.view');
+        
+        // Update physical counts
+        Route::put('/{stockOpname}/counts', [StockOpnameController::class, 'updateCounts'])->name('updateCounts')->middleware('permission:inventory.items.edit');
+        
+        // Approval workflow
+        Route::post('/{stockOpname}/submit', [StockOpnameController::class, 'submit'])->name('submit')->middleware('permission:inventory.items.edit');
+        Route::post('/{stockOpname}/approve', [StockOpnameController::class, 'approve'])->name('approve')->middleware('permission:inventory.items.approve');
+        Route::post('/{stockOpname}/reject', [StockOpnameController::class, 'reject'])->name('reject')->middleware('permission:inventory.items.approve');
+    });
+
+    // =============================================
+    // STOCK OPNAME REPORTS (Logistics only)
+    // =============================================
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/stock-opname-compliance', [\App\Http\Controllers\Inventory\StockOpnameReportController::class, 'index'])
+            ->name('opname-compliance')
+            ->middleware('permission:inventory.items.view');
+        
+        Route::get('/stock-opname-compliance/export', [\App\Http\Controllers\Inventory\StockOpnameReportController::class, 'export'])
+            ->name('opname-compliance.export')
+            ->middleware('permission:inventory.items.view');
     });
 });

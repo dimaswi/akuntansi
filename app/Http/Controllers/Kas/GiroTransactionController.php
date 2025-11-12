@@ -8,6 +8,7 @@ use App\Models\Kas\BankAccount;
 use App\Models\Akuntansi\DaftarAkun;
 use App\Models\Akuntansi\Jurnal;
 use App\Models\Akuntansi\DetailJurnal;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -378,166 +379,134 @@ class GiroTransactionController extends Controller
     /**
      * Show form for batch posting giro transactions to journal
      */
+    /**
+     * Show form to post single giro transaction to journal
+     */
     public function showPostToJournal(Request $request)
     {
-        // Check permission
-        if (!auth()->user()->can('akuntansi.journal-posting.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view journal posting.');
+        $transactionId = $request->get('id');
+        
+        if (!$transactionId) {
+            return redirect()->route('kas.giro-transactions.index')
+                ->with('error', 'Pilih transaksi giro untuk diposting ke jurnal.');
         }
 
-        $search = $request->get('search', '');
-        $perPage = $request->get('perPage', 10);
-        $jenisGiro = $request->get('jenis_giro', '');
-        $statusGiro = $request->get('status_giro', '');
-        $bankAccountId = $request->get('bank_account_id', '');
-
-        // Get draft giro transactions ready for posting
-        $query = GiroTransaction::with(['bankAccount', 'daftarAkunGiro', 'daftarAkunLawan', 'user'])
+        $giroTransaction = GiroTransaction::with(['bankAccount.daftarAkun', 'daftarAkunGiro', 'user'])
+            ->where('id', $transactionId)
             ->where('status', 'draft')
-            ->whereNotNull('daftar_akun_lawan_id')
-            ->orderBy('tanggal_terima', 'asc');
+            ->first();
 
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->where('nomor_giro', 'like', "%{$search}%")
-                  ->orWhere('nama_penerbit', 'like', "%{$search}%")
-                  ->orWhere('bank_penerbit', 'like', "%{$search}%");
-            });
+        if (!$giroTransaction) {
+            return redirect()->route('kas.giro-transactions.index')
+                ->with('error', 'Transaksi giro tidak ditemukan atau sudah diposting.');
         }
 
-        if ($jenisGiro) {
-            $query->where('jenis_giro', $jenisGiro);
-        }
+        // Daftar akun untuk dropdown (exclude giro account yang sudah auto-filled)
+        $daftarAkun = DaftarAkun::aktif()
+            ->where('id', '!=', $giroTransaction->daftar_akun_giro_id)
+            ->orderBy('jenis_akun')
+            ->orderBy('kode_akun')
+            ->get(['id', 'kode_akun', 'nama_akun', 'jenis_akun']);
 
-        if ($statusGiro) {
-            $query->where('status_giro', $statusGiro);
-        }
-
-        if ($bankAccountId) {
-            $query->where('bank_account_id', $bankAccountId);
-        }
-
-        $giroTransactions = $query->paginate($perPage);
-
-        // Get options for form
-        $bankAccounts = BankAccount::orderBy('nama_bank')->get();
-        $daftarAkun = DaftarAkun::orderBy('kode_akun')->get();
+        // Generate nomor jurnal preview
+        $nomorJurnal = str_replace('GRO-', 'JGR/', $giroTransaction->nomor_giro);
+        $nomorJurnal = str_replace('-', '/', $nomorJurnal);
 
         return Inertia::render('kas/giro-transactions/post-to-journal', [
-            'giroTransactions' => $giroTransactions,
-            'bankAccounts' => $bankAccounts,
+            'giroTransaction' => $giroTransaction,
             'daftarAkun' => $daftarAkun,
-            'filters' => $request->only(['search', 'perPage', 'jenis_giro', 'status_giro', 'bank_account_id']),
+            'nomorJurnalPreview' => $nomorJurnal
         ]);
     }
 
     /**
-     * Batch post selected giro transactions to journal
+     * Process posting single giro transaction to journal
      */
-    public function postToJournal(Request $request)
+    public function postToJurnal(Request $request)
     {
-        // Check permission
-        if (!auth()->user()->can('akuntansi.journal-posting.post')) {
-            abort(403, 'Unauthorized. You do not have permission to post to journal.');
-        }
-
-        $request->validate([
-            'selected_transactions' => 'required|array|min:1',
-            'selected_transactions.*' => 'exists:giro_transactions,id',
-            'keterangan_posting' => 'string|nullable|max:255',
+        $validated = $request->validate([
+            'giro_transaction_id' => 'required|exists:giro_transactions,id',
+            'detail_jurnal' => 'required|array|min:2',
+            'detail_jurnal.*.daftar_akun_id' => 'required|exists:daftar_akun,id',
+            'detail_jurnal.*.keterangan' => 'required|string',
+            'detail_jurnal.*.jumlah_debit' => 'required|numeric|min:0',
+            'detail_jurnal.*.jumlah_kredit' => 'required|numeric|min:0',
         ]);
 
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
+            $giroTransaction = GiroTransaction::findOrFail($validated['giro_transaction_id']);
 
-            $selectedIds = $request->selected_transactions;
-            $keteranganPosting = $request->keterangan_posting ?? 'Posting batch giro transactions';
-            $userId = auth()->id();
-            $now = now();
-            
-            $postedCount = 0;
-            $errors = [];
-
-            foreach ($selectedIds as $id) {
-                $giro = GiroTransaction::where('id', $id)
-                    ->where('status', 'draft')
-                    ->whereNotNull('daftar_akun_lawan_id')
-                    ->first();
-
-                if (!$giro) {
-                    $errors[] = "Giro ID {$id} tidak dapat diposting (tidak memenuhi kriteria)";
-                    continue;
-                }
-
-                try {
-                    // Create journal entry
-                    $jurnal = Jurnal::create([
-                        'nomor_jurnal' => $this->generateNomorJurnal('JU'),
-                        'tanggal_jurnal' => $giro->tanggal_terima,
-                        'keterangan' => "Penerimaan Giro - {$giro->nomor_giro} - {$giro->nama_penerbit}",
-                        'total_debit' => $giro->jumlah,
-                        'total_kredit' => $giro->jumlah,
-                        'user_id' => $userId,
-                    ]);
-
-                    // Create journal details
-                    // Debit: Giro account
-                    DetailJurnal::create([
-                        'jurnal_id' => $jurnal->id,
-                        'daftar_akun_id' => $giro->daftar_akun_giro_id,
-                        'debit' => $giro->jumlah,
-                        'kredit' => 0,
-                        'keterangan' => "Penerimaan Giro {$giro->nomor_giro}",
-                    ]);
-
-                    // Credit: Counter account
-                    DetailJurnal::create([
-                        'jurnal_id' => $jurnal->id,
-                        'daftar_akun_id' => $giro->daftar_akun_lawan_id,
-                        'debit' => 0,
-                        'kredit' => $giro->jumlah,
-                        'keterangan' => "Penerimaan Giro {$giro->nomor_giro}",
-                    ]);
-
-                    // Update giro transaction
-                    $giro->update([
-                        'status' => 'posted',
-                        'jurnal_terima_id' => $jurnal->id,
-                        'posted_at' => $now,
-                        'posted_by' => $userId,
-                        'posting_notes' => $keteranganPosting,
-                        'posting_batch_data' => [
-                            'batch_id' => uniqid('batch_'),
-                            'posted_at' => $now->toISOString(),
-                            'posted_by' => $userId,
-                            'notes' => $keteranganPosting,
-                        ],
-                    ]);
-
-                    $postedCount++;
-
-                } catch (\Exception $e) {
-                    $errors[] = "Error posting giro {$giro->nomor_giro}: " . $e->getMessage();
-                }
+            if ($giroTransaction->status !== 'draft') {
+                return back()->with('error', 'Transaksi giro sudah diposting atau tidak valid.');
             }
 
-            if ($postedCount > 0) {
-                DB::commit();
-                
-                $message = "Berhasil memposting {$postedCount} transaksi giro ke jurnal.";
-                if (!empty($errors)) {
-                    $message .= " Namun ada " . count($errors) . " transaksi yang gagal.";
-                }
-                
-                return redirect()->back()->with('success', $message);
-            } else {
-                DB::rollBack();
-                return redirect()->back()->with('error', 'Tidak ada transaksi yang berhasil diposting. Errors: ' . implode('; ', $errors));
+            // Validate balance
+            $totalDebit = collect($validated['detail_jurnal'])->sum('jumlah_debit');
+            $totalKredit = collect($validated['detail_jurnal'])->sum('jumlah_kredit');
+
+            if ($totalDebit != $totalKredit) {
+                return back()->with('error', 'Total debit dan kredit harus seimbang.');
             }
+
+            // Generate nomor jurnal
+            $nomorJurnal = str_replace('GRO-', 'JGR/', $giroTransaction->nomor_giro);
+            $nomorJurnal = str_replace('-', '/', $nomorJurnal);
+
+            // Create journal entry
+            $jurnal = Jurnal::create([
+                'nomor_jurnal' => $nomorJurnal,
+                'jenis_jurnal' => 'giro',
+                'tanggal_transaksi' => $giroTransaction->tanggal_terima,
+                'keterangan' => "Penerimaan Giro - {$giroTransaction->nomor_giro} - {$giroTransaction->nama_penerbit}",
+                'nomor_referensi' => $giroTransaction->nomor_giro,
+                'total_debit' => $totalDebit,
+                'total_kredit' => $totalKredit,
+                'dibuat_oleh' => Auth::id(),
+                'status' => 'posted',
+                'tanggal_posting' => now(),
+                'diposting_oleh' => Auth::id()
+            ]);
+
+            // Create journal details
+            foreach ($validated['detail_jurnal'] as $detail) {
+                DetailJurnal::create([
+                    'jurnal_id' => $jurnal->id,
+                    'daftar_akun_id' => $detail['daftar_akun_id'],
+                    'keterangan' => $detail['keterangan'],
+                    'jumlah_debit' => $detail['jumlah_debit'],
+                    'jumlah_kredit' => $detail['jumlah_kredit']
+                ]);
+            }
+
+            // Update transaction status
+            $giroTransaction->update([
+                'jurnal_terima_id' => $jurnal->id,
+                'status' => 'posted',
+                'posted_at' => now(),
+                'posted_by' => Auth::id()
+            ]);
+
+            DB::commit();
+
+            // Send notification
+            $notificationService = new NotificationService();
+            $notificationService->sendToAllRoles(
+                NotificationService::TYPE_KAS_POST,
+                [
+                    'title' => 'Transaksi Giro Posted ke Jurnal',
+                    'message' => "Transaksi giro {$giroTransaction->nomor_giro} telah berhasil diposting ke jurnal oleh " . Auth::user()->name,
+                    'action_url' => route('kas.giro-transactions.index'),
+                    'data' => ['transaction_id' => $giroTransaction->id]
+                ]
+            );
+
+            return redirect()->route('kas.giro-transactions.index')
+                ->with('success', 'Transaksi giro berhasil diposting ke jurnal.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 

@@ -13,9 +13,13 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
+        $tab = $request->get('tab', 'accounting'); // Default to accounting tab
+        
         // Jika tidak ada parameter bulan, return empty state (untuk first load cepat)
         if (!$request->has('bulan')) {
             return Inertia::render('dashboard', [
+                'tab' => $tab,
                 'bulan' => null,
                 'dataHarian' => [],
                 'statistik' => [
@@ -69,6 +73,7 @@ class DashboardController extends Controller
         $rasioLikuiditas = $this->getRasioLikuiditas();
         
         return Inertia::render('dashboard', [
+            'tab' => $tab,
             'bulan' => $bulan,
             'dataHarian' => $dataHarian,
             'statistik' => [

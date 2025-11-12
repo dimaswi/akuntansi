@@ -252,6 +252,51 @@ export default function PostToJournal() {
                     </div>
                 </div>
 
+                {/* Info Card - Penjelasan Jurnal Entry */}
+                <div className="mb-6">
+                    <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-sm font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4" />
+                                Penjelasan Jurnal Entry
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm text-blue-800 dark:text-blue-200">
+                            <div>
+                                <p className="font-medium mb-2">Purchase Order akan dicatat dengan jurnal:</p>
+                                <div className="bg-white dark:bg-blue-900/30 rounded-lg p-4 space-y-2 font-mono text-xs">
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-2">
+                                            <FileText className="h-3 w-3" />
+                                            <strong>Debit:</strong> Inventory/Beban ({purchaseAccount.kode_akun})
+                                        </span>
+                                        <span className="text-gray-600 dark:text-gray-300">{formatCurrency(purchase.total_amount)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-2">
+                                            <FileText className="h-3 w-3" />
+                                            <strong>Credit:</strong> Hutang Usaha (pilih akun di bawah)
+                                        </span>
+                                        <span className="text-gray-600 dark:text-gray-300">{formatCurrency(purchase.total_amount)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-2 text-xs">
+                                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="font-medium">Catatan Penting:</p>
+                                    <ul className="list-disc list-inside space-y-1 mt-1 text-xs">
+                                        <li>Anda bisa menambah baris jurnal jika diperlukan</li>
+                                        <li>Nomor jurnal: <strong>{nomorJurnalPreview}</strong></li>
+                                        <li>Total Debit harus sama dengan Total Kredit</li>
+                                        <li>Setelah diposting, tidak bisa dibatalkan</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     {/* Left: Purchase Info */}
                     <div className="lg:col-span-1">

@@ -88,15 +88,7 @@ export default function ShowGiroTransaction() {
     };
 
     const handlePost = () => {
-        router.post(route("kas.giro-transactions.post", giro_transaction.id), {}, {
-            onSuccess: () => {
-                toast.success("Transaksi giro berhasil diposting");
-            },
-            onError: (error) => {
-                console.error("Post error:", error);
-                toast.error("Gagal memposting transaksi giro");
-            },
-        });
+        router.visit(route("kas.giro-transactions.show-post-to-journal", { id: giro_transaction.id }));
     };
 
     const handleCair = () => {

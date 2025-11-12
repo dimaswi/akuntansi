@@ -79,15 +79,7 @@ export default function ShowBankTransaction() {
     };
 
     const handlePost = () => {
-        router.post(route("kas.bank-transactions.post", bank_transaction.id), {}, {
-            onSuccess: () => {
-                toast.success("Transaksi bank berhasil diposting");
-            },
-            onError: (error) => {
-                console.error("Post error:", error);
-                toast.error("Gagal memposting transaksi bank");
-            },
-        });
+        router.visit(route("kas.bank-transactions.show-post-to-journal", { id: bank_transaction.id }));
     };
 
     const getStatusBadge = (status: string) => {

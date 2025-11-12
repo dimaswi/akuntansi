@@ -84,8 +84,8 @@ class BankTransactionController extends Controller
             ->get(['id', 'kode_rekening', 'nama_bank', 'nama_rekening', 'nomor_rekening']);
 
         return Inertia::render('kas/bank-transactions/index', [
-            'bank_transactions' => $bankTransactions,
-            'bank_accounts' => $bankAccounts,
+            'bankTransactions' => $bankTransactions,
+            'bankAccounts' => $bankAccounts,
             'filters' => [
                 'search' => $search,
                 'perPage' => (int) $perPage,
@@ -348,97 +348,137 @@ class BankTransactionController extends Controller
     }
 
     /**
-     * Show form to post transactions to journal
+     * Show form to post single transaction to journal
      */
     public function showPostToJournal(Request $request)
     {
-        $transactionIds = $request->get('ids', []);
+        $transactionId = $request->get('id');
         
-        if (empty($transactionIds)) {
+        if (!$transactionId) {
             return redirect()->route('kas.bank-transactions.index')
-                ->with('error', 'Pilih minimal satu transaksi untuk diposting ke jurnal.');
+                ->with('error', 'Pilih transaksi untuk diposting ke jurnal.');
         }
-        
-        $transactions = BankTransaction::with(['bankAccount'])
+
+        $bankTransaction = BankTransaction::with(['bankAccount.daftarAkun', 'user'])
+            ->where('id', $transactionId)
             ->where('status', 'draft')
-            ->whereIn('id', $transactionIds)
-            ->orderBy('tanggal_transaksi')
-            ->get();
+            ->first();
 
-        if ($transactions->isEmpty()) {
+        if (!$bankTransaction) {
             return redirect()->route('kas.bank-transactions.index')
-                ->with('error', 'Tidak ada transaksi draft yang dipilih.');
+                ->with('error', 'Transaksi tidak ditemukan atau sudah diposting.');
         }
 
-        // Get available accounts for journal entries
+        // Daftar akun untuk dropdown (exclude bank account yang sudah auto-filled)
         $daftarAkun = DaftarAkun::aktif()
-            ->whereIn('jenis_akun', ['pendapatan', 'biaya', 'beban', 'kewajiban', 'modal', 'aset'])
+            ->where('id', '!=', $bankTransaction->bankAccount->daftar_akun_id)
             ->orderBy('jenis_akun')
             ->orderBy('kode_akun')
             ->get(['id', 'kode_akun', 'nama_akun', 'jenis_akun']);
 
+        // Generate nomor jurnal preview
+        $nomorJurnal = str_replace('BKT-', 'JBT/', $bankTransaction->nomor_transaksi);
+        $nomorJurnal = str_replace('-', '/', $nomorJurnal);
+
         return Inertia::render('kas/bank-transactions/post-to-journal', [
-            'bankTransactions' => $transactions,
+            'bankTransaction' => $bankTransaction,
             'daftarAkun' => $daftarAkun,
+            'nomorJurnalPreview' => $nomorJurnal
         ]);
     }
 
     /**
-     * Process posting multiple transactions to journal
+     * Process posting single transaction to journal
      */
     public function postToJurnal(Request $request)
     {
         $validated = $request->validate([
-            'selected_transactions' => 'required|array|min:1',
-            'selected_transactions.*' => 'exists:bank_transactions,id',
-            'account_mappings' => 'required|array',
-            'account_mappings.*.bank_transaction_id' => 'required|exists:bank_transactions,id',
-            'account_mappings.*.daftar_akun_lawan_id' => 'required|exists:daftar_akun,id'
+            'bank_transaction_id' => 'required|exists:bank_transactions,id',
+            'detail_jurnal' => 'required|array|min:2',
+            'detail_jurnal.*.daftar_akun_id' => 'required|exists:daftar_akun,id',
+            'detail_jurnal.*.keterangan' => 'required|string',
+            'detail_jurnal.*.jumlah_debit' => 'required|numeric|min:0',
+            'detail_jurnal.*.jumlah_kredit' => 'required|numeric|min:0',
         ]);
 
-        $postedCount = 0;
+        DB::beginTransaction();
+        try {
+            $bankTransaction = BankTransaction::findOrFail($validated['bank_transaction_id']);
 
-        DB::transaction(function () use ($validated, &$postedCount) {
-            foreach ($validated['account_mappings'] as $mapping) {
-                $transaction = BankTransaction::find($mapping['bank_transaction_id']);
-                
-                if ($transaction && $transaction->status === 'draft') {
-                    // Generate journal entry
-                    $jurnal = $this->generateJurnal($transaction, $mapping['daftar_akun_lawan_id']);
-
-                    // Update transaction status
-                    $transaction->update([
-                        'daftar_akun_lawan_id' => $mapping['daftar_akun_lawan_id'],
-                        'jurnal_id' => $jurnal->id,
-                        'status' => 'posted',
-                        'posted_at' => now(),
-                        'posted_by' => Auth::id()
-                    ]);
-
-                    // Update bank account balance
-                    $transaction->bankAccount->updateSaldoBerjalan();
-                    
-                    $postedCount++;
-                }
+            if ($bankTransaction->status !== 'draft') {
+                return back()->with('error', 'Transaksi sudah diposting atau tidak valid.');
             }
-        });
 
-        // Send notification - system will auto-filter based on each role's notification_settings
-        if ($postedCount > 0) {
+            // Validate balance
+            $totalDebit = collect($validated['detail_jurnal'])->sum('jumlah_debit');
+            $totalKredit = collect($validated['detail_jurnal'])->sum('jumlah_kredit');
+
+            if ($totalDebit != $totalKredit) {
+                return back()->with('error', 'Total debit dan kredit harus seimbang.');
+            }
+
+            // Generate nomor jurnal
+            $nomorJurnal = str_replace('BKT-', 'JBT/', $bankTransaction->nomor_transaksi);
+            $nomorJurnal = str_replace('-', '/', $nomorJurnal);
+
+            // Create journal entry
+            $jurnal = Jurnal::create([
+                'nomor_jurnal' => $nomorJurnal,
+                'jenis_jurnal' => 'bank',
+                'tanggal_transaksi' => $bankTransaction->tanggal_transaksi,
+                'keterangan' => $bankTransaction->keterangan . ($bankTransaction->pihak_terkait ? ' - ' . $bankTransaction->pihak_terkait : ''),
+                'nomor_referensi' => $bankTransaction->nomor_transaksi,
+                'total_debit' => $totalDebit,
+                'total_kredit' => $totalKredit,
+                'dibuat_oleh' => Auth::id(),
+                'status' => 'posted',
+                'tanggal_posting' => now(),
+                'diposting_oleh' => Auth::id()
+            ]);
+
+            // Create journal details
+            foreach ($validated['detail_jurnal'] as $detail) {
+                DetailJurnal::create([
+                    'jurnal_id' => $jurnal->id,
+                    'daftar_akun_id' => $detail['daftar_akun_id'],
+                    'keterangan' => $detail['keterangan'],
+                    'jumlah_debit' => $detail['jumlah_debit'],
+                    'jumlah_kredit' => $detail['jumlah_kredit']
+                ]);
+            }
+
+            // Update transaction status
+            $bankTransaction->update([
+                'jurnal_id' => $jurnal->id,
+                'status' => 'posted',
+                'posted_at' => now(),
+                'posted_by' => Auth::id()
+            ]);
+
+            // Update bank account balance
+            $bankTransaction->bankAccount->updateSaldoBerjalan();
+
+            DB::commit();
+
+            // Send notification
             $notificationService = new NotificationService();
             $notificationService->sendToAllRoles(
                 NotificationService::TYPE_KAS_POST,
                 [
                     'title' => 'Transaksi Bank Posted ke Jurnal',
-                    'message' => "{$postedCount} transaksi bank telah berhasil diposting ke jurnal oleh " . Auth::user()->name,
+                    'message' => "Transaksi bank {$bankTransaction->nomor_transaksi} telah berhasil diposting ke jurnal oleh " . Auth::user()->name,
                     'action_url' => route('kas.bank-transactions.index'),
-                    'data' => ['count' => $postedCount]
+                    'data' => ['transaction_id' => $bankTransaction->id]
                 ]
             );
-        }
 
-        return redirect()->route('kas.bank-transactions.index')
-            ->with('success', "Berhasil memposting {$postedCount} transaksi bank ke jurnal.");
+            return redirect()->route('kas.bank-transactions.index')
+                ->with('success', 'Transaksi bank berhasil diposting ke jurnal.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 
     private function generateJurnal(BankTransaction $bankTransaction, $daftarAkunLawanId = null)

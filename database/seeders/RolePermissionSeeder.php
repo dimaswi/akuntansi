@@ -147,6 +147,15 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'inventory.stock-requests.complete', 'display_name' => 'Complete Permintaan Stok', 'description' => 'Dapat menyelesaikan permintaan stok (issue items)', 'module' => 'Inventory'],
             ['name' => 'inventory.stock-requests.cancel', 'display_name' => 'Cancel Permintaan Stok', 'description' => 'Dapat membatalkan permintaan stok', 'module' => 'Inventory'],
             
+            // Inventory - Stock Opname (Physical Stock Count)
+            ['name' => 'inventory.stock-opnames.view', 'display_name' => 'Lihat Stock Opname', 'description' => 'Dapat melihat daftar stock opname', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-opnames.create', 'display_name' => 'Tambah Stock Opname', 'description' => 'Dapat membuat stock opname baru', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-opnames.edit', 'display_name' => 'Edit Stock Opname', 'description' => 'Dapat mengedit stock opname', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-opnames.delete', 'display_name' => 'Hapus Stock Opname', 'description' => 'Dapat menghapus stock opname', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-opnames.submit', 'display_name' => 'Submit Stock Opname', 'description' => 'Dapat submit stock opname untuk approval', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-opnames.approve', 'display_name' => 'Approve Stock Opname', 'description' => 'Dapat approve/reject stock opname', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-opnames.update-counts', 'display_name' => 'Update Physical Counts', 'description' => 'Dapat update hasil perhitungan fisik', 'module' => 'Inventory'],
+            
             // Inventory - Requisitions (OLD - Keep for backward compatibility)
             ['name' => 'inventory.requisitions.view', 'display_name' => 'Lihat Requisitions', 'description' => 'Dapat melihat daftar requisitions', 'module' => 'Inventory'],
             ['name' => 'inventory.requisitions.create', 'display_name' => 'Tambah Requisitions', 'description' => 'Dapat menambah requisition baru', 'module' => 'Inventory'],

@@ -19,7 +19,7 @@ class BankAccountController extends Controller
         $perPage = $request->get('perPage', 10);
         $status = $request->get('status', '');
 
-        $query = BankAccount::with(['daftarAkun'])
+        $query = BankAccount::with(['daftarAkun:id,kode_akun,nama_akun,is_aktif'])
             ->orderBy('nama_bank')
             ->orderBy('nama_rekening');
 
@@ -98,12 +98,52 @@ class BankAccountController extends Controller
      */
     public function show(BankAccount $bankAccount)
     {
-        $bankAccount->load(['daftarAkun', 'bankTransactions' => function($query) {
-            $query->orderBy('tanggal_transaksi', 'desc')->limit(20);
-        }]);
+        $bankAccount->load([
+            'daftarAkun' => function($query) {
+                $query->select('id', 'kode_akun', 'nama_akun', 'jenis_akun', 'sub_jenis', 'saldo_normal', 'is_aktif', 'induk_akun_id');
+            },
+            'bankTransactions' => function($query) {
+                $query->with(['daftarAkunLawan:id,kode_akun,nama_akun', 'user:id,name'])
+                    ->orderBy('tanggal_transaksi', 'desc')
+                    ->limit(20);
+            },
+            'giroTransactions' => function($query) {
+                $query->with(['daftarAkunGiro:id,kode_akun,nama_akun', 'user:id,name'])
+                    ->orderBy('tanggal_terima', 'desc')
+                    ->limit(10);
+            }
+        ]);
+
+        // Calculate saldo from detail_jurnal if daftar_akun exists
+        $saldoCoa = null;
+        if ($bankAccount->daftarAkun) {
+            $saldoCoa = $bankAccount->daftarAkun->getBalance();
+        }
+
+        // Calculate detailed statistics
+        $stats = [
+            'total_transaksi_bank' => $bankAccount->bankTransactions()->count(),
+            'total_transaksi_giro' => $bankAccount->giroTransactions()->count(),
+            'total_setoran' => $bankAccount->bankTransactions()
+                ->whereIn('jenis_transaksi', ['setoran', 'transfer_masuk', 'kliring_masuk', 'bunga_bank'])
+                ->where('status', 'posted')
+                ->sum('jumlah'),
+            'total_penarikan' => $bankAccount->bankTransactions()
+                ->whereIn('jenis_transaksi', ['penarikan', 'transfer_keluar', 'kliring_keluar', 'biaya_admin', 'pajak_bunga'])
+                ->where('status', 'posted')
+                ->sum('jumlah'),
+            'total_giro_pending' => $bankAccount->giroTransactions()
+                ->whereIn('status', ['diterima', 'posted'])
+                ->sum('jumlah'),
+            'total_giro_cair' => $bankAccount->giroTransactions()
+                ->where('status', 'cair')
+                ->sum('jumlah'),
+        ];
 
         return Inertia::render('kas/bank-accounts/show', [
             'bank_account' => $bankAccount,
+            'saldo_coa' => $saldoCoa,
+            'stats' => $stats,
         ]);
     }
 

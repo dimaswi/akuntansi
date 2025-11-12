@@ -271,8 +271,8 @@ export default function BankTransactionIndex() {
     };
 
     const handlePost = (transaction: BankTransaction) => {
-        // Redirect to batch posting page with single transaction
-        router.visit(`/kas/bank-transactions/post-to-journal?ids[]=${transaction.id}`);
+        // Redirect to single transaction posting page
+        router.visit(route('kas.bank-transactions.show-post-to-journal', { id: transaction.id }));
     };
 
     const [selectedTransactions, setSelectedTransactions] = useState<number[]>([]);
@@ -283,8 +283,8 @@ export default function BankTransactionIndex() {
             return;
         }
 
-        const queryParams = selectedTransactions.map((id) => `ids[]=${id}`).join('&');
-        router.visit(`/kas/bank-transactions/post-to-journal?${queryParams}`);
+        // For batch posting, redirect to first transaction (or could implement batch in future)
+        router.visit(route('kas.bank-transactions.show-post-to-journal', { id: selectedTransactions[0] }));
     };
 
     const handleSelectTransaction = (transactionId: number, checked: boolean) => {
