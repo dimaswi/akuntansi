@@ -96,7 +96,7 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'closing-period.view-dashboard', 'display_name' => 'Lihat Dashboard Kelengkapan', 'description' => 'Dapat melihat dashboard kelengkapan data periode', 'module' => 'Tutup Buku'],
             
             // ========== INVENTORY MODULE ==========
-            ['name' => 'inventory.view', 'display_name' => 'Lihat Inventory Dashboard', 'description' => 'Dapat mengakses dashboard inventory', 'module' => 'Inventory - Dashboard'],
+            ['name' => 'inventory.dashboard.view', 'display_name' => 'Lihat Inventory Dashboard', 'description' => 'Dapat mengakses dashboard inventory', 'module' => 'Inventory - Dashboard'],
             
             // Inventory - Items
             ['name' => 'inventory.items.view', 'display_name' => 'Lihat Items', 'description' => 'Dapat melihat daftar items', 'module' => 'Items (Barang)'],

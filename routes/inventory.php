@@ -20,7 +20,7 @@ Route::middleware(['auth'])->group(function () {
     // =============================================
     // INVENTORY DASHBOARD
     // =============================================
-    Route::get('/inventory/dashboard', [InventoryDashboardController::class, 'index'])->name('inventory.dashboard')->middleware('permission:inventory.view');
+    Route::get('/inventory/dashboard', [InventoryDashboardController::class, 'index'])->name('inventory.dashboard')->middleware('permission:inventory.dashboard.view');
     
     // =============================================
     // INVENTORY ITEMS ROUTES

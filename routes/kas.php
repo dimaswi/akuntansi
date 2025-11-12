@@ -14,7 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Kas Dashboard
     Route::get('kas', [KasDashboardController::class, 'index'])
         ->name('kas.index')
-        ->middleware('permission:kas.cash-management.view');
+        ->middleware('permission:kas.view');
     
     // Bank Accounts
     Route::get('kas/bank-accounts', [BankAccountController::class, 'index'])
