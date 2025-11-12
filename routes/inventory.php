@@ -51,6 +51,11 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{department}', [DepartmentController::class, 'update'])->name('update')->middleware('permission:inventory.departments.edit');
         Route::delete('/{department}', [DepartmentController::class, 'destroy'])->name('destroy')->middleware('permission:inventory.departments.delete');
         
+        // User Management Routes
+        Route::get('/{department}/users', [DepartmentController::class, 'users'])->name('users')->middleware('permission:inventory.departments.edit');
+        Route::post('/{department}/assign-users', [DepartmentController::class, 'assignUsers'])->name('assign-users')->middleware('permission:inventory.departments.edit');
+        Route::post('/{department}/remove-user', [DepartmentController::class, 'removeUser'])->name('remove-user')->middleware('permission:inventory.departments.edit');
+        
         // API Routes
         Route::get('/api/search', [DepartmentController::class, 'api'])->name('api')->middleware('permission:inventory.departments.view');
     });

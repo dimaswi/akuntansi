@@ -55,9 +55,23 @@ RUN apt-get update; \
     pecl install imagick; \
     docker-php-ext-enable imagick;
 
+# Install cron
+RUN apt-get update && apt-get install -y cron
+
 # Copy project ke dalam container
 COPY . /var/www/html
 
+# Copy cron file
+COPY docker/cron/laravel-scheduler /etc/cron.d/laravel-scheduler
+
+# Give execution rights on the cron job
+RUN chmod 0644 /etc/cron.d/laravel-scheduler
+
+# Apply cron job
+RUN crontab /etc/cron.d/laravel-scheduler
+
+# Create the log file to be able to run tail
+RUN touch /var/log/cron.log
 
 # Copy directory project permission ke container
 # COPY --chown=www-data:www-data . /var/www/html
@@ -72,8 +86,13 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # RUN chmod -R 775 storage
 # RUN chmod -R ugo+rw storage
 
-USER $user
+# Copy entrypoint script
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Don't switch user yet - entrypoint needs root for cron
+# USER $user
 
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
-CMD ["php-fpm"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

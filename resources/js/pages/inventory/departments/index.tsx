@@ -22,7 +22,7 @@ import {
 import AppLayout from "@/layouts/app-layout";
 import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, usePage } from "@inertiajs/react";
-import { Edit3, PlusCircle, Search, Trash, X, Loader2, Building2, Filter, Package } from "lucide-react";
+import { Edit3, PlusCircle, Search, Trash, X, Loader2, Building2, Filter, Package, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { route } from "ziggy-js";
@@ -59,6 +59,7 @@ interface Props extends SharedData {
         is_active?: string;
         perPage: number;
     };
+    isLogistics: boolean;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -70,7 +71,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function DepartmentIndex() {
-    const { departments, filters } = usePage<Props>().props;
+    const { departments, filters, isLogistics } = usePage<Props>().props;
     const [search, setSearch] = useState(filters.search);
     const [isFilterExpanded, setIsFilterExpanded] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState<{
@@ -296,7 +297,7 @@ export default function DepartmentIndex() {
                                     <TableHead>Level</TableHead>
                                     <TableHead>Parent</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="w-[100px] text-center">Aksi</TableHead>
+                                    <TableHead className="w-[120px] text-center">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -310,8 +311,18 @@ export default function DepartmentIndex() {
                                     departments.data.map((department, index) => (
                                         <TableRow key={department.id}>
                                             <TableCell>{(departments.current_page - 1) * departments.per_page + index + 1}</TableCell>
-                                            <TableCell className="font-medium font-mono">{department.code}</TableCell>
-                                            <TableCell>{department.name}</TableCell>
+                                            <TableCell 
+                                                className="font-medium font-mono cursor-pointer hover:text-blue-600"
+                                                onClick={() => router.visit(route('departments.show', department.id))}
+                                            >
+                                                {department.code}
+                                            </TableCell>
+                                            <TableCell 
+                                                className="cursor-pointer hover:text-blue-600"
+                                                onClick={() => router.visit(route('departments.show', department.id))}
+                                            >
+                                                {department.name}
+                                            </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline">Level {department.level}</Badge>
                                             </TableCell>
@@ -325,6 +336,17 @@ export default function DepartmentIndex() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center justify-center gap-1">
+                                                    {isLogistics && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => router.visit(route('departments.users', department.id))}
+                                                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                                                            title="Kelola Users"
+                                                        >
+                                                            <Users className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"

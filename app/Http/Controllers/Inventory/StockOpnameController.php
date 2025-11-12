@@ -31,6 +31,12 @@ class StockOpnameController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = $request->user();
+
+         // Check if user has department assigned (for non-logistics users)
+        if (!$user->hasRole(['logistik', 'super_admin']) && !$user->department_id) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
+        }
         
         $query = StockOpname::with(['department', 'creator', 'approver']);
         
