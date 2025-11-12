@@ -78,8 +78,6 @@ class LaporanKeuanganController extends Controller
         $periodeDari = $request->periode_dari ? Carbon::parse($request->periode_dari) : Carbon::now()->startOfMonth();
         $periodeSampai = $request->periode_sampai ? Carbon::parse($request->periode_sampai) : Carbon::now()->endOfMonth();
 
-        dd($periodeDari, $periodeSampai);
-
         // Ambil semua akun aset, kewajiban, dan modal
         $akunAset = DaftarAkun::where('jenis_akun', 'aset')->aktif()->orderBy('kode_akun')->get();
         $akunKewajiban = DaftarAkun::where('jenis_akun', 'kewajiban')->aktif()->orderBy('kode_akun')->get();
