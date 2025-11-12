@@ -96,73 +96,95 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'closing-period.view-dashboard', 'display_name' => 'Lihat Dashboard Kelengkapan', 'description' => 'Dapat melihat dashboard kelengkapan data periode', 'module' => 'Tutup Buku'],
             
             // ========== INVENTORY MODULE ==========
-            ['name' => 'inventory.view', 'display_name' => 'Lihat Inventory', 'description' => 'Dapat mengakses modul inventory', 'module' => 'Inventory'],
+            ['name' => 'inventory.view', 'display_name' => 'Lihat Inventory Dashboard', 'description' => 'Dapat mengakses dashboard inventory', 'module' => 'Inventory'],
             
             // Inventory - Items
-            ['name' => 'inventory.items.view', 'display_name' => 'Lihat Items', 'description' => 'Dapat melihat daftar items', 'module' => 'Inventory'],
-            ['name' => 'inventory.items.create', 'display_name' => 'Tambah Items', 'description' => 'Dapat menambah item baru', 'module' => 'Inventory'],
-            ['name' => 'inventory.items.edit', 'display_name' => 'Edit Items', 'description' => 'Dapat mengedit items', 'module' => 'Inventory'],
-            ['name' => 'inventory.items.delete', 'display_name' => 'Hapus Items', 'description' => 'Dapat menghapus items', 'module' => 'Inventory'],
-            ['name' => 'inventory.items.upload-image', 'display_name' => 'Upload Gambar Item', 'description' => 'Dapat mengupload gambar item', 'module' => 'Inventory'],
+            ['name' => 'inventory.items.view', 'display_name' => 'Lihat Items', 'description' => 'Dapat melihat daftar items', 'module' => 'Inventory - Items'],
+            ['name' => 'inventory.items.create', 'display_name' => 'Tambah Items', 'description' => 'Dapat menambah item baru', 'module' => 'Inventory - Items'],
+            ['name' => 'inventory.items.edit', 'display_name' => 'Edit Items', 'description' => 'Dapat mengedit items', 'module' => 'Inventory - Items'],
+            ['name' => 'inventory.items.delete', 'display_name' => 'Hapus Items', 'description' => 'Dapat menghapus items', 'module' => 'Inventory - Items'],
+            ['name' => 'inventory.items.upload-image', 'display_name' => 'Upload Gambar Item', 'description' => 'Dapat mengupload gambar item', 'module' => 'Inventory - Items'],
             
             // Inventory - Categories
-            ['name' => 'inventory.categories.view', 'display_name' => 'Lihat Categories', 'description' => 'Dapat melihat daftar categories', 'module' => 'Inventory'],
-            ['name' => 'inventory.categories.create', 'display_name' => 'Tambah Categories', 'description' => 'Dapat menambah category baru', 'module' => 'Inventory'],
-            ['name' => 'inventory.categories.edit', 'display_name' => 'Edit Categories', 'description' => 'Dapat mengedit categories', 'module' => 'Inventory'],
-            ['name' => 'inventory.categories.delete', 'display_name' => 'Hapus Categories', 'description' => 'Dapat menghapus categories', 'module' => 'Inventory'],
+            ['name' => 'inventory.categories.view', 'display_name' => 'Lihat Categories', 'description' => 'Dapat melihat daftar categories', 'module' => 'Inventory - Categories'],
+            ['name' => 'inventory.categories.create', 'display_name' => 'Tambah Categories', 'description' => 'Dapat menambah category baru', 'module' => 'Inventory - Categories'],
+            ['name' => 'inventory.categories.edit', 'display_name' => 'Edit Categories', 'description' => 'Dapat mengedit categories', 'module' => 'Inventory - Categories'],
+            ['name' => 'inventory.categories.delete', 'display_name' => 'Hapus Categories', 'description' => 'Dapat menghapus categories', 'module' => 'Inventory - Categories'],
             
             // Inventory - Departments
-            ['name' => 'inventory.departments.view', 'display_name' => 'Lihat Departments', 'description' => 'Dapat melihat daftar departments', 'module' => 'Inventory'],
-            ['name' => 'inventory.departments.create', 'display_name' => 'Tambah Departments', 'description' => 'Dapat menambah department baru', 'module' => 'Inventory'],
-            ['name' => 'inventory.departments.edit', 'display_name' => 'Edit Departments', 'description' => 'Dapat mengedit departments', 'module' => 'Inventory'],
-            ['name' => 'inventory.departments.delete', 'display_name' => 'Hapus Departments', 'description' => 'Dapat menghapus departments', 'module' => 'Inventory'],
+            ['name' => 'inventory.departments.view', 'display_name' => 'Lihat Departments', 'description' => 'Dapat melihat daftar departments', 'module' => 'Inventory - Departments'],
+            ['name' => 'inventory.departments.create', 'display_name' => 'Tambah Departments', 'description' => 'Dapat menambah department baru', 'module' => 'Inventory - Departments'],
+            ['name' => 'inventory.departments.edit', 'display_name' => 'Edit Departments', 'description' => 'Dapat mengedit departments', 'module' => 'Inventory - Departments'],
+            ['name' => 'inventory.departments.delete', 'display_name' => 'Hapus Departments', 'description' => 'Dapat menghapus departments', 'module' => 'Inventory - Departments'],
             
             // Inventory - Suppliers
-            ['name' => 'inventory.suppliers.view', 'display_name' => 'Lihat Suppliers', 'description' => 'Dapat melihat daftar suppliers', 'module' => 'Inventory'],
-            ['name' => 'inventory.suppliers.create', 'display_name' => 'Tambah Suppliers', 'description' => 'Dapat menambah supplier baru', 'module' => 'Inventory'],
-            ['name' => 'inventory.suppliers.edit', 'display_name' => 'Edit Suppliers', 'description' => 'Dapat mengedit suppliers', 'module' => 'Inventory'],
-            ['name' => 'inventory.suppliers.delete', 'display_name' => 'Hapus Suppliers', 'description' => 'Dapat menghapus suppliers', 'module' => 'Inventory'],
-            ['name' => 'inventory.suppliers.toggle-status', 'display_name' => 'Toggle Status Suppliers', 'description' => 'Dapat mengubah status suppliers', 'module' => 'Inventory'],
+            ['name' => 'inventory.suppliers.view', 'display_name' => 'Lihat Suppliers', 'description' => 'Dapat melihat daftar suppliers', 'module' => 'Inventory - Suppliers'],
+            ['name' => 'inventory.suppliers.create', 'display_name' => 'Tambah Suppliers', 'description' => 'Dapat menambah supplier baru', 'module' => 'Inventory - Suppliers'],
+            ['name' => 'inventory.suppliers.edit', 'display_name' => 'Edit Suppliers', 'description' => 'Dapat mengedit suppliers', 'module' => 'Inventory - Suppliers'],
+            ['name' => 'inventory.suppliers.delete', 'display_name' => 'Hapus Suppliers', 'description' => 'Dapat menghapus suppliers', 'module' => 'Inventory - Suppliers'],
+            ['name' => 'inventory.suppliers.toggle-status', 'display_name' => 'Toggle Status Suppliers', 'description' => 'Dapat mengubah status suppliers', 'module' => 'Inventory - Suppliers'],
             
             // Inventory - Purchases
-            ['name' => 'inventory.purchases.view', 'display_name' => 'Lihat Purchases', 'description' => 'Dapat melihat daftar purchases', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.create', 'display_name' => 'Tambah Purchases', 'description' => 'Dapat menambah purchase baru', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.edit', 'display_name' => 'Edit Purchases', 'description' => 'Dapat mengedit purchases', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.delete', 'display_name' => 'Hapus Purchases', 'description' => 'Dapat menghapus purchases', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.submit', 'display_name' => 'Submit Purchase', 'description' => 'Dapat submit purchase untuk approval', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.approve', 'display_name' => 'Approve Purchase', 'description' => 'Dapat approve purchase order', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.cancel', 'display_name' => 'Cancel Purchase', 'description' => 'Dapat cancel purchase order', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.receive', 'display_name' => 'Receive Purchase', 'description' => 'Dapat receive barang purchase', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.post-to-journal', 'display_name' => 'Post Purchase to Journal', 'description' => 'Dapat posting purchase ke jurnal', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.create-payment', 'display_name' => 'Create Purchase Payment', 'description' => 'Dapat membuat pembayaran purchase', 'module' => 'Inventory'],
-            ['name' => 'inventory.purchases.view-ap', 'display_name' => 'View Accounts Payable', 'description' => 'Dapat melihat outstanding accounts payable', 'module' => 'Inventory'],
+            ['name' => 'inventory.purchases.view', 'display_name' => 'Lihat Purchases', 'description' => 'Dapat melihat daftar purchases', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.create', 'display_name' => 'Tambah Purchases', 'description' => 'Dapat menambah purchase baru', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.edit', 'display_name' => 'Edit Purchases', 'description' => 'Dapat mengedit purchases', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.delete', 'display_name' => 'Hapus Purchases', 'description' => 'Dapat menghapus purchases', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.submit', 'display_name' => 'Submit Purchase', 'description' => 'Dapat submit purchase untuk approval', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.approve', 'display_name' => 'Approve Purchase', 'description' => 'Dapat approve purchase order', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.cancel', 'display_name' => 'Cancel Purchase', 'description' => 'Dapat cancel purchase order', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.receive', 'display_name' => 'Receive Purchase', 'description' => 'Dapat receive barang purchase', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.post-to-journal', 'display_name' => 'Post Purchase to Journal', 'description' => 'Dapat posting purchase ke jurnal', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.create-payment', 'display_name' => 'Create Purchase Payment', 'description' => 'Dapat membuat pembayaran purchase', 'module' => 'Inventory - Purchases'],
+            ['name' => 'inventory.purchases.view-ap', 'display_name' => 'View Accounts Payable', 'description' => 'Dapat melihat outstanding accounts payable', 'module' => 'Inventory - Purchases'],
+            
+            // Inventory - Stock Adjustments
+            ['name' => 'inventory.stock-adjustments.view', 'display_name' => 'Lihat Stock Adjustment', 'description' => 'Dapat melihat daftar stock adjustment', 'module' => 'Inventory - Stock Adjustments'],
+            ['name' => 'inventory.stock-adjustments.create', 'display_name' => 'Tambah Stock Adjustment', 'description' => 'Dapat menambah stock adjustment', 'module' => 'Inventory - Stock Adjustments'],
+            ['name' => 'inventory.stock-adjustments.edit', 'display_name' => 'Edit Stock Adjustment', 'description' => 'Dapat mengedit stock adjustment', 'module' => 'Inventory - Stock Adjustments'],
+            ['name' => 'inventory.stock-adjustments.delete', 'display_name' => 'Hapus Stock Adjustment', 'description' => 'Dapat menghapus stock adjustment', 'module' => 'Inventory - Stock Adjustments'],
+            ['name' => 'inventory.stock-adjustments.approve', 'display_name' => 'Approve Stock Adjustment', 'description' => 'Dapat approve stock adjustment', 'module' => 'Inventory - Stock Adjustments'],
+            ['name' => 'inventory.stock-adjustments.post-to-journal', 'display_name' => 'Post Stock Adjustment to Journal', 'description' => 'Dapat posting stock adjustment ke jurnal', 'module' => 'Inventory - Stock Adjustments'],
+            
+            // Inventory - Stock Transfers
+            ['name' => 'inventory.stock-transfers.view', 'display_name' => 'Lihat Stock Transfer', 'description' => 'Dapat melihat daftar stock transfer', 'module' => 'Inventory - Stock Transfers'],
+            ['name' => 'inventory.stock-transfers.create', 'display_name' => 'Tambah Stock Transfer', 'description' => 'Dapat membuat stock transfer', 'module' => 'Inventory - Stock Transfers'],
+            ['name' => 'inventory.stock-transfers.edit', 'display_name' => 'Edit Stock Transfer', 'description' => 'Dapat mengedit stock transfer', 'module' => 'Inventory - Stock Transfers'],
+            ['name' => 'inventory.stock-transfers.delete', 'display_name' => 'Hapus Stock Transfer', 'description' => 'Dapat menghapus stock transfer', 'module' => 'Inventory - Stock Transfers'],
+            ['name' => 'inventory.stock-transfers.approve', 'display_name' => 'Approve Stock Transfer', 'description' => 'Dapat approve stock transfer', 'module' => 'Inventory - Stock Transfers'],
+            ['name' => 'inventory.stock-transfers.receive', 'display_name' => 'Receive Stock Transfer', 'description' => 'Dapat receive stock transfer', 'module' => 'Inventory - Stock Transfers'],
             
             // Inventory - Stock Requests (Central Warehouse System)
-            ['name' => 'inventory.stock-requests.view', 'display_name' => 'Lihat Permintaan Stok', 'description' => 'Dapat melihat daftar permintaan stok', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-requests.create', 'display_name' => 'Tambah Permintaan Stok', 'description' => 'Dapat membuat permintaan stok baru', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-requests.edit', 'display_name' => 'Edit Permintaan Stok', 'description' => 'Dapat mengedit permintaan stok', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-requests.delete', 'display_name' => 'Hapus Permintaan Stok', 'description' => 'Dapat menghapus permintaan stok', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-requests.submit', 'display_name' => 'Submit Permintaan Stok', 'description' => 'Dapat submit permintaan stok untuk approval', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-requests.approve', 'display_name' => 'Approve Permintaan Stok', 'description' => 'Dapat approve/reject permintaan stok', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-requests.complete', 'display_name' => 'Complete Permintaan Stok', 'description' => 'Dapat menyelesaikan permintaan stok (issue items)', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-requests.cancel', 'display_name' => 'Cancel Permintaan Stok', 'description' => 'Dapat membatalkan permintaan stok', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-requests.view', 'display_name' => 'Lihat Permintaan Stok', 'description' => 'Dapat melihat daftar permintaan stok', 'module' => 'Inventory - Stock Requests'],
+            ['name' => 'inventory.stock-requests.create', 'display_name' => 'Tambah Permintaan Stok', 'description' => 'Dapat membuat permintaan stok baru', 'module' => 'Inventory - Stock Requests'],
+            ['name' => 'inventory.stock-requests.edit', 'display_name' => 'Edit Permintaan Stok', 'description' => 'Dapat mengedit permintaan stok', 'module' => 'Inventory - Stock Requests'],
+            ['name' => 'inventory.stock-requests.delete', 'display_name' => 'Hapus Permintaan Stok', 'description' => 'Dapat menghapus permintaan stok', 'module' => 'Inventory - Stock Requests'],
+            ['name' => 'inventory.stock-requests.submit', 'display_name' => 'Submit Permintaan Stok', 'description' => 'Dapat submit permintaan stok untuk approval', 'module' => 'Inventory - Stock Requests'],
+            ['name' => 'inventory.stock-requests.approve', 'display_name' => 'Approve Permintaan Stok', 'description' => 'Dapat approve/reject permintaan stok', 'module' => 'Inventory - Stock Requests'],
+            ['name' => 'inventory.stock-requests.complete', 'display_name' => 'Complete Permintaan Stok', 'description' => 'Dapat menyelesaikan permintaan stok (issue items)', 'module' => 'Inventory - Stock Requests'],
+            ['name' => 'inventory.stock-requests.cancel', 'display_name' => 'Cancel Permintaan Stok', 'description' => 'Dapat membatalkan permintaan stok', 'module' => 'Inventory - Stock Requests'],
             
             // Inventory - Stock Opname (Physical Stock Count)
-            ['name' => 'inventory.stock-opnames.view', 'display_name' => 'Lihat Stock Opname', 'description' => 'Dapat melihat daftar stock opname', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-opnames.create', 'display_name' => 'Tambah Stock Opname', 'description' => 'Dapat membuat stock opname baru', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-opnames.edit', 'display_name' => 'Edit Stock Opname', 'description' => 'Dapat mengedit stock opname', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-opnames.delete', 'display_name' => 'Hapus Stock Opname', 'description' => 'Dapat menghapus stock opname', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-opnames.submit', 'display_name' => 'Submit Stock Opname', 'description' => 'Dapat submit stock opname untuk approval', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-opnames.approve', 'display_name' => 'Approve Stock Opname', 'description' => 'Dapat approve/reject stock opname', 'module' => 'Inventory'],
-            ['name' => 'inventory.stock-opnames.update-counts', 'display_name' => 'Update Physical Counts', 'description' => 'Dapat update hasil perhitungan fisik', 'module' => 'Inventory'],
+            ['name' => 'inventory.stock-opnames.view', 'display_name' => 'Lihat Stock Opname', 'description' => 'Dapat melihat daftar stock opname', 'module' => 'Inventory - Stock Opnames'],
+            ['name' => 'inventory.stock-opnames.create', 'display_name' => 'Tambah Stock Opname', 'description' => 'Dapat membuat stock opname baru', 'module' => 'Inventory - Stock Opnames'],
+            ['name' => 'inventory.stock-opnames.edit', 'display_name' => 'Edit Stock Opname', 'description' => 'Dapat mengedit stock opname', 'module' => 'Inventory - Stock Opnames'],
+            ['name' => 'inventory.stock-opnames.delete', 'display_name' => 'Hapus Stock Opname', 'description' => 'Dapat menghapus stock opname', 'module' => 'Inventory - Stock Opnames'],
+            ['name' => 'inventory.stock-opnames.submit', 'display_name' => 'Submit Stock Opname', 'description' => 'Dapat submit stock opname untuk approval', 'module' => 'Inventory - Stock Opnames'],
+            ['name' => 'inventory.stock-opnames.approve', 'display_name' => 'Approve Stock Opname', 'description' => 'Dapat approve/reject stock opname', 'module' => 'Inventory - Stock Opnames'],
+            ['name' => 'inventory.stock-opnames.update-counts', 'display_name' => 'Update Physical Counts', 'description' => 'Dapat update hasil perhitungan fisik', 'module' => 'Inventory - Stock Opnames'],
+            
+            // Inventory - Central Warehouse
+            ['name' => 'inventory.central-warehouse.view', 'display_name' => 'Lihat Gudang Pusat', 'description' => 'Dapat melihat stok gudang pusat', 'module' => 'Inventory - Central Warehouse'],
+            
+            // Inventory - Department Stocks
+            ['name' => 'inventory.department-stocks.view', 'display_name' => 'Lihat Stok Department', 'description' => 'Dapat melihat stok per department', 'module' => 'Inventory - Department Stocks'],
             
             // Inventory - Requisitions (OLD - Keep for backward compatibility)
-            ['name' => 'inventory.requisitions.view', 'display_name' => 'Lihat Requisitions', 'description' => 'Dapat melihat daftar requisitions', 'module' => 'Inventory'],
-            ['name' => 'inventory.requisitions.create', 'display_name' => 'Tambah Requisitions', 'description' => 'Dapat menambah requisition baru', 'module' => 'Inventory'],
-            ['name' => 'inventory.requisitions.edit', 'display_name' => 'Edit Requisitions', 'description' => 'Dapat mengedit requisitions', 'module' => 'Inventory'],
-            ['name' => 'inventory.requisitions.delete', 'display_name' => 'Hapus Requisitions', 'description' => 'Dapat menghapus requisitions', 'module' => 'Inventory'],
-            ['name' => 'inventory.requisitions.approve', 'display_name' => 'Approve Requisition', 'description' => 'Dapat approve requisition', 'module' => 'Inventory'],
-            ['name' => 'inventory.requisitions.cancel', 'display_name' => 'Cancel Requisition', 'description' => 'Dapat cancel requisition', 'module' => 'Inventory'],
+            ['name' => 'inventory.requisitions.view', 'display_name' => 'Lihat Requisitions', 'description' => 'Dapat melihat daftar requisitions', 'module' => 'Inventory - Requisitions (Deprecated)'],
+            ['name' => 'inventory.requisitions.create', 'display_name' => 'Tambah Requisitions', 'description' => 'Dapat menambah requisition baru', 'module' => 'Inventory - Requisitions (Deprecated)'],
+            ['name' => 'inventory.requisitions.edit', 'display_name' => 'Edit Requisitions', 'description' => 'Dapat mengedit requisitions', 'module' => 'Inventory - Requisitions (Deprecated)'],
+            ['name' => 'inventory.requisitions.delete', 'display_name' => 'Hapus Requisitions', 'description' => 'Dapat menghapus requisitions', 'module' => 'Inventory - Requisitions (Deprecated)'],
+            ['name' => 'inventory.requisitions.approve', 'display_name' => 'Approve Requisition', 'description' => 'Dapat approve requisition', 'module' => 'Inventory - Requisitions (Deprecated)'],
+            ['name' => 'inventory.requisitions.cancel', 'display_name' => 'Cancel Requisition', 'description' => 'Dapat cancel requisition', 'module' => 'Inventory - Requisitions (Deprecated)'],
             
             // ========== KAS MODULE ==========
             ['name' => 'kas.view', 'display_name' => 'Lihat Kas', 'description' => 'Dapat mengakses modul kas', 'module' => 'Kas'],
