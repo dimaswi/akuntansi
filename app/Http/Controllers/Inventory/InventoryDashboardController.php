@@ -342,6 +342,11 @@ class InventoryDashboardController extends Controller
             });
         } else {
             // Show current department only
+            // Check if user has department assigned
+            if (!$user->department_id) {
+                return collect([]);
+            }
+            
             $hasOpname = StockOpname::hasMonthlyOpname($user->department_id);
             $latestOpname = StockOpname::where('department_id', $user->department_id)
                 ->where('status', 'approved')
