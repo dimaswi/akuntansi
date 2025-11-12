@@ -131,6 +131,9 @@ export default function Neraca({
         console.log('Export neraca');
     };
 
+    console.log("Get Data Periode Dari" : periodeDari);
+    console.log("Get Data Periode Sampai" : periodeSampai);
+
     return (
         <AppLayout>
             <Head title={`Neraca - ${formatDate(periode_sampai)}`} />
