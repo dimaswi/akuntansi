@@ -47,6 +47,7 @@ interface Props {
     periode_dari: string;
     periode_sampai: string;
     include_penyesuaian: boolean;
+    mode: string;
     dataAset: AkunSaldo[];
     dataKewajiban: AkunSaldo[];
     dataEkuitas: AkunSaldo[];
@@ -61,6 +62,7 @@ export default function Neraca({
     periode_dari,
     periode_sampai,
     include_penyesuaian,
+    mode,
     dataAset,
     dataKewajiban,
     dataEkuitas,
@@ -73,6 +75,7 @@ export default function Neraca({
     const [periodeDari, setPeriodeDari] = useState(periode_dari);
     const [periodeSampai, setPeriodeSampai] = useState(periode_sampai);
     const [includePenyesuaian, setIncludePenyesuaian] = useState(include_penyesuaian);
+    const [modeNeraca, setModeNeraca] = useState(mode || 'akumulasi');
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
     // Auto-reload ketika toggle jurnal penyesuaian berubah
@@ -81,13 +84,29 @@ export default function Neraca({
             router.get(route('akuntansi.laporan.neraca'), { 
                 periode_dari: periodeDari,
                 periode_sampai: periodeSampai,
-                include_penyesuaian: includePenyesuaian ? 1 : 0
+                include_penyesuaian: includePenyesuaian ? 1 : 0,
+                mode: modeNeraca
             }, {
                 preserveState: true,
                 preserveScroll: true,
             });
         }
     }, [includePenyesuaian]);
+
+    // Auto-reload ketika mode berubah
+    useEffect(() => {
+        if (modeNeraca !== mode) {
+            router.get(route('akuntansi.laporan.neraca'), { 
+                periode_dari: periodeDari,
+                periode_sampai: periodeSampai,
+                include_penyesuaian: includePenyesuaian ? 1 : 0,
+                mode: modeNeraca
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }
+    }, [modeNeraca]);
 
     const toggleRow = (akunId: number) => {
         const newExpanded = new Set(expandedRows);
@@ -119,7 +138,8 @@ export default function Neraca({
         router.get(route('akuntansi.laporan.neraca'), { 
             periode_dari: periodeDari,
             periode_sampai: periodeSampai,
-            include_penyesuaian: includePenyesuaian ? 1 : 0
+            include_penyesuaian: includePenyesuaian ? 1 : 0,
+            mode: modeNeraca
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -151,9 +171,19 @@ export default function Neraca({
                                     </Link>
                                 </Button>
                                 <div>
-                                    <h1 className="text-3xl font-bold mb-2">Neraca</h1>
+                                    <h1 className="text-3xl font-bold mb-2">
+                                        Neraca
+                                        {modeNeraca === 'periode' && (
+                                            <Badge variant="outline" className="ml-2 text-xs">
+                                                Mode Periode
+                                            </Badge>
+                                        )}
+                                    </h1>
                                     <p className="text-lg text-gray-600 dark:text-gray-400">
-                                        Per {formatDate(periode_sampai)}
+                                        {modeNeraca === 'akumulasi' 
+                                            ? `Per ${formatDate(periode_sampai)}` 
+                                            : `Periode ${formatDate(periode_dari)} - ${formatDate(periode_sampai)}`
+                                        }
                                     </p>
                                 </div>
                             </div>
@@ -173,7 +203,10 @@ export default function Neraca({
                                     Pilih Periode Neraca
                                 </h3>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                    Neraca akan menampilkan posisi keuangan per tanggal sampai, dan laba/rugi berjalan untuk periode yang dipilih
+                                    {modeNeraca === 'akumulasi' 
+                                        ? 'Mode Akumulasi: Menampilkan posisi keuangan akumulasi dari awal sampai tanggal yang dipilih (Standar Akuntansi)'
+                                        : 'Mode Periode: Menampilkan pergerakan keuangan hanya dalam periode yang dipilih (Untuk Analisis)'
+                                    }
                                 </p>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -202,6 +235,56 @@ export default function Neraca({
                                 </div>
                             </div>
                             
+                            {/* Toggle Mode Neraca */}
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <div className="mb-3">
+                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        Mode Perhitungan
+                                    </span>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Pilih metode perhitungan saldo akun
+                                    </p>
+                                </div>
+                                <div className="flex space-x-4">
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="mode"
+                                            value="akumulasi"
+                                            checked={modeNeraca === 'akumulasi'}
+                                            onChange={(e) => setModeNeraca(e.target.value)}
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                        />
+                                        <div>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Akumulasi
+                                            </span>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                Posisi per tanggal (Standar Akuntansi)
+                                            </p>
+                                        </div>
+                                    </label>
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="mode"
+                                            value="periode"
+                                            checked={modeNeraca === 'periode'}
+                                            onChange={(e) => setModeNeraca(e.target.value)}
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                        />
+                                        <div>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Periode
+                                            </span>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                Hanya dalam periode yang dipilih
+                                            </p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
                             {/* Toggle Jurnal Penyesuaian */}
                             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <label className="flex items-center space-x-3 cursor-pointer">

@@ -69,9 +69,11 @@ class LaporanKeuanganController extends Controller
             'periode_dari' => 'nullable|date',
             'periode_sampai' => 'nullable|date|after_or_equal:periode_dari',
             'include_penyesuaian' => 'nullable|boolean',
+            'mode' => 'nullable|in:akumulasi,periode',
         ]);
 
         $includePenyesuaian = $request->boolean('include_penyesuaian', false);
+        $mode = $request->get('mode', 'akumulasi'); // default: akumulasi (standar akuntansi)
         
         // Gunakan periode_dari dan periode_sampai untuk neraca
         // Default: awal bulan sampai akhir bulan ini
@@ -83,13 +85,20 @@ class LaporanKeuanganController extends Controller
         $akunKewajiban = DaftarAkun::where('jenis_akun', 'kewajiban')->aktif()->orderBy('kode_akun')->get();
         $akunEkuitas = DaftarAkun::where('jenis_akun', 'modal')->aktif()->orderBy('kode_akun')->get();
 
-        // Hitung saldo masing-masing akun sampai periode_sampai
-        $dataAset = $this->hitungSaldoAkun($akunAset, $periodeSampai, $includePenyesuaian);
-        $dataKewajiban = $this->hitungSaldoAkun($akunKewajiban, $periodeSampai, $includePenyesuaian);
-        $dataEkuitas = $this->hitungSaldoAkun($akunEkuitas, $periodeSampai, $includePenyesuaian);
-
-        // Hitung laba rugi berjalan berdasarkan periode yang dipilih
-        $labaRugiBerjalan = $this->hitungLabaRugiPeriode($periodeDari, $periodeSampai, $includePenyesuaian);
+        // Pilih metode perhitungan berdasarkan mode
+        if ($mode === 'periode') {
+            // Mode Periode: hanya transaksi dalam periode yang dipilih
+            $dataAset = $this->hitungSaldoAkunDenganPeriode($akunAset, $periodeDari, $periodeSampai, $includePenyesuaian);
+            $dataKewajiban = $this->hitungSaldoAkunDenganPeriode($akunKewajiban, $periodeDari, $periodeSampai, $includePenyesuaian);
+            $dataEkuitas = $this->hitungSaldoAkunDenganPeriode($akunEkuitas, $periodeDari, $periodeSampai, $includePenyesuaian);
+            $labaRugiBerjalan = $this->hitungLabaRugiPeriode($periodeDari, $periodeSampai, $includePenyesuaian);
+        } else {
+            // Mode Akumulasi: akumulasi sampai periode_sampai (standar akuntansi)
+            $dataAset = $this->hitungSaldoAkunNeraca($akunAset, $periodeDari, $periodeSampai, $includePenyesuaian);
+            $dataKewajiban = $this->hitungSaldoAkunNeraca($akunKewajiban, $periodeDari, $periodeSampai, $includePenyesuaian);
+            $dataEkuitas = $this->hitungSaldoAkunNeraca($akunEkuitas, $periodeDari, $periodeSampai, $includePenyesuaian);
+            $labaRugiBerjalan = $this->hitungLabaRugiBerjalan($periodeSampai, $includePenyesuaian);
+        }
 
         $totalAset = collect($dataAset)->sum('saldo');
         $totalKewajiban = collect($dataKewajiban)->sum('saldo');
@@ -99,6 +108,7 @@ class LaporanKeuanganController extends Controller
             'periode_dari' => $periodeDari->format('Y-m-d'),
             'periode_sampai' => $periodeSampai->format('Y-m-d'),
             'include_penyesuaian' => $includePenyesuaian,
+            'mode' => $mode,
             'dataAset' => $dataAset,
             'dataKewajiban' => $dataKewajiban,
             'dataEkuitas' => $dataEkuitas,
@@ -412,6 +422,137 @@ class LaporanKeuanganController extends Controller
         return $hasil;
     }
 
+    private function hitungSaldoAkunDenganPeriode($akunList, $periodeDari, $periodeSampai, $includePenyesuaian = false)
+    {
+        $hasil = [];
+        foreach ($akunList as $akun) {
+            $transaksi = DetailJurnal::with(['jurnal'])
+                ->where('daftar_akun_id', $akun->id)
+                ->whereHas('jurnal', function($query) use ($periodeDari, $periodeSampai, $includePenyesuaian) {
+                    $query->whereBetween('tanggal_transaksi', [$periodeDari, $periodeSampai])
+                          ->where('status', 'posted');
+                    
+                    // Exclude jurnal penyesuaian jika tidak diminta
+                    if (!$includePenyesuaian) {
+                        $query->where(function($q) {
+                            $q->where('jenis_jurnal', '!=', 'penyesuaian')
+                              ->orWhereNull('jenis_jurnal');
+                        });
+                    }
+                })
+                ->get();
+
+            $totalDebet = $transaksi->sum('jumlah_debit');
+            $totalKredit = $transaksi->sum('jumlah_kredit');
+
+            // Hitung saldo berdasarkan jenis akun
+            if (in_array($akun->jenis_akun, ['aset', 'beban'])) {
+                $saldo = $totalDebet - $totalKredit; // Normal debet
+            } else {
+                $saldo = $totalKredit - $totalDebet; // Normal kredit
+            }
+
+            if ($saldo != 0 || $transaksi->count() > 0) {
+                // Format detail transaksi untuk expandable row
+                $detailTransaksi = $transaksi->map(function($detail) use ($akun) {
+                    $isNormalDebit = in_array($akun->jenis_akun, ['aset', 'beban']);
+                    
+                    return [
+                        'id' => $detail->id,
+                        'tanggal' => $detail->jurnal->tanggal_transaksi->format('Y-m-d'),
+                        'nomor_jurnal' => $detail->jurnal->nomor_jurnal,
+                        'keterangan' => $detail->jurnal->keterangan,
+                        'debit' => $detail->jumlah_debit,
+                        'kredit' => $detail->jumlah_kredit,
+                        'saldo' => $isNormalDebit 
+                            ? $detail->jumlah_debit - $detail->jumlah_kredit
+                            : $detail->jumlah_kredit - $detail->jumlah_debit
+                    ];
+                });
+
+                $hasil[] = [
+                    'akun' => $akun,
+                    'saldo' => $saldo,
+                    'detail_transaksi' => $detailTransaksi
+                ];
+            }
+        }
+        return $hasil;
+    }
+
+    private function hitungSaldoAkunNeraca($akunList, $periodeDari, $periodeSampai, $includePenyesuaian = false)
+    {
+        $hasil = [];
+        foreach ($akunList as $akun) {
+            // Ambil semua transaksi sampai periode_sampai untuk hitung saldo
+            $transaksiSaldo = DetailJurnal::where('daftar_akun_id', $akun->id)
+                ->whereHas('jurnal', function($query) use ($periodeSampai, $includePenyesuaian) {
+                    $query->where('tanggal_transaksi', '<=', $periodeSampai)
+                          ->where('status', 'posted');
+                    
+                    if (!$includePenyesuaian) {
+                        $query->where(function($q) {
+                            $q->where('jenis_jurnal', '!=', 'penyesuaian')
+                              ->orWhereNull('jenis_jurnal');
+                        });
+                    }
+                })
+                ->get();
+
+            // Ambil transaksi dalam periode untuk detail (untuk expand row)
+            $transaksiDetail = DetailJurnal::with(['jurnal'])
+                ->where('daftar_akun_id', $akun->id)
+                ->whereHas('jurnal', function($query) use ($periodeDari, $periodeSampai, $includePenyesuaian) {
+                    $query->whereBetween('tanggal_transaksi', [$periodeDari, $periodeSampai])
+                          ->where('status', 'posted');
+                    
+                    if (!$includePenyesuaian) {
+                        $query->where(function($q) {
+                            $q->where('jenis_jurnal', '!=', 'penyesuaian')
+                              ->orWhereNull('jenis_jurnal');
+                        });
+                    }
+                })
+                ->get();
+
+            $totalDebet = $transaksiSaldo->sum('jumlah_debit');
+            $totalKredit = $transaksiSaldo->sum('jumlah_kredit');
+
+            // Hitung saldo berdasarkan jenis akun
+            if (in_array($akun->jenis_akun, ['aset', 'beban'])) {
+                $saldo = $totalDebet - $totalKredit; // Normal debet
+            } else {
+                $saldo = $totalKredit - $totalDebet; // Normal kredit
+            }
+
+            if ($saldo != 0 || $transaksiSaldo->count() > 0) {
+                // Format detail transaksi untuk expandable row (hanya transaksi dalam periode)
+                $detailTransaksi = $transaksiDetail->map(function($detail) use ($akun) {
+                    $isNormalDebit = in_array($akun->jenis_akun, ['aset', 'beban']);
+                    
+                    return [
+                        'id' => $detail->id,
+                        'tanggal' => $detail->jurnal->tanggal_transaksi->format('Y-m-d'),
+                        'nomor_jurnal' => $detail->jurnal->nomor_jurnal,
+                        'keterangan' => $detail->jurnal->keterangan,
+                        'debit' => $detail->jumlah_debit,
+                        'kredit' => $detail->jumlah_kredit,
+                        'saldo' => $isNormalDebit 
+                            ? $detail->jumlah_debit - $detail->jumlah_kredit
+                            : $detail->jumlah_kredit - $detail->jumlah_debit
+                    ];
+                });
+
+                $hasil[] = [
+                    'akun' => $akun,
+                    'saldo' => $saldo,
+                    'detail_transaksi' => $detailTransaksi
+                ];
+            }
+        }
+        return $hasil;
+    }
+
     private function hitungSaldoAkunPeriode($akunList, $periodeAwal, $periodeAkhir, $includePenyesuaian = false)
     {
         $hasil = [];
@@ -691,8 +832,8 @@ class LaporanKeuanganController extends Controller
             $totalEkuitas += $transaksi->sum('jumlah_kredit') - $transaksi->sum('jumlah_debit');
         }
 
-        // Hitung laba berjalan sampai tanggal (tanpa penyesuaian untuk analisis rasio)
-        $labaBerjalan = $this->hitungLabaRugiPeriode(Carbon::parse('1970-01-01'), $tanggal, false);
+        // Hitung laba berjalan sampai tanggal (akumulasi, tanpa penyesuaian untuk analisis rasio)
+        $labaBerjalan = $this->hitungLabaRugiBerjalan($tanggal, false);
         $totalEkuitas += $labaBerjalan;
 
         // Hitung modal kerja
