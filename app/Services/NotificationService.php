@@ -120,7 +120,6 @@ class NotificationService
     public function sendToDepartment(int $departmentId, string $type, array $data, ?int $excludeUserId = null): void
     {
         $users = \App\Models\User::where('department_id', $departmentId)
-            ->where('is_active', true)
             ->when($excludeUserId, function ($query, $excludeUserId) {
                 return $query->where('id', '!=', $excludeUserId);
             })

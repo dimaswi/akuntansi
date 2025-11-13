@@ -3,6 +3,7 @@
 namespace App\Models\Inventory;
 
 use App\Models\User;
+use App\Models\Inventory\Department as InventoryDepartment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -126,7 +127,7 @@ class StockOpname extends Model
      */
     public static function getDepartmentsWithoutPreviousMonthOpname(): \Illuminate\Support\Collection
     {
-        $allDepartments = Department::where('is_active', true)->get();
+        $allDepartments = InventoryDepartment::where('is_active', true)->get();
         
         return $allDepartments->filter(function ($department) {
             return !self::hasPreviousMonthOpname($department->id);
@@ -183,7 +184,7 @@ class StockOpname extends Model
     // Relationships
     public function department(): BelongsTo
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(InventoryDepartment::class);
     }
 
     public function items(): HasMany

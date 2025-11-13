@@ -12,7 +12,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Box, Tag, Settings, FileCheck, Warehouse, DollarSign, ClipboardList, ArrowRightLeft } from 'lucide-react';
+import { BookOpen, Cog, Folder, Home, LayoutGrid, Menu, Search, Users, Shield, Key, Calculator, FileText, BookOpenCheck, Book, BarChart, Wallet, Building2, Landmark, Receipt, TrendingUp, FileBarChart, Box, Tag, Settings, FileCheck, Warehouse, DollarSign, ClipboardList, ArrowRightLeft, Banknote } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -206,6 +206,19 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
+        title: 'Penggajian',
+        href: '/penggajian',
+        icon: Banknote,
+        children: [
+            {
+                title: 'Gaji',
+                href: '/penggajian',
+                icon: FileText,
+                permission: 'penggajian.view',
+            },
+        ],
+    },
+    {
         title: 'Settings',
         href: '/master',
         icon: Cog,
@@ -359,39 +372,39 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                     <Menu className="h-5 w-5" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="flex h-full w-64 flex-col items-stretch justify-between bg-sidebar">
+                            <SheetContent side="left" className="flex h-full w-72 flex-col items-stretch bg-sidebar overflow-y-auto pt-6">
                                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                                <SheetHeader className="flex justify-start text-left">
-                                    <AppLogoIcon className="h-6 w-6 fill-current text-black dark:text-white" />
+                                <SheetHeader className="flex justify-start text-left px-6 mb-4">
+                                    <AppLogoIcon className="h-7 w-7 fill-current text-black dark:text-white" />
                                 </SheetHeader>
-                                <div className="flex h-full flex-1 flex-col space-y-4 p-4">
-                                    <div className="flex h-full flex-col justify-between text-sm">
-                                        <div className="flex flex-col space-y-2">
+                                <div className="flex flex-1 flex-col px-5 pb-6">
+                                    <div className="flex flex-col space-y-3">
+                                        <div className="flex flex-col space-y-1.5">
                                             {filteredNavItems.map((item) => (
-                                                <div key={item.title} className="space-y-2">                                    <Link 
+                                                <div key={item.title} className="space-y-1">                                    <Link 
                                         href={item.href} 
                                         className={cn(
-                                            "flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                                            "flex items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
                                             (currentPath === item.href || currentPath.startsWith(item.href + '/')) && "bg-accent text-accent-foreground"
                                         )}
                                     >
                                                         {item.icon && <Icon iconNode={item.icon} className="h-5 w-5 shrink-0" />}
-                                                        <span>{item.title}</span>
+                                                        <span className="text-[15px]">{item.title}</span>
                                                     </Link>
                                                     {item.children && (
-                                                        <div className="ml-8 space-y-1">
+                                                        <div className="ml-9 space-y-0.5 mt-1">
                                                             {item.children.map((childItem) => (
                                                                 <Link
                                                                     key={childItem.href}
                                                                     href={childItem.href}
                                                                     className={cn(
-                                                                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-accent-foreground",
+                                                                        "flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-accent-foreground",
                                                                         currentPath === childItem.href && "bg-accent text-accent-foreground",
                                                                         "text-muted-foreground"
                                                                     )}
                                                                 >
                                                                     {childItem.icon && <Icon iconNode={childItem.icon} className="h-4 w-4 shrink-0" />}
-                                                                    <span>{childItem.title}</span>
+                                                                    <span className="text-[13.5px]">{childItem.title}</span>
                                                                 </Link>
                                                             ))}
                                                         </div>
@@ -400,17 +413,17 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                             ))}
                                         </div>
 
-                                        <div className="flex flex-col space-y-4">
+                                        <div className="flex flex-col space-y-3 mt-6 pt-5 border-t">
                                             {rightNavItems.map((item) => (
                                                 <a
                                                     key={item.title}
                                                     href={item.href}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex items-center space-x-2 font-medium"
+                                                    className="flex items-center space-x-3 font-medium px-4 py-2.5 rounded-lg hover:bg-accent transition-colors"
                                                 >
                                                     {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
-                                                    <span>{item.title}</span>
+                                                    <span className="text-[15px]">{item.title}</span>
                                                 </a>
                                             ))}
                                         </div>

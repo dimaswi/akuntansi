@@ -79,6 +79,11 @@ class User extends Authenticatable
         return $this->role?->id === $role->id;
     }
 
+    public function hasAnyRole(array $roles): bool
+    {
+        return $this->hasRole($roles);
+    }
+
     public function getAllPermissions(): array
     {
         return $this->role?->permissions?->pluck('name')->toArray() ?? [];

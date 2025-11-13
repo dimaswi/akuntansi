@@ -228,6 +228,14 @@ class RolePermissionSeeder extends Seeder
             // Laporan - Giro
             ['name' => 'laporan.giro-report.view', 'display_name' => 'Lihat Laporan Giro', 'description' => 'Dapat melihat laporan giro', 'module' => 'Laporan'],
             ['name' => 'laporan.giro-report.export', 'display_name' => 'Export Laporan Giro', 'description' => 'Dapat export laporan giro', 'module' => 'Laporan'],
+            
+            // ========== PENGGAJIAN MODULE ==========
+            ['name' => 'penggajian.view', 'display_name' => 'Lihat Penggajian', 'description' => 'Dapat melihat daftar batch gaji', 'module' => 'Penggajian'],
+            ['name' => 'penggajian.create', 'display_name' => 'Buat Batch Gaji', 'description' => 'Dapat membuat batch gaji baru', 'module' => 'Penggajian'],
+            ['name' => 'penggajian.edit', 'display_name' => 'Edit Batch Gaji', 'description' => 'Dapat mengedit batch gaji', 'module' => 'Penggajian'],
+            ['name' => 'penggajian.delete', 'display_name' => 'Hapus Batch Gaji', 'description' => 'Dapat menghapus batch gaji', 'module' => 'Penggajian'],
+            ['name' => 'penggajian.input-gaji', 'display_name' => 'Input Data Gaji', 'description' => 'Dapat input data gaji karyawan', 'module' => 'Penggajian'],
+            ['name' => 'penggajian.post-to-journal', 'display_name' => 'Post Gaji ke Jurnal', 'description' => 'Dapat posting gaji ke jurnal akuntansi', 'module' => 'Penggajian'],
         ];
 
         foreach ($permissions as $permission) {
