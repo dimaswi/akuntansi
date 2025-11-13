@@ -26,7 +26,7 @@ class SalaryBatchController extends Controller
         $user = Auth::user();
         
         // Cek role: HANYA admin dan akuntansi yang bisa akses list batch
-        $canAccessBatchList = $user->hasAnyRole(['superadmin', 'admin', 'akuntansi']);
+        $canAccessBatchList = $user->hasAnyRole(['administrator', 'akuntan']);
         
         if (!$canAccessBatchList) {
             // User lain: tampilkan slip gaji mereka sendiri
