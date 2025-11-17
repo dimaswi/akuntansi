@@ -283,6 +283,12 @@ class StockAdjustmentController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         
+        Log::info('Stock Adjustment Approve Started', [
+            'adjustment_id' => $stockAdjustment->id,
+            'user_id' => $user->id,
+            'user_role' => $user->role?->name,
+        ]);
+        
         if (!$user->isLogistics()) {
             abort(403, 'Hanya role logistics yang dapat meng-approve stock adjustment');
         }
@@ -295,7 +301,10 @@ class StockAdjustmentController extends Controller
             DB::beginTransaction();
 
             $item = $stockAdjustment->item;
+            Log::info('Item loaded', ['item_id' => $item->id, 'item_name' => $item->name]);
+
             $centralStock = $item->centralStock();
+            Log::info('Central stock checked', ['has_central_stock' => $centralStock ? true : false]);
 
             if (!$centralStock) {
                 throw new \Exception('Central stock tidak ditemukan untuk item ini');
@@ -317,6 +326,10 @@ class StockAdjustmentController extends Controller
             }
 
             $centralStock->save();
+            Log::info('Central stock updated', [
+                'quantity_on_hand' => $centralStock->quantity_on_hand,
+                'available_quantity' => $centralStock->available_quantity,
+            ]);
 
             // Update adjustment status
             $stockAdjustment->update([
@@ -324,30 +337,46 @@ class StockAdjustmentController extends Controller
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
             ]);
+            Log::info('Adjustment status updated to approved');
 
             DB::commit();
+            Log::info('Transaction committed');
 
-            // Send notification
-            $this->notificationService->sendToAllRoles(
-                NotificationService::TYPE_STOCK_ADJUSTMENT_APPROVED,
-                [
-                    'title' => 'Stock Adjustment Disetujui',
-                    'message' => "Stock Adjustment {$stockAdjustment->nomor_adjustment} untuk item {$item->name} ({$stockAdjustment->quantity} {$item->unit_of_measure}) - {$stockAdjustment->tipe_adjustment} telah disetujui.",
-                    'action_url' => route('stock-adjustments.show', $stockAdjustment->id),
-                    'data' => [
-                        'adjustment_id' => $stockAdjustment->id,
-                        'nomor_adjustment' => $stockAdjustment->nomor_adjustment,
-                        'item_name' => $item->name,
-                        'tipe' => $stockAdjustment->tipe_adjustment,
-                        'quantity' => $stockAdjustment->quantity,
+            // Send notification - wrap in try-catch to prevent failure
+            try {
+                Log::info('Attempting to send notification');
+                $this->notificationService->sendToAllRoles(
+                    NotificationService::TYPE_STOCK_ADJUSTMENT_APPROVED,
+                    [
+                        'title' => 'Stock Adjustment Disetujui',
+                        'message' => "Stock Adjustment {$stockAdjustment->nomor_adjustment} untuk item {$item->name} ({$stockAdjustment->quantity} {$item->unit_of_measure}) - {$stockAdjustment->tipe_adjustment} telah disetujui.",
+                        'action_url' => route('stock-adjustments.show', $stockAdjustment->id),
+                        'data' => [
+                            'adjustment_id' => $stockAdjustment->id,
+                            'nomor_adjustment' => $stockAdjustment->nomor_adjustment,
+                            'item_name' => $item->name,
+                            'tipe' => $stockAdjustment->tipe_adjustment,
+                            'quantity' => $stockAdjustment->quantity,
+                        ]
                     ]
-                ]
-            );
+                );
+                Log::info('Notification sent successfully');
+            } catch (\Exception $notifError) {
+                Log::error('Notification failed but continuing', [
+                    'error' => $notifError->getMessage(),
+                    'trace' => $notifError->getTraceAsString()
+                ]);
+            }
 
+            Log::info('Approve completed successfully, redirecting');
             return redirect()->route('stock-adjustments.show', $stockAdjustment)
                 ->with('success', 'Stock adjustment berhasil diapprove dan stok telah diupdate');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Stock Adjustment Approve Failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return back()->with('error', 'Gagal approve stock adjustment: ' . $e->getMessage());
         }
