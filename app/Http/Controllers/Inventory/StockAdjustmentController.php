@@ -345,11 +345,11 @@ class StockAdjustmentController extends Controller
             );
 
             return redirect()->route('stock-adjustments.show', $stockAdjustment)
-                ->with('success', 'Stock adjustment approved dan stok berhasil diupdate');
+                ->with('success', 'Stock adjustment berhasil diapprove dan stok telah diupdate');
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Gagal approve adjustment: ' . $e->getMessage());
+            return back()->with('error', 'Gagal approve stock adjustment: ' . $e->getMessage());
         }
     }
 
