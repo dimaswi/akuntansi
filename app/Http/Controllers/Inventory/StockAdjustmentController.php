@@ -306,8 +306,17 @@ class StockAdjustmentController extends Controller
             $centralStock = $item->centralStock();
             Log::info('Central stock checked', ['has_central_stock' => $centralStock ? true : false]);
 
+            // Create central stock if not exists
             if (!$centralStock) {
-                throw new \Exception('Central stock tidak ditemukan untuk item ini');
+                Log::info('Creating central stock record');
+                $centralStock = \App\Models\Inventory\ItemStock::create([
+                    'item_id' => $item->id,
+                    'department_id' => null, // Central warehouse
+                    'quantity_on_hand' => 0,
+                    'available_quantity' => 0,
+                    'reserved_quantity' => 0,
+                ]);
+                Log::info('Central stock created', ['stock_id' => $centralStock->id]);
             }
 
             // Update stock based on adjustment type
@@ -315,7 +324,7 @@ class StockAdjustmentController extends Controller
                 // Kekurangan: reduce stock
                 $newStock = $centralStock->quantity_on_hand - $stockAdjustment->quantity;
                 if ($newStock < 0) {
-                    throw new \Exception('Stok tidak mencukupi untuk adjustment shortage');
+                    throw new \Exception('Stok tidak mencukupi untuk adjustment shortage. Stok saat ini: ' . $centralStock->quantity_on_hand);
                 }
                 $centralStock->quantity_on_hand = $newStock;
                 $centralStock->available_quantity = max(0, $centralStock->available_quantity - $stockAdjustment->quantity);
