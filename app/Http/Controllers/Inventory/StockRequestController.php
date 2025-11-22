@@ -11,6 +11,7 @@ use App\Services\Inventory\ItemStockService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class StockRequestController extends Controller
@@ -89,7 +90,7 @@ class StockRequestController extends Controller
                 'can_edit' => $request->canEdit(),
                 'can_submit' => $request->canSubmit(),
                 'can_approve' => $request->canApprove(),
--                'can_complete' => $request->canComplete(),
+                'can_complete' => $request->canComplete(),
             ];
         });
                 
@@ -152,38 +153,100 @@ class StockRequestController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
         
+        Log::info('Stock Request Store Started', [
+            'user_id' => $user->id,
+            'department_id' => $user->department_id,
+            'is_logistics' => $user->isLogistics(),
+        ]);
+        
         // Check if user has department assigned
         if (!$user->isLogistics() && !$user->department_id) {
+            Log::warning('User has no department assigned');
             return redirect()->route('dashboard')
                 ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
         }
         
         // Check if department has completed stock opname for PREVIOUS month
-        if (!\App\Models\Inventory\StockOpname::hasPreviousMonthOpname($user->department_id)) {
-            return back()->with('error', 'Department harus menyelesaikan Stock Opname bulan lalu sebelum dapat membuat Stock Request baru');
+        // Smart validation for fresh system:
+        // 1. If no stock opname ever created -> Allow (fresh system)
+        // 2. If first stock opname is in current month -> Allow (still in first month)
+        // 3. If first stock opname is in previous month -> Require previous month completion
+        $firstOpname = \App\Models\Inventory\StockOpname::where('department_id', $user->department_id)
+            ->orderBy('opname_date', 'asc')
+            ->first();
+        
+        if ($firstOpname) {
+            $currentMonth = now()->month;
+            $currentYear = now()->year;
+            $firstOpnameDate = \Carbon\Carbon::parse($firstOpname->opname_date);
+            $firstOpnameMonth = $firstOpnameDate->month;
+            $firstOpnameYear = $firstOpnameDate->year;
+            
+            // If first opname is NOT in current month, validate previous month completion
+            if (!($firstOpnameYear == $currentYear && $firstOpnameMonth == $currentMonth)) {
+                // Check if there's approved opname for previous month
+                $previousMonth = now()->subMonth();
+                $hasPreviousMonthOpname = \App\Models\Inventory\StockOpname::where('department_id', $user->department_id)
+                    ->where('status', 'approved')
+                    ->whereYear('opname_date', $previousMonth->year)
+                    ->whereMonth('opname_date', $previousMonth->month)
+                    ->exists();
+                
+                if (!$hasPreviousMonthOpname) {
+                    Log::warning('Previous month opname not completed', [
+                        'department_id' => $user->department_id,
+                        'first_opname' => [
+                            'date' => $firstOpname->opname_date,
+                            'month' => $firstOpnameMonth,
+                            'year' => $firstOpnameYear,
+                        ],
+                        'current' => [
+                            'month' => $currentMonth,
+                            'year' => $currentYear,
+                        ]
+                    ]);
+                    return back()->with('error', 'Department harus menyelesaikan Stock Opname bulan lalu sebelum dapat membuat Stock Request baru');
+                }
+            }
         }
         
-        $validated = $request->validate([
-            'department_id' => 'required|exists:departments,id',
-            'priority' => 'required|in:low,normal,high,urgent',
-            'notes' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.item_id' => 'required|exists:items,id',
-            'items.*.quantity_requested' => 'required|numeric|min:0.01',
-            'items.*.notes' => 'nullable|string',
-        ]);
-        
-        $stockRequest = $this->stockRequestService->createDraft(
-            departmentId: $validated['department_id'],
-            requestedBy: Auth::id(),
-            items: $validated['items'],
-            priority: $validated['priority'],
-            notes: $validated['notes'] ?? null
-        );
-        
-        return redirect()
-            ->route('stock-requests.show', $stockRequest)
-            ->with('success', 'Permintaan Stok berhasil dibuat.');
+        try {
+            $validated = $request->validate([
+                'department_id' => 'required|exists:departments,id',
+                'priority' => 'required|in:low,normal,high,urgent',
+                'notes' => 'nullable|string',
+                'items' => 'required|array|min:1',
+                'items.*.item_id' => 'required|exists:items,id',
+                'items.*.quantity_requested' => 'required|numeric|min:0.01',
+                'items.*.notes' => 'nullable|string',
+            ]);
+            
+            Log::info('Validation passed', ['validated_data' => $validated]);
+            
+            $stockRequest = $this->stockRequestService->createDraft(
+                departmentId: $validated['department_id'],
+                requestedBy: Auth::id(),
+                items: $validated['items'],
+                priority: $validated['priority'],
+                notes: $validated['notes'] ?? null
+            );
+            
+            Log::info('Stock Request created', [
+                'stock_request_id' => $stockRequest->id,
+                'request_number' => $stockRequest->request_number,
+            ]);
+            
+            return redirect()
+                ->route('stock-requests.show', $stockRequest)
+                ->with('success', 'Permintaan Stok berhasil dibuat.');
+        } catch (\Exception $e) {
+            Log::error('Stock Request Store Failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return back()->with('error', 'Gagal membuat permintaan stok: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -193,6 +256,9 @@ class StockRequestController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+        
+        // Load user role with permissions
+        $user->load('role.permissions');
         
         // Department-level access control
         if (!$user->isLogistics()) {
@@ -263,7 +329,7 @@ class StockRequestController extends Controller
                 'completed_at' => $stockRequest->completed_at?->format('Y-m-d H:i'),
                 'can_edit' => $stockRequest->canEdit(),
                 'can_submit' => $stockRequest->canSubmit(),
-                'can_approve' => $stockRequest->canApprove(),
+                'can_approve' => $stockRequest->canApprove() && $user->hasPermission('inventory.stock-requests.approve'),
                 'can_complete' => $stockRequest->canComplete(),
                 'can_delete' => $stockRequest->canEdit(),
                 'can_cancel' => $stockRequest->canCancel(),

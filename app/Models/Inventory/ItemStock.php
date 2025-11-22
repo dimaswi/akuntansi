@@ -64,6 +64,16 @@ class ItemStock extends Model
 
     public function addStock(float $quantity, float $unitCost = null): void
     {
+        \Log::info('ItemStock::addStock called', [
+            'item_id' => $this->item_id,
+            'department_id' => $this->department_id,
+            'quantity' => $quantity,
+            'unitCost' => $unitCost,
+            'before_quantity' => $this->quantity_on_hand,
+            'before_avg_cost' => $this->average_unit_cost,
+            'before_total_value' => $this->total_value,
+        ]);
+        
         $this->quantity_on_hand += $quantity;
         
         if ($unitCost !== null) {
@@ -79,6 +89,14 @@ class ItemStock extends Model
         $this->updateTotalValue();
         $this->last_updated_at = now();
         $this->save();
+        
+        \Log::info('ItemStock::addStock completed', [
+            'item_id' => $this->item_id,
+            'department_id' => $this->department_id,
+            'after_quantity' => $this->quantity_on_hand,
+            'after_avg_cost' => $this->average_unit_cost,
+            'after_total_value' => $this->total_value,
+        ]);
     }
 
     public function reduceStock(float $quantity): void

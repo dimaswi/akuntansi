@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class InventoryDashboardController extends Controller
 {
@@ -23,7 +24,7 @@ class InventoryDashboardController extends Controller
         $user = $request->user();
         
         // Check if user has department assigned (for non-logistics users)
-        if (!$user->hasRole(['logistik', 'super_admin']) && !$user->department_id) {
+        if (!$user->hasRole(['logistics', 'super_admin']) && !$user->department_id) {
             return redirect()->back()
                 ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
         }
@@ -57,43 +58,49 @@ class InventoryDashboardController extends Controller
             'pendingApprovals' => $pendingApprovals,
             'stockMovement' => $stockMovement,
             'opnameStatus' => $opnameStatus,
+            'canAccessAccountingDashboard' => $user->hasPermission('akuntansi.view'),
         ]);
     }
     
     private function getStats($user)
     {
-        $hasLogisticsRole = $user->hasRole(['logistik', 'super_admin']);
+        $hasLogisticsRole = $user->hasRole(['logistics', 'super_admin']);
+        
+        Log::info('Dashboard getStats', [
+            'user_id' => $user->id,
+            'user_role' => $user->role?->name,
+            'hasLogisticsRole' => $hasLogisticsRole,
+        ]);
         
         if ($hasLogisticsRole) {
-            // Central warehouse stats
-            $totalItems = Item::aktif()->count();
-            $totalStockValue = ItemStock::where('department_id', 1) // Assuming dept 1 is central warehouse
-                ->with('item')
-                ->get()
-                ->sum(function($stock) {
-                    return $stock->quantity_on_hand * ($stock->item->standard_cost ?? 0);
-                });
-            $lowStockCount = ItemStock::where('department_id', 1)
-                ->whereHas('item', function($q) {
-                    $q->whereRaw('item_stocks.quantity_on_hand <= items.reorder_level');
-                })
-                ->count();
-            $pendingRequests = StockRequest::where('status', 'pending')->count();
-        } else {
-            // Department stats
-            $totalItems = ItemStock::where('department_id', $user->department_id)
+            // Central warehouse stats (NULL department_id)
+            $totalItems = ItemStock::whereNull('item_stocks.department_id')
                 ->where('quantity_on_hand', '>', 0)
                 ->count();
-            $totalStockValue = ItemStock::where('department_id', $user->department_id)
-                ->with('item')
-                ->get()
-                ->sum(function($stock) {
-                    return $stock->quantity_on_hand * ($stock->item->standard_cost ?? 0);
-                });
-            $lowStockCount = ItemStock::where('department_id', $user->department_id)
-                ->whereHas('item', function($q) {
-                    $q->whereRaw('item_stocks.quantity_on_hand <= items.reorder_level');
-                })
+            $totalStockValue = ItemStock::whereNull('item_stocks.department_id')
+                ->sum('total_value');
+            $lowStockCount = ItemStock::whereNull('item_stocks.department_id')
+                ->join('items', 'item_stocks.item_id', '=', 'items.id')
+                ->whereRaw('item_stocks.quantity_on_hand <= items.reorder_level')
+                ->count();
+            $pendingRequests = StockRequest::where('status', 'pending')->count();
+            
+            Log::info('Logistics stats', [
+                'totalItems' => $totalItems,
+                'totalStockValue' => $totalStockValue,
+                'lowStockCount' => $lowStockCount,
+                'pendingRequests' => $pendingRequests,
+            ]);
+        } else {
+            // Department stats
+            $totalItems = ItemStock::where('item_stocks.department_id', $user->department_id)
+                ->where('quantity_on_hand', '>', 0)
+                ->count();
+            $totalStockValue = ItemStock::where('item_stocks.department_id', $user->department_id)
+                ->sum('total_value');
+            $lowStockCount = ItemStock::where('item_stocks.department_id', $user->department_id)
+                ->join('items', 'item_stocks.item_id', '=', 'items.id')
+                ->whereRaw('item_stocks.quantity_on_hand <= items.reorder_level')
                 ->count();
             $pendingRequests = StockRequest::where('department_id', $user->department_id)
                 ->whereIn('status', ['draft', 'pending'])
@@ -110,7 +117,7 @@ class InventoryDashboardController extends Controller
     
     private function getLowStockItems($user)
     {
-        $hasLogisticsRole = $user->hasRole(['logistik', 'super_admin']);
+        $hasLogisticsRole = $user->hasRole(['logistics', 'super_admin']);
         
         $query = ItemStock::with(['item', 'department'])
             ->join('items', 'item_stocks.item_id', '=', 'items.id')
@@ -121,6 +128,9 @@ class InventoryDashboardController extends Controller
             
         if (!$hasLogisticsRole) {
             $query->where('item_stocks.department_id', $user->department_id);
+        } else {
+            // Logistics: show central warehouse items only
+            $query->whereNull('item_stocks.department_id');
         }
         
         return $query->get()->map(function($stock) {
@@ -128,7 +138,7 @@ class InventoryDashboardController extends Controller
                 'id' => $stock->id,
                 'item_code' => $stock->item->code,
                 'item_name' => $stock->item->name,
-                'department' => $stock->department->name,
+                'department' => $stock->department ? $stock->department->name : 'Central Warehouse',
                 'quantity' => $stock->quantity_on_hand,
                 'min_stock' => $stock->item->reorder_level,
                 'unit' => $stock->item->unit_of_measure,
@@ -139,7 +149,7 @@ class InventoryDashboardController extends Controller
     
     private function getRecentActivities($user)
     {
-        $hasLogisticsRole = $user->hasRole(['logistik', 'super_admin']);
+        $hasLogisticsRole = $user->hasRole(['logistics', 'super_admin']);
         $activities = collect();
         
         // Stock Requests
@@ -221,13 +231,16 @@ class InventoryDashboardController extends Controller
     
     private function getStockByCategory($user)
     {
-        $hasLogisticsRole = $user->hasRole(['logistik', 'super_admin']);
+        $hasLogisticsRole = $user->hasRole(['logistics', 'super_admin']);
         
         $query = ItemStock::with(['item.category'])
             ->where('quantity_on_hand', '>', 0);
             
         if (!$hasLogisticsRole) {
             $query->where('department_id', $user->department_id);
+        } else {
+            // Logistics: show central warehouse items only
+            $query->whereNull('department_id');
         }
         
         $stocks = $query->get();
@@ -239,9 +252,7 @@ class InventoryDashboardController extends Controller
                 'category' => $category,
                 'total_items' => $items->count(),
                 'total_quantity' => $items->sum('quantity_on_hand'),
-                'total_value' => $items->sum(function($stock) {
-                    return $stock->quantity_on_hand * ($stock->item->standard_cost ?? 0);
-                }),
+                'total_value' => $items->sum('total_value'),
             ];
         })->values();
         
@@ -250,7 +261,7 @@ class InventoryDashboardController extends Controller
     
     private function getPendingApprovals($user)
     {
-        $hasLogisticsRole = $user->hasRole(['logistik', 'super_admin']);
+        $hasLogisticsRole = $user->hasRole(['logistics', 'super_admin']);
         $isDeptHead = $user->hasRole('ketua_department');
         
         if (!$hasLogisticsRole && !$isDeptHead) {
@@ -284,7 +295,7 @@ class InventoryDashboardController extends Controller
     
     private function getMonthlyStockMovement($user)
     {
-        $hasLogisticsRole = $user->hasRole(['logistik', 'super_admin']);
+        $hasLogisticsRole = $user->hasRole(['logistics', 'super_admin']);
         $startDate = Carbon::now()->subMonths(6)->startOfMonth();
         $endDate = Carbon::now()->endOfMonth();
         
@@ -326,12 +337,12 @@ class InventoryDashboardController extends Controller
     
     private function getOpnameStatus($user)
     {
-        $hasLogisticsRole = $user->hasRole(['logistik', 'super_admin']);
+        $hasLogisticsRole = $user->hasRole(['logistics', 'super_admin']);
         $currentMonth = Carbon::now()->format('Y-m');
         
         if ($hasLogisticsRole) {
             // Show all departments opname status
-            $departments = Department::aktif()->get();
+            $departments = Department::where('is_active', true)->get();
             $status = $departments->map(function($dept) use ($currentMonth) {
                 $hasOpname = StockOpname::hasMonthlyOpname($dept->id);
                 $latestOpname = StockOpname::where('department_id', $dept->id)

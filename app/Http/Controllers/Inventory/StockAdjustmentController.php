@@ -321,24 +321,28 @@ class StockAdjustmentController extends Controller
 
             // Update stock based on adjustment type
             if ($stockAdjustment->tipe_adjustment === 'shortage') {
-                // Kekurangan: reduce stock
-                $newStock = $centralStock->quantity_on_hand - $stockAdjustment->quantity;
-                if ($newStock < 0) {
-                    throw new \Exception('Stok tidak mencukupi untuk adjustment shortage. Stok saat ini: ' . $centralStock->quantity_on_hand);
-                }
-                $centralStock->quantity_on_hand = $newStock;
-                $centralStock->available_quantity = max(0, $centralStock->available_quantity - $stockAdjustment->quantity);
+                // Kekurangan: reduce stock using method to auto-update total_value
+                $centralStock->reduceStock($stockAdjustment->quantity);
+                Log::info('Central stock reduced (shortage)', [
+                    'quantity' => $stockAdjustment->quantity,
+                    'quantity_on_hand' => $centralStock->quantity_on_hand,
+                    'available_quantity' => $centralStock->available_quantity,
+                    'total_value' => $centralStock->total_value,
+                ]);
             } else {
-                // Kelebihan: increase stock
-                $centralStock->quantity_on_hand += $stockAdjustment->quantity;
-                $centralStock->available_quantity += $stockAdjustment->quantity;
+                // Kelebihan: increase stock using method to auto-update total_value
+                // Use existing average_unit_cost or 0 if not set
+                $unitCost = $centralStock->average_unit_cost > 0 ? $centralStock->average_unit_cost : 0;
+                $centralStock->addStock($stockAdjustment->quantity, $unitCost);
+                Log::info('Central stock increased (surplus)', [
+                    'quantity' => $stockAdjustment->quantity,
+                    'unit_cost' => $unitCost,
+                    'quantity_on_hand' => $centralStock->quantity_on_hand,
+                    'available_quantity' => $centralStock->available_quantity,
+                    'average_unit_cost' => $centralStock->average_unit_cost,
+                    'total_value' => $centralStock->total_value,
+                ]);
             }
-
-            $centralStock->save();
-            Log::info('Central stock updated', [
-                'quantity_on_hand' => $centralStock->quantity_on_hand,
-                'available_quantity' => $centralStock->available_quantity,
-            ]);
 
             // Update adjustment status
             $stockAdjustment->update([

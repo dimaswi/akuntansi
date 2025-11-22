@@ -14,12 +14,38 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $tab = $request->get('tab', 'accounting'); // Default to accounting tab
+        
+        // Administrator can access both dashboards - default to inventory
+        if ($user->isAdmin()) {
+            return redirect()->route('inventory.dashboard');
+        }
+        
+        // Priority: Inventory dashboard
+        if ($user->hasPermission('inventory.dashboard.view')) {
+            return redirect()->route('inventory.dashboard');
+        }
+        
+        // If user has accounting view permission, redirect to accounting dashboard
+        if ($user->hasPermission('akuntansi.view')) {
+            return redirect()->route('dashboard.accounting');
+        }
+        
+        // For users without any dashboard access, show welcome page
+        return Inertia::render('dashboard-welcome');
+    }
+    
+    public function accounting(Request $request)
+    {
+        $user = $request->user();
+        
+        // Check permission
+        if (!$user->hasPermission('akuntansi.view')) {
+            abort(403, 'Anda tidak memiliki akses ke Dashboard Akuntansi');
+        }
         
         // Jika tidak ada parameter bulan, return empty state (untuk first load cepat)
         if (!$request->has('bulan')) {
-            return Inertia::render('dashboard', [
-                'tab' => $tab,
+            return Inertia::render('dashboard-accounting', [
                 'bulan' => null,
                 'dataHarian' => [],
                 'statistik' => [
@@ -41,6 +67,7 @@ class DashboardController extends Controller
                     'kewajiban_lancar' => 0,
                     'current_ratio' => 0,
                 ],
+                'canAccessInventoryDashboard' => $user->hasPermission('inventory.dashboard.view'),
             ]);
         }
         
@@ -72,8 +99,7 @@ class DashboardController extends Controller
         // Rasio Likuiditas Cepat
         $rasioLikuiditas = $this->getRasioLikuiditas();
         
-        return Inertia::render('dashboard', [
-            'tab' => $tab,
+        return Inertia::render('dashboard-accounting', [
             'bulan' => $bulan,
             'dataHarian' => $dataHarian,
             'statistik' => [
@@ -87,6 +113,7 @@ class DashboardController extends Controller
             'topBeban' => $topBeban,
             'posisiKeuangan' => $posisiKeuangan,
             'rasioLikuiditas' => $rasioLikuiditas,
+            'canAccessInventoryDashboard' => $user->hasPermission('inventory.dashboard.view'),
         ]);
     }
     

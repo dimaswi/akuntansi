@@ -105,6 +105,7 @@ interface Props {
     };
     stockMovement: StockMovement[];
     opnameStatus: OpnameStatus[];
+    canAccessAccountingDashboard?: boolean;
 }
 
 const STATUS_COLORS = {
@@ -125,7 +126,8 @@ export default function InventoryDashboard({
     stockByCategory,
     pendingApprovals,
     stockMovement,
-    opnameStatus
+    opnameStatus,
+    canAccessAccountingDashboard = false
 }: Props) {
 
     const formatCurrency = (amount: number) => {
@@ -173,22 +175,24 @@ export default function InventoryDashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard Inventory" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
-                {/* Tabs */}
-                <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-full max-w-md">
-                    <button
-                        onClick={() => router.visit(route('dashboard'))}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                    >
-                        <BarChart3 className="h-4 w-4" />
-                        Akuntansi
-                    </button>
-                    <button
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
-                    >
-                        <Package className="h-4 w-4" />
-                        Inventory
-                    </button>
-                </div>
+                {/* Tabs - Only show if user has access to accounting dashboard */}
+                {canAccessAccountingDashboard && (
+                    <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-full max-w-md">
+                        <button
+                            onClick={() => router.visit(route('dashboard.accounting'))}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                        >
+                            <BarChart3 className="h-4 w-4" />
+                            Akuntansi
+                        </button>
+                        <button
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
+                        >
+                            <Package className="h-4 w-4" />
+                            Inventory
+                        </button>
+                    </div>
+                )}
 
                 {/* Header */}
                 <div className="flex justify-between items-center">

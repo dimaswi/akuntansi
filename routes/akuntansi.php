@@ -6,11 +6,16 @@ use App\Http\Controllers\Akuntansi\JurnalController;
 use App\Http\Controllers\Akuntansi\JurnalPenyesuaianController;
 use App\Http\Controllers\Akuntansi\BukuBesarController;
 use App\Http\Controllers\Akuntansi\LaporanKeuanganController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
     
     // Akuntansi Dashboard
+    Route::get('dashboard/accounting', [DashboardController::class, 'accounting'])
+        ->name('dashboard.accounting')
+        ->middleware('permission:akuntansi.view');
+    
     Route::get('akuntansi', [AkuntansiController::class, 'index'])
         ->name('akuntansi.index')
         ->middleware('permission:akuntansi.view');

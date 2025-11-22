@@ -254,7 +254,7 @@ export default function show() {
                                 Approve
                             </Button>
                         )}
-                        {hasRemainingToApprove() && (
+                        {stockRequest.can_approve && hasRemainingToApprove() && (
                             <Button
                                 variant="default"
                                 size="sm"
