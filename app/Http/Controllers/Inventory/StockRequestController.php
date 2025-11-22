@@ -166,50 +166,6 @@ class StockRequestController extends Controller
                 ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
         }
         
-        // Check if department has completed stock opname for PREVIOUS month
-        // Smart validation for fresh system:
-        // 1. If no stock opname ever created -> Allow (fresh system)
-        // 2. If first stock opname is in current month -> Allow (still in first month)
-        // 3. If first stock opname is in previous month -> Require previous month completion
-        $firstOpname = \App\Models\Inventory\StockOpname::where('department_id', $user->department_id)
-            ->orderBy('opname_date', 'asc')
-            ->first();
-        
-        if ($firstOpname) {
-            $currentMonth = now()->month;
-            $currentYear = now()->year;
-            $firstOpnameDate = \Carbon\Carbon::parse($firstOpname->opname_date);
-            $firstOpnameMonth = $firstOpnameDate->month;
-            $firstOpnameYear = $firstOpnameDate->year;
-            
-            // If first opname is NOT in current month, validate previous month completion
-            if (!($firstOpnameYear == $currentYear && $firstOpnameMonth == $currentMonth)) {
-                // Check if there's approved opname for previous month
-                $previousMonth = now()->subMonth();
-                $hasPreviousMonthOpname = \App\Models\Inventory\StockOpname::where('department_id', $user->department_id)
-                    ->where('status', 'approved')
-                    ->whereYear('opname_date', $previousMonth->year)
-                    ->whereMonth('opname_date', $previousMonth->month)
-                    ->exists();
-                
-                if (!$hasPreviousMonthOpname) {
-                    Log::warning('Previous month opname not completed', [
-                        'department_id' => $user->department_id,
-                        'first_opname' => [
-                            'date' => $firstOpname->opname_date,
-                            'month' => $firstOpnameMonth,
-                            'year' => $firstOpnameYear,
-                        ],
-                        'current' => [
-                            'month' => $currentMonth,
-                            'year' => $currentYear,
-                        ]
-                    ]);
-                    return back()->with('error', 'Department harus menyelesaikan Stock Opname bulan lalu sebelum dapat membuat Stock Request baru');
-                }
-            }
-        }
-        
         try {
             $validated = $request->validate([
                 'department_id' => 'required|exists:departments,id',
