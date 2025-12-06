@@ -308,10 +308,10 @@ export default function MySalary({ salarySlips, filters, summary, userName, user
                                                     <Calendar className="h-3.5 w-3.5 shrink-0 text-gray-400 sm:h-4 sm:w-4" />
                                                     <div className="min-w-0">
                                                         <h3 className="text-xs font-semibold text-gray-900 sm:text-sm">
-                                                            {slip.salary_batch.period_display}
+                                                            {slip.salary_batch?.period_display || '-'}
                                                         </h3>
                                                         <p className="truncate text-[10px] text-gray-500 sm:text-xs">
-                                                            {slip.salary_batch.batch_number}
+                                                            {slip.salary_batch?.batch_number || '-'}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -534,8 +534,8 @@ export default function MySalary({ salarySlips, filters, summary, userName, user
                                             <div className="p-3">
                                                 <div className="flex items-center justify-between text-sm text-gray-600">
                                                     <div>
-                                                        <div className="font-medium text-gray-900">{slip.salary_batch.period_display}</div>
-                                                        <div className="text-xs">{slip.salary_batch.batch_number}</div>
+                                                        <div className="font-medium text-gray-900">{slip.salary_batch?.period_display || '-'}</div>
+                                                        <div className="text-xs">{slip.salary_batch?.batch_number || '-'}</div>
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="text-sm font-semibold">{formatRupiah(slip.gaji_bersih)}</div>
