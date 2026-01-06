@@ -90,16 +90,22 @@ class ItemStockService
 
     /**
      * Issue stock from central to department (stock transfer)
+     * @param bool $skipAvailabilityCheck Set true when stock is already reserved (e.g., completing stock request)
      */
-    public function issueFromCentral(int $itemId, int $toDepartmentId, float $quantity, int $userId, string $referenceType = null, int $referenceId = null, string $notes = null): array
+    public function issueFromCentral(int $itemId, int $toDepartmentId, float $quantity, int $userId, string $referenceType = null, int $referenceId = null, string $notes = null, bool $skipAvailabilityCheck = false): array
     {
-        return DB::transaction(function() use ($itemId, $toDepartmentId, $quantity, $userId, $referenceType, $referenceId, $notes) {
+        return DB::transaction(function() use ($itemId, $toDepartmentId, $quantity, $userId, $referenceType, $referenceId, $notes, $skipAvailabilityCheck) {
             $centralStock = $this->getOrCreateCentralStock($itemId);
             $deptStock = $this->getOrCreateDepartmentStock($itemId, $toDepartmentId);
             
-            // Check availability
-            if ($centralStock->available_quantity < $quantity) {
+            // Check availability (skip if stock was already reserved)
+            if (!$skipAvailabilityCheck && $centralStock->available_quantity < $quantity) {
                 throw new \Exception("Stok di gudang pusat tidak mencukupi. Available: {$centralStock->available_quantity}, Required: {$quantity}");
+            }
+            
+            // When skipping availability check, still verify quantity_on_hand
+            if ($skipAvailabilityCheck && $centralStock->quantity_on_hand < $quantity) {
+                throw new \Exception("Stok di gudang pusat tidak mencukupi. On Hand: {$centralStock->quantity_on_hand}, Required: {$quantity}");
             }
             
             $centralBalanceBefore = $centralStock->quantity_on_hand;

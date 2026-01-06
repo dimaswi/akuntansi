@@ -29,7 +29,7 @@ import {
     TrendingDown,
     Minus,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface StockOpnameItem {
     id: number;
@@ -126,37 +126,26 @@ export default function StockOpnameShow() {
 
         put(route('stock-opnames.updateCounts', opname.id), {
             onSuccess: () => {
-                toast.success('Physical count berhasil diupdate');
                 setEditMode(false);
             },
-            onError: () => {
-                toast.error('Gagal update physical count');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal update physical count');
             },
         });
     };
 
     const handleSubmit = () => {
         router.post(route('stock-opnames.submit', opname.id), {}, {
-            onSuccess: () => {
-                toast.success('Stock Opname berhasil disubmit');
-            },
             onError: (errors) => {
-                if (errors.message) {
-                    toast.error(errors.message);
-                } else {
-                    toast.error('Gagal submit Stock Opname');
-                }
+                toast.error(errors?.message || 'Gagal submit Stock Opname');
             },
         });
     };
 
     const handleApprove = () => {
         router.post(route('stock-opnames.approve', opname.id), {}, {
-            onSuccess: () => {
-                toast.success('Stock Opname berhasil diapprove');
-            },
-            onError: () => {
-                toast.error('Gagal approve Stock Opname');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal approve Stock Opname');
             },
         });
     };
@@ -164,11 +153,10 @@ export default function StockOpnameShow() {
     const handleReject = () => {
         rejectForm.post(route('stock-opnames.reject', opname.id), {
             onSuccess: () => {
-                toast.success('Stock Opname berhasil direject');
                 setRejectDialog(false);
             },
-            onError: () => {
-                toast.error('Gagal reject Stock Opname');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal reject Stock Opname');
             },
         });
     };

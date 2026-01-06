@@ -12,7 +12,7 @@ import { BreadcrumbItem, SharedData } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Edit3, Loader2, Package, PlusCircle, Search, Trash, X, Filter, Home, Eye } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface ItemCategory {
@@ -183,12 +183,11 @@ export default function ItemCategoryIndex() {
 
         router.delete(route('item_categories.destroy', deleteDialog.category.id), {
             onSuccess: () => {
-                toast.success('Kategori berhasil dihapus');
                 setDeleteDialog({ open: false, category: null, loading: false });
             },
             onError: (errors) => {
                 // Inertia sends validation errors in errors object
-                const errorMessage = errors.error || Object.values(errors)[0] || 'Gagal menghapus kategori';
+                const errorMessage = errors?.message || errors?.error || Object.values(errors)[0] || 'Gagal menghapus kategori';
                 toast.error(errorMessage);
                 setDeleteDialog({ open: false, category: null, loading: false });
             },

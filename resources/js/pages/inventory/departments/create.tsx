@@ -15,7 +15,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage, useForm } from '@inertiajs/react';
 import { Building2, Save, ArrowLeft, X, Package } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -56,11 +56,8 @@ export default function CreateDepartment() {
         };
 
         post(route('departments.store'), {
-            onSuccess: () => {
-                toast.success('Departemen berhasil ditambahkan');
-            },
-            onError: () => {
-                toast.error('Gagal menambah departemen. Periksa data yang dimasukkan.');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal menambah departemen. Periksa data yang dimasukkan.');
             },
         });
     };

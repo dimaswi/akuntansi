@@ -19,7 +19,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage, useForm } from '@inertiajs/react';
 import { Package, Save, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 import { useState } from 'react';
 
@@ -141,12 +141,9 @@ export default function CreateItem() {
         });
 
         post(route('items.store'), {
-            onSuccess: () => {
-                toast.success('Item berhasil ditambahkan');
-            },
             onError: (errors: any) => {
                 console.log(errors);
-                toast.error('Gagal menambah item. Periksa data yang dimasukkan.');
+                toast.error(errors?.message || 'Gagal menambah item. Periksa data yang dimasukkan.');
             },
         });
     };

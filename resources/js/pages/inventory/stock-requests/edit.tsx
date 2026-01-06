@@ -13,7 +13,7 @@ import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Home, Package, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface Item {
@@ -134,10 +134,7 @@ export default function edit() {
             {
                 onError: (errors) => {
                     setErrors(errors);
-                    toast.error('Gagal mengupdate permintaan stok');
-                },
-                onSuccess: () => {
-                    toast.success('Permintaan stok berhasil diupdate');
+                    toast.error(errors?.message || 'Gagal mengupdate permintaan stok');
                 },
                 onFinish: () => setProcessing(false),
             }

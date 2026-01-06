@@ -22,7 +22,7 @@ import {
     Package, Send, Trash2, TruckIcon, XCircle, AlertTriangle 
 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface StockRequestItem {
@@ -32,6 +32,7 @@ interface StockRequestItem {
     quantity_approved?: number;
     quantity_issued?: number;  // Backend sends quantity_issued
     notes?: string;
+    approval_notes?: string;  // Notes from logistics for each item
     item: {
         id: number;
         code: string;
@@ -148,20 +149,18 @@ export default function show() {
     const handleSubmit = () => {
         router.post(route('stock-requests.submit', stockRequest.id), {}, {
             onSuccess: () => {
-                toast.success('Permintaan Stok submitted successfully');
                 setSubmitDialogOpen(false);
             },
-            onError: () => toast.error('Failed to submit Permintaan Stok'),
+            onError: (errors) => toast.error(errors?.message || 'Failed to submit Permintaan Stok'),
         });
     };
 
     const handleDelete = () => {
         router.delete(route('stock-requests.destroy', stockRequest.id), {
             onSuccess: () => {
-                toast.success('Permintaan Stok deleted successfully');
                 setDeleteDialogOpen(false);
             },
-            onError: () => toast.error('Failed to delete Permintaan Stok'),
+            onError: (errors) => toast.error(errors?.message || 'Failed to delete Permintaan Stok'),
         });
     };
 
@@ -175,21 +174,19 @@ export default function show() {
             reason: cancelReason,
         }, {
             onSuccess: () => {
-                toast.success('Permintaan Stok cancelled successfully');
                 setCancelDialogOpen(false);
                 setCancelReason('');
             },
-            onError: () => toast.error('Failed to cancel Permintaan Stok'),
+            onError: (errors) => toast.error(errors?.message || 'Failed to cancel Permintaan Stok'),
         });
     };
 
     const handleComplete = () => {
         router.post(route('stock-requests.complete', stockRequest.id), {}, {
             onSuccess: () => {
-                toast.success('Permintaan Stok completed successfully');
                 setCompleteDialogOpen(false);
             },
-            onError: () => toast.error('Failed to complete Permintaan Stok'),
+            onError: (errors) => toast.error(errors?.message || 'Failed to complete Permintaan Stok'),
         });
     };
 
@@ -296,6 +293,22 @@ export default function show() {
                         )}
                     </div>
                 </div>
+
+                {/* Partial Approval Warning */}
+                {stockRequest.status === 'approved' && hasRemainingToApprove() && (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                            <div>
+                                <h4 className="font-semibold text-yellow-800">Partial Approval</h4>
+                                <p className="text-sm text-yellow-700 mt-1">
+                                    Beberapa item belum di-approve sepenuhnya. Klik "Approve Sisanya" untuk melanjutkan approval,
+                                    atau klik "Complete" untuk menyelesaikan permintaan dengan item yang sudah di-approve saja.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Request Information */}
                 <Card>
@@ -410,7 +423,10 @@ export default function show() {
                                         {stockRequest.status === 'completed' && (
                                             <TableHead className="w-[120px] text-right">Qty Completed</TableHead>
                                         )}
-                                        <TableHead>Notes</TableHead>
+                                        <TableHead>Catatan Peminta</TableHead>
+                                        {(stockRequest.status === 'approved' || stockRequest.status === 'completed') && (
+                                            <TableHead>Catatan Logistik</TableHead>
+                                        )}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -423,8 +439,12 @@ export default function show() {
                                                 {item.quantity_requested.toLocaleString()}
                                             </TableCell>
                                             {(stockRequest.status === 'approved' || stockRequest.status === 'completed') && (
-                                                <TableCell className="text-right font-semibold text-green-600">
-                                                    {item.quantity_approved?.toLocaleString() || '-'}
+                                                <TableCell className="text-right font-semibold">
+                                                    {item.quantity_approved > 0 ? (
+                                                        <span className="text-green-600">{item.quantity_approved.toLocaleString()}</span>
+                                                    ) : (
+                                                        <Badge variant="secondary" className="text-xs">Pending</Badge>
+                                                    )}
                                                 </TableCell>
                                             )}
                                             {stockRequest.status === 'completed' && (
@@ -435,6 +455,11 @@ export default function show() {
                                             <TableCell className="text-sm text-gray-600">
                                                 {item.notes || '-'}
                                             </TableCell>
+                                            {(stockRequest.status === 'approved' || stockRequest.status === 'completed') && (
+                                                <TableCell className="text-sm text-blue-700">
+                                                    {item.approval_notes || '-'}
+                                                </TableCell>
+                                            )}
                                         </TableRow>
                                     ))}
                                 </TableBody>

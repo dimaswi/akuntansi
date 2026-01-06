@@ -24,7 +24,7 @@ import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, usePage } from "@inertiajs/react";
 import { Edit3, PlusCircle, Search, Trash, X, Loader2, Eye, Truck, Filter, Phone, Mail, MapPin, Power, PowerOff, Package } from "lucide-react";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from '@/lib/toast';
 import { route } from "ziggy-js";
 
 interface Supplier {
@@ -189,11 +189,10 @@ export default function SuppliersIndex() {
         try {
             router.delete(route('suppliers.destroy', deleteDialog.supplier.id), {
                 onSuccess: () => {
-                    toast.success('Supplier berhasil dihapus');
                     setDeleteDialog({ open: false, supplier: null, loading: false });
                 },
-                onError: () => {
-                    toast.error('Gagal menghapus supplier');
+                onError: (errors) => {
+                    toast.error(errors?.message || 'Gagal menghapus supplier');
                     setDeleteDialog((prev) => ({ ...prev, loading: false }));
                 },
             });
@@ -208,11 +207,8 @@ export default function SuppliersIndex() {
         
         try {
             router.post(route('suppliers.toggle-status', supplier.id), {}, {
-                onSuccess: () => {
-                    toast.success(`Supplier berhasil ${action}`);
-                },
-                onError: () => {
-                    toast.error(`Gagal ${action} supplier`);
+                onError: (errors) => {
+                    toast.error(errors?.message || `Gagal ${action} supplier`);
                 },
             });
         } catch (error) {

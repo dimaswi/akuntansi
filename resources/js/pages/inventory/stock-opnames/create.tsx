@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { SharedData } from '@/types';
 import { FileBarChart, Save, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface Department {
     id: number;
@@ -40,15 +40,8 @@ export default function StockOpnameCreate() {
         e.preventDefault();
 
         post(route('stock-opnames.store'), {
-            onSuccess: () => {
-                toast.success('Stock Opname berhasil dibuat');
-            },
             onError: (errors) => {
-                if (errors.message) {
-                    toast.error(errors.message);
-                } else {
-                    toast.error('Gagal membuat Stock Opname');
-                }
+                toast.error(errors?.message || 'Gagal membuat Stock Opname');
             },
         });
     };

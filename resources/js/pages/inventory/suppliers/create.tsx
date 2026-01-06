@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, useForm, router } from '@inertiajs/react';
 import { Truck, Save, ArrowLeft, AlertCircle, Package } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface SupplierFormData {
@@ -46,12 +46,11 @@ export default function SuppliersCreate() {
         
         post(route('suppliers.store'), {
             onSuccess: () => {
-                toast.success('Supplier berhasil ditambahkan');
                 router.visit(route('suppliers.index'));
             },
             onError: (errors) => {
                 console.error('Validation errors:', errors);
-                toast.error('Gagal menambahkan supplier. Periksa data yang diisi.');
+                toast.error(errors?.message || 'Gagal menambahkan supplier. Periksa data yang diisi.');
             },
         });
     };

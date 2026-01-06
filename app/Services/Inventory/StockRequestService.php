@@ -56,6 +56,8 @@ class StockRequestService
 
     /**
      * Submit stock request for approval
+     * Alur baru: Tidak reserve stock saat submit, biarkan user tetap bisa submit
+     * meski stok tidak cukup. Logistik akan memberikan catatan dan approve partial jika perlu.
      */
     public function submit(StockRequest $stockRequest): StockRequest
     {
@@ -64,42 +66,15 @@ class StockRequestService
         }
         
         return DB::transaction(function() use ($stockRequest) {
-            // Reserve stock immediately upon submission (not waiting for approval)
-            foreach ($stockRequest->items as $requestItem) {
-                if ($requestItem->quantity_requested > 0) {
-                    try {
-                        Log::info("Attempting to reserve stock", [
-                            'item_id' => $requestItem->item_id,
-                            'quantity' => $requestItem->quantity_requested,
-                        ]);
-                        
-                        // Reserve stock di central warehouse
-                        $this->itemStockService->reserveStock(
-                            $requestItem->item_id, 
-                            null, // null = central warehouse
-                            $requestItem->quantity_requested
-                        );
-                        
-                        Log::info("Stock reserved successfully", [
-                            'item_id' => $requestItem->item_id,
-                            'quantity' => $requestItem->quantity_requested,
-                        ]);
-                    } catch (\Exception $e) {
-                        Log::error("Failed to reserve stock", [
-                            'item_id' => $requestItem->item_id,
-                            'error' => $e->getMessage(),
-                        ]);
-                        throw $e; // Re-throw to rollback transaction
-                    }
-                }
-            }
+            // Tidak perlu reserve stock saat submit
+            // Stok akan di-reserve saat approve oleh logistik
             
             $stockRequest->update([
                 'status' => 'submitted',
                 'submitted_at' => now(),
             ]);
             
-            Log::info("Stock request submitted and stock reserved", [
+            Log::info("Stock request submitted (without stock reservation)", [
                 'stock_request_id' => $stockRequest->id,
                 'request_number' => $stockRequest->request_number,
             ]);
@@ -109,7 +84,13 @@ class StockRequestService
     }
 
     /**
-     * Approve stock request
+     * Approve stock request (partial approval supported)
+     * Alur baru: Reserve stock saat approve, bukan saat submit
+     * 
+     * @param StockRequest $stockRequest
+     * @param int $approvedBy
+     * @param array $itemApprovals Array of ['id' => stock_request_item_id, 'quantity_approved' => qty, 'approval_notes' => notes]
+     * @return StockRequest
      */
     public function approve(StockRequest $stockRequest, int $approvedBy, array $itemApprovals): StockRequest
     {
@@ -118,37 +99,86 @@ class StockRequestService
         }
         
         return DB::transaction(function() use ($stockRequest, $approvedBy, $itemApprovals) {
-            // Update item approvals - $itemApprovals is [stock_request_item_id => quantity_approved]
-            foreach ($itemApprovals as $stockRequestItemId => $approvedQty) {
+            $hasPartialApproval = false;
+            $totalApproved = 0;
+            $totalRequested = 0;
+            
+            // Update item approvals
+            foreach ($itemApprovals as $itemApproval) {
+                $stockRequestItemId = $itemApproval['id'] ?? null;
+                $approvedQty = $itemApproval['quantity_approved'] ?? 0;
+                $approvalNotes = $itemApproval['approval_notes'] ?? null;
+                
+                if (!$stockRequestItemId) continue;
+                
                 $requestItem = $stockRequest->items()->where('id', $stockRequestItemId)->first();
-                if ($requestItem) {
-                    // Get stock info for unit cost
-                    $centralStock = $this->itemStockService->getCentralStock($requestItem->item_id);
-                    
-                    // Calculate the DIFFERENCE if already approved before
-                    $previousApprovedQty = $requestItem->quantity_approved ?? 0;
-                    $newApprovedQty = min($approvedQty, $requestItem->quantity_requested);
-                    
-                    $requestItem->update([
-                        'quantity_approved' => $newApprovedQty,
-                        'unit_cost' => $centralStock ? $centralStock->average_unit_cost : 0,
-                        'total_cost' => $newApprovedQty * ($centralStock ? $centralStock->average_unit_cost : 0),
-                    ]);
-                    
-                    // Adjust reserved stock if approved quantity is less than requested
-                    $qtyDifference = $requestItem->quantity_requested - $newApprovedQty;
-                    if ($qtyDifference > 0) {
-                        // Release the portion that was not approved
-                        $this->itemStockService->releaseReservedStock(
-                            $requestItem->item_id, 
-                            null, 
-                            $qtyDifference
-                        );
+                if (!$requestItem) continue;
+                
+                $totalRequested += $requestItem->quantity_requested;
+                
+                // Get stock info for unit cost
+                $centralStock = $this->itemStockService->getCentralStock($requestItem->item_id);
+                $availableStock = $centralStock ? $centralStock->available_quantity : 0;
+                
+                // Calculate the actual approved qty (cannot exceed available stock or requested)
+                $previousApprovedQty = $requestItem->quantity_approved ?? 0;
+                $maxApprovable = $requestItem->quantity_requested - $previousApprovedQty;
+                
+                // Limit by available stock if stock exists
+                if ($centralStock && $approvedQty > $availableStock) {
+                    $approvedQty = $availableStock;
+                    // Auto-set approval notes if stock is insufficient
+                    if (!$approvalNotes) {
+                        $approvalNotes = "Stok hanya tersedia {$availableStock} dari {$maxApprovable} yang diminta";
                     }
                 }
+                
+                // Ensure not exceeding max approvable
+                $approvedQty = min($approvedQty, $maxApprovable);
+                $newTotalApproved = $previousApprovedQty + $approvedQty;
+                $totalApproved += $newTotalApproved;
+                
+                // Check if partial approval
+                if ($newTotalApproved < $requestItem->quantity_requested) {
+                    $hasPartialApproval = true;
+                }
+                
+                // Reserve stock for the approved quantity (only for new approval)
+                if ($approvedQty > 0 && $centralStock) {
+                    try {
+                        $this->itemStockService->reserveStock(
+                            $requestItem->item_id,
+                            null, // central warehouse
+                            $approvedQty
+                        );
+                        
+                        Log::info("Stock reserved on approval", [
+                            'item_id' => $requestItem->item_id,
+                            'quantity' => $approvedQty,
+                        ]);
+                    } catch (\Exception $e) {
+                        // If reserve fails, set approved qty to 0 and add note
+                        $approvedQty = 0;
+                        $newTotalApproved = $previousApprovedQty;
+                        $approvalNotes = ($approvalNotes ? $approvalNotes . ". " : "") . "Gagal reserve stok: " . $e->getMessage();
+                        $hasPartialApproval = true;
+                        
+                        Log::warning("Failed to reserve stock on approval", [
+                            'item_id' => $requestItem->item_id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+                
+                $requestItem->update([
+                    'quantity_approved' => $newTotalApproved,
+                    'unit_cost' => $centralStock ? $centralStock->average_unit_cost : 0,
+                    'total_cost' => $newTotalApproved * ($centralStock ? $centralStock->average_unit_cost : 0),
+                    'approval_notes' => $approvalNotes,
+                ]);
             }
             
-            // Update stock request
+            // Update stock request status
             $stockRequest->update([
                 'status' => 'approved',
                 'approved_by' => $approvedBy,
@@ -159,6 +189,9 @@ class StockRequestService
                 'stock_request_id' => $stockRequest->id,
                 'request_number' => $stockRequest->request_number,
                 'approved_by' => $approvedBy,
+                'partial_approval' => $hasPartialApproval,
+                'total_approved' => $totalApproved,
+                'total_requested' => $totalRequested,
             ]);
             
             return $stockRequest->fresh('items.item');
@@ -167,6 +200,7 @@ class StockRequestService
 
     /**
      * Reject stock request
+     * Karena stok tidak di-reserve saat submit, tidak perlu release
      */
     public function reject(StockRequest $stockRequest, int $rejectedBy, string $rejectionReason): StockRequest
     {
@@ -175,14 +209,21 @@ class StockRequestService
         }
         
         return DB::transaction(function() use ($stockRequest, $rejectedBy, $rejectionReason) {
-            // Release ALL reserved stock when rejected
+            // Jika sudah ada yang di-approve sebelumnya (partial), release stok yang sudah di-reserve
             foreach ($stockRequest->items as $requestItem) {
-                if ($requestItem->quantity_requested > 0) {
-                    $this->itemStockService->releaseReservedStock(
-                        $requestItem->item_id, 
-                        null, 
-                        $requestItem->quantity_requested
-                    );
+                if (($requestItem->quantity_approved ?? 0) > 0) {
+                    try {
+                        $this->itemStockService->releaseReservedStock(
+                            $requestItem->item_id, 
+                            null, 
+                            $requestItem->quantity_approved
+                        );
+                    } catch (\Exception $e) {
+                        Log::warning("Failed to release reserved stock on rejection", [
+                            'item_id' => $requestItem->item_id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
                 }
             }
             
@@ -190,10 +231,10 @@ class StockRequestService
                 'status' => 'rejected',
                 'approved_by' => $rejectedBy,
                 'approved_at' => now(),
-                'notes' => ($stockRequest->notes ? $stockRequest->notes . "\n\n" : '') . "REJECTED: {$rejectionReason}",
+                'rejection_reason' => $rejectionReason,
             ]);
             
-            Log::info("Stock request rejected and stock released", [
+            Log::info("Stock request rejected", [
                 'stock_request_id' => $stockRequest->id,
                 'request_number' => $stockRequest->request_number,
                 'rejected_by' => $rejectedBy,
@@ -206,6 +247,7 @@ class StockRequestService
 
     /**
      * Complete stock request (issue items to department)
+     * Hanya issue item yang memiliki stok tersedia
      */
     public function complete(StockRequest $stockRequest, int $completedBy, array $issuedQuantities = []): StockRequest
     {
@@ -214,33 +256,70 @@ class StockRequestService
         }
         
         return DB::transaction(function() use ($stockRequest, $completedBy, $issuedQuantities) {
+            $hasIssuedItems = false;
+            $pendingItems = [];
+            
             foreach ($stockRequest->items as $requestItem) {
                 $itemId = $requestItem->item_id;
                 $quantityToIssue = $issuedQuantities[$itemId] ?? $requestItem->quantity_approved;
                 
-                if ($quantityToIssue > 0) {
-                    // Release reserved stock (use approved quantity, which was already reserved)
-                    $this->itemStockService->releaseReservedStock($itemId, null, $requestItem->quantity_approved);
-                    
-                    // Issue stock from central to department
-                    $transfer = $this->itemStockService->issueFromCentral(
-                        itemId: $itemId,
-                        toDepartmentId: $stockRequest->department_id,
-                        quantity: $quantityToIssue,
-                        userId: $completedBy,
-                        referenceType: StockRequest::class,
-                        referenceId: $stockRequest->id,
-                        notes: "Stock Request #{$stockRequest->request_number}"
-                    );
-                    
-                    // Update request item
-                    $requestItem->update([
-                        'quantity_issued' => $quantityToIssue,
-                    ]);
+                if ($quantityToIssue <= 0) {
+                    // Item is pending, skip
+                    continue;
                 }
+                
+                // Check if stock is available
+                $centralStock = $this->itemStockService->getCentralStock($itemId);
+                $stockOnHand = $centralStock ? $centralStock->quantity_on_hand : 0;
+                
+                if ($stockOnHand < $quantityToIssue) {
+                    // Not enough stock - issue what's available or skip
+                    if ($stockOnHand > 0) {
+                        $quantityToIssue = $stockOnHand;
+                    } else {
+                        // No stock at all, mark as pending
+                        $pendingItems[] = $requestItem->item->name ?? "Item #{$itemId}";
+                        $requestItem->update([
+                            'quantity_issued' => 0,
+                            'approval_notes' => ($requestItem->approval_notes ? $requestItem->approval_notes . ". " : "") . "Belum bisa diissue - stok kosong saat complete"
+                        ]);
+                        continue;
+                    }
+                }
+                
+                // Release reserved stock if any was reserved
+                if ($requestItem->quantity_approved > 0) {
+                    try {
+                        $this->itemStockService->releaseReservedStock($itemId, null, $requestItem->quantity_approved);
+                    } catch (\Exception $e) {
+                        // Ignore release error - stock might not have been reserved
+                        Log::warning("Failed to release reserved stock on complete", [
+                            'item_id' => $itemId,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+                
+                // Issue stock from central to department
+                $transfer = $this->itemStockService->issueFromCentral(
+                    itemId: $itemId,
+                    toDepartmentId: $stockRequest->department_id,
+                    quantity: $quantityToIssue,
+                    userId: $completedBy,
+                    referenceType: StockRequest::class,
+                    referenceId: $stockRequest->id,
+                    notes: "Stock Request #{$stockRequest->request_number}"
+                );
+                
+                // Update request item
+                $requestItem->update([
+                    'quantity_issued' => $quantityToIssue,
+                ]);
+                
+                $hasIssuedItems = true;
             }
             
-            // Update stock request
+            // Update stock request status
             $stockRequest->update([
                 'status' => 'completed',
                 'completed_by' => $completedBy,
@@ -251,6 +330,8 @@ class StockRequestService
                 'stock_request_id' => $stockRequest->id,
                 'request_number' => $stockRequest->request_number,
                 'completed_by' => $completedBy,
+                'has_issued_items' => $hasIssuedItems,
+                'pending_items' => $pendingItems,
             ]);
             
             return $stockRequest->fresh('items.item');

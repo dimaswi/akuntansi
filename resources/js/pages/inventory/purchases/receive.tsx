@@ -17,7 +17,7 @@ import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Package, ArrowLeft, CheckCircle, Clock } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface PurchaseItem {

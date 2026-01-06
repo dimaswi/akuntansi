@@ -248,6 +248,7 @@ class StockRequestController extends Controller
                 'unit_cost' => $item->unit_cost,
                 'total_cost' => $item->total_cost,
                 'notes' => $item->notes,
+                'approval_notes' => $item->approval_notes,
                 'central_stock' => $centralStock ? [
                     'quantity_on_hand' => $centralStock->quantity_on_hand,
                     'available_quantity' => $centralStock->available_quantity,
@@ -493,6 +494,7 @@ class StockRequestController extends Controller
                 'quantity_requested' => $item->quantity_requested,
                 'quantity_approved' => $item->quantity_approved ?? 0,  // Include already approved qty
                 'notes' => $item->notes,
+                'approval_notes' => $item->approval_notes,  // Include existing approval notes
                 'item' => [
                     'id' => $item->item->id,
                     'code' => $item->item->code,
@@ -548,22 +550,22 @@ class StockRequestController extends Controller
             $items = json_decode($items, true);
         }
         
-        $validated = $request->validate([
-            'approval_notes' => 'nullable|string',
-        ]);
-        
-        // Build approvals array [stock_request_item_id => quantity_approved]
-        $approvals = [];
+        // Items now contain: id (stock_request_item_id), quantity_approved, approval_notes
+        // Pass items directly to service (new format)
+        $itemApprovals = [];
         foreach ($items as $item) {
-            $approvals[$item['id']] = $item['quantity_approved'];  // id = stock_request_item id
+            $itemApprovals[] = [
+                'id' => $item['id'],
+                'quantity_approved' => $item['quantity_approved'] ?? 0,
+                'approval_notes' => $item['approval_notes'] ?? null,
+            ];
         }
         
         try {
             $this->stockRequestService->approve(
                 $stockRequest,
                 Auth::id(),
-                $approvals,
-                $validated['approval_notes'] ?? null
+                $itemApprovals
             );
             
             // Send notification to all users in the requesting department

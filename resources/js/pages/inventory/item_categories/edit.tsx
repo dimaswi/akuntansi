@@ -10,7 +10,7 @@ import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { ArrowLeft, Package, Save, Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from '@/lib/toast';
 import { route } from "ziggy-js";
 
 interface ItemCategory {
@@ -75,12 +75,9 @@ export default function ItemCategoryEdit() {
         e.preventDefault();
         
         put(route('item_categories.update', item_category.id), {
-            onError: () => {
-                toast.error('Gagal memperbarui kategori');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal memperbarui kategori');
             },
-            onSuccess: () => {
-                toast.success('Kategori berhasil diperbarui');
-            }
         });
     }
 

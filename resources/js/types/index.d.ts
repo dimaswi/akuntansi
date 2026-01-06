@@ -1,6 +1,13 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
 
+export interface Flash {
+    success?: string;
+    error?: string;
+    warning?: string;
+    info?: string;
+}
+
 export interface Auth {
     user: User;
     permissions: string[];
@@ -31,6 +38,7 @@ export interface SharedData {
     auth: Auth;
     ziggy: Config & { location: string };
     sidebarOpen: boolean;
+    flash: Flash;
     [key: string]: unknown;
 }
 

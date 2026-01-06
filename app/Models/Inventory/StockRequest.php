@@ -143,7 +143,8 @@ class StockRequest extends Model
         
         if ($this->status === 'approved') {
             // Check if there's remaining quantity to approve
-            return $this->items()->whereRaw('quantity_approved < quantity_requested')->exists();
+            // Use COALESCE to handle NULL quantity_approved
+            return $this->items()->whereRaw('COALESCE(quantity_approved, 0) < quantity_requested')->exists();
         }
         
         return false;
@@ -151,7 +152,12 @@ class StockRequest extends Model
 
     public function canComplete(): bool
     {
-        return $this->status === 'approved';
+        if ($this->status !== 'approved') {
+            return false;
+        }
+        
+        // Check if at least one item has been approved with qty > 0
+        return $this->items()->where('quantity_approved', '>', 0)->exists();
     }
 
     public function canCancel(): bool

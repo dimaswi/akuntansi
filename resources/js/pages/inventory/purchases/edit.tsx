@@ -26,7 +26,7 @@ import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ShoppingCart, Plus, Trash2, Save, ArrowLeft, Package } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface Supplier {

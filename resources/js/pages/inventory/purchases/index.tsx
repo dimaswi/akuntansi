@@ -35,7 +35,7 @@ import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ShoppingCart, Plus, Edit, Trash2, Eye, Search, Filter, CheckCircle, Clock, XCircle, Truck, Package } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface Purchase {
@@ -169,12 +169,11 @@ export default function PurchaseIndex() {
         if (purchaseToDelete) {
             router.delete(route('purchases.destroy', purchaseToDelete), {
                 onSuccess: () => {
-                    toast.success('Purchase order deleted successfully');
                     setDeleteDialogOpen(false);
                     setPurchaseToDelete(null);
                 },
-                onError: () => {
-                    toast.error('Failed to delete purchase order');
+                onError: (errors) => {
+                    toast.error(errors?.message || 'Failed to delete purchase order');
                 }
             });
         }

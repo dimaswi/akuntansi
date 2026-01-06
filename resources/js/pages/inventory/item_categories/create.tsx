@@ -10,7 +10,7 @@ import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { ArrowLeft, Package, Save, Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from '@/lib/toast';
 import { route } from "ziggy-js";
 
 interface ItemCategory {
@@ -73,12 +73,9 @@ export default function CreateItemCategory() {
         e.preventDefault();
         
         post(route('item_categories.store'), {
-            onError: () => {
-                toast.error('Gagal menambahkan kategori');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal menambahkan kategori');
             },
-            onSuccess: () => {
-                toast.success('Kategori berhasil ditambahkan');
-            }
         });
     }
 

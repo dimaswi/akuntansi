@@ -23,7 +23,7 @@ import {
     Package
 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 import { BreadcrumbItem, PageProps } from '@/types';
 
@@ -209,11 +209,8 @@ export default function PostToJournal() {
         }
 
         post(route('purchases.postToJournal'), {
-            onSuccess: () => {
-                toast.success('Purchase order berhasil di-post ke jurnal');
-            },
-            onError: () => {
-                toast.error('Gagal post ke jurnal');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal post ke jurnal');
             }
         });
     };

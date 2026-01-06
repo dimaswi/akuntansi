@@ -30,7 +30,7 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface Supplier {
@@ -83,13 +83,12 @@ export default function SuppliersShow() {
         try {
             router.delete(route('suppliers.destroy', supplier.id), {
                 onSuccess: () => {
-                    toast.success('Supplier berhasil dihapus');
                     setDeleteDialogOpen(false);
                     router.visit(route('suppliers.index'));
                 },
                 onError: (errors) => {
                     console.error('Delete errors:', errors);
-                    toast.error('Gagal menghapus supplier');
+                    toast.error(errors?.message || 'Gagal menghapus supplier');
                 },
             });
         } catch (error) {
@@ -102,12 +101,11 @@ export default function SuppliersShow() {
         try {
             router.post(route('suppliers.toggle-status', supplier.id), {}, {
                 onSuccess: () => {
-                    toast.success(`Supplier berhasil ${action}`);
                     setToggleDialogOpen(false);
                 },
                 onError: (errors) => {
                     console.error('Toggle status errors:', errors);
-                    toast.error(`Gagal ${action === 'diaktifkan' ? 'mengaktifkan' : 'menonaktifkan'} supplier`);
+                    toast.error(errors?.message || `Gagal ${action === 'diaktifkan' ? 'mengaktifkan' : 'menonaktifkan'} supplier`);
                 },
             });
         } catch (error) {

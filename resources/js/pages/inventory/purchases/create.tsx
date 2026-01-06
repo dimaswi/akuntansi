@@ -13,7 +13,7 @@ import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage, useForm } from '@inertiajs/react';
 import { ArrowLeft, Package, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface Supplier {
@@ -155,9 +155,6 @@ export default function PurchaseCreate() {
                 }))
             },
             {
-                onSuccess: () => {
-                    toast.success('Purchase order created successfully');
-                },
                 onError: (errors) => {
                     console.log('Validation errors:', errors);
                     if (errors.supplier_id) {

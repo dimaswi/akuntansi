@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { SharedData } from '@/types';
 import { PlusCircle, Search, X, Eye, CheckCircle, XCircle, FileBarChart, Filter } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface StockOpname {
     id: number;

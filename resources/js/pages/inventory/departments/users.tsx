@@ -8,7 +8,7 @@ import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, usePage } from "@inertiajs/react";
 import { ArrowLeft, Users, UserPlus, UserMinus, Building2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from '@/lib/toast';
 
 interface User {
     id: number;
@@ -77,11 +77,10 @@ export default function DepartmentUsers() {
             user_ids: selectedUsers,
         }, {
             onSuccess: () => {
-                toast.success('Users berhasil di-assign ke departemen');
                 setSelectedUsers([]);
             },
-            onError: () => {
-                toast.error('Gagal assign users');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal assign users');
             },
         });
     };
@@ -92,11 +91,8 @@ export default function DepartmentUsers() {
         router.post(route('departments.remove-user', department.id), {
             user_id: userId,
         }, {
-            onSuccess: () => {
-                toast.success('User berhasil dihapus dari departemen');
-            },
-            onError: () => {
-                toast.error('Gagal menghapus user');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal menghapus user');
             },
         });
     };

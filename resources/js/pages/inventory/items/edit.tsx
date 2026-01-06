@@ -19,7 +19,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage, useForm } from '@inertiajs/react';
 import { Package, Save, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 import { useState } from 'react';
 
@@ -184,11 +184,8 @@ export default function EditItem() {
         };
 
         put(route('items.update', item.id), {
-            onSuccess: () => {
-                toast.success('Item berhasil diupdate');
-            },
-            onError: () => {
-                toast.error('Gagal mengupdate item. Periksa data yang dimasukkan.');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Gagal mengupdate item. Periksa data yang dimasukkan.');
             },
         });
     };

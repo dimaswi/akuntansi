@@ -24,7 +24,7 @@ import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, usePage } from "@inertiajs/react";
 import { Edit3, PlusCircle, Search, Trash, X, Loader2, Building2, Filter, Package, Users } from "lucide-react";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from '@/lib/toast';
 import { route } from "ziggy-js";
 
 interface Department {
@@ -192,11 +192,10 @@ export default function DepartmentIndex() {
         try {
             router.delete(route('departments.destroy', deleteDialog.department.id), {
                 onSuccess: () => {
-                    toast.success('Departemen berhasil dihapus');
                     setDeleteDialog({ open: false, department: null, loading: false });
                 },
-                onError: () => {
-                    toast.error('Gagal menghapus departemen');
+                onError: (errors) => {
+                    toast.error(errors?.message || 'Gagal menghapus departemen');
                     setDeleteDialog((prev) => ({ ...prev, loading: false }));
                 },
             });

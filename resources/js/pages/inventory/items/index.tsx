@@ -24,7 +24,7 @@ import { BreadcrumbItem, SharedData } from "@/types";
 import { Head, router, usePage } from "@inertiajs/react";
 import { Edit3, PlusCircle, Search, Trash, X, Loader2, Eye, Package, Filter, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from '@/lib/toast';
 import { route } from "ziggy-js";
 
 interface Department {
@@ -385,11 +385,10 @@ export default function ItemsIndex() {
         try {
             router.delete(route('items.destroy', deleteDialog.item.id), {
                 onSuccess: () => {
-                    toast.success('Item berhasil dihapus');
                     setDeleteDialog({ open: false, item: null, loading: false });
                 },
-                onError: () => {
-                    toast.error('Gagal menghapus item');
+                onError: (errors) => {
+                    toast.error(errors?.message || 'Gagal menghapus item');
                     setDeleteDialog((prev) => ({ ...prev, loading: false }));
                 },
             });

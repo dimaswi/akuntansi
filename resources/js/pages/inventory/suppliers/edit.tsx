@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { Truck, Save, ArrowLeft, AlertCircle, Package } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface Supplier {
@@ -67,12 +67,11 @@ export default function SuppliersEdit() {
         
         put(route('suppliers.update', supplier.id), {
             onSuccess: () => {
-                toast.success('Supplier berhasil diperbarui');
                 router.visit(route('suppliers.index'));
             },
             onError: (errors) => {
                 console.error('Validation errors:', errors);
-                toast.error('Gagal memperbarui supplier. Periksa data yang diisi.');
+                toast.error(errors?.message || 'Gagal memperbarui supplier. Periksa data yang diisi.');
             },
         });
     };

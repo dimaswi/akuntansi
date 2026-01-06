@@ -17,7 +17,7 @@ import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle, Clock, DollarSign, Edit, Package, Send, ShoppingCart, Trash2, Truck, XCircle, BookOpen } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 import { usePermission } from '@/hooks/use-permission';
 
@@ -148,11 +148,10 @@ export default function PurchaseShow() {
     const handleDelete = () => {
         router.delete(route('purchases.destroy', purchase.id), {
             onSuccess: () => {
-                toast.success('Purchase order deleted successfully');
                 setDeleteDialogOpen(false);
             },
-            onError: () => {
-                toast.error('Failed to delete purchase order');
+            onError: (errors) => {
+                toast.error(errors?.message || 'Failed to delete purchase order');
             },
         });
     };
@@ -162,11 +161,8 @@ export default function PurchaseShow() {
             route('purchases.submit', purchase.id),
             {},
             {
-                onSuccess: () => {
-                    toast.success('Purchase order submitted for approval');
-                },
-                onError: () => {
-                    toast.error('Failed to submit purchase order');
+                onError: (errors) => {
+                    toast.error(errors?.message || 'Failed to submit purchase order');
                 },
             },
         );
@@ -177,11 +173,8 @@ export default function PurchaseShow() {
             route('purchases.approve', purchase.id),
             {},
             {
-                onSuccess: () => {
-                    toast.success('Purchase order approved successfully');
-                },
-                onError: () => {
-                    toast.error('Failed to approve purchase order');
+                onError: (errors) => {
+                    toast.error(errors?.message || 'Failed to approve purchase order');
                 },
             },
         );
@@ -192,11 +185,8 @@ export default function PurchaseShow() {
             route('purchases.markAsOrdered', purchase.id),
             {},
             {
-                onSuccess: () => {
-                    toast.success('Purchase order marked as ordered');
-                },
-                onError: () => {
-                    toast.error('Failed to mark as ordered');
+                onError: (errors) => {
+                    toast.error(errors?.message || 'Failed to mark as ordered');
                 },
             },
         );
@@ -208,11 +198,10 @@ export default function PurchaseShow() {
             {},
             {
                 onSuccess: () => {
-                    toast.success('Purchase order cancelled successfully');
                     setCancelDialogOpen(false);
                 },
-                onError: () => {
-                    toast.error('Failed to cancel purchase order');
+                onError: (errors) => {
+                    toast.error(errors?.message || 'Failed to cancel purchase order');
                 },
             },
         );
