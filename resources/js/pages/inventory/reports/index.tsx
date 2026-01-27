@@ -259,6 +259,10 @@ export default function Index({
             newColumns = ['rank', 'item_code', 'item_name', 'category_name', 'total_requests', 'total_quantity_requested', 'total_quantity_approved', 'approval_rate'];
         } else if (type === 'purchase_item_rankings') {
             newColumns = ['rank', 'item_code', 'item_name', 'category_name', 'total_purchases', 'total_quantity', 'total_amount', 'avg_unit_price'];
+        } else if (type === 'stock_request_items') {
+            newColumns = ['item_name', 'department_name', 'quantity_requested'];
+        } else if (type === 'purchase_items') {
+            newColumns = ['item_name', 'supplier_name', 'quantity_ordered', 'total_price'];
         } else {
             newColumns = ['purchase_number', 'purchase_date', 'supplier_name', 'status', 'total_amount', 'items_count'];
         }
@@ -311,7 +315,7 @@ export default function Index({
     };
 
     const getStatusOptions = () => {
-        if (['stock_requests', 'stock_request_rankings', 'stock_request_item_rankings'].includes(localFilters.report_type)) {
+        if (['stock_requests', 'stock_request_items', 'stock_request_rankings', 'stock_request_item_rankings'].includes(localFilters.report_type)) {
             return [
                 { value: '', label: 'Semua Status' },
                 { value: 'draft', label: 'Draft' },
@@ -357,11 +361,11 @@ export default function Index({
 
         // Handle numeric columns for ranking report
         if (column === 'rank' || column === 'total_requests' || column === 'total_approved') {
-            return value !== undefined && value !== null ? value.toLocaleString('id-ID') : '-';
+            return value !== undefined && value !== null ? Math.floor(value).toLocaleString('id-ID', { maximumFractionDigits: 0 }) : '-';
         }
 
-        if (column.includes('quantity') || column.includes('items_count') || column.includes('total_items')) {
-            return (value || 0).toLocaleString('id-ID');
+        if (column.includes('quantity') || column.includes('items_count') || column.includes('total_items') || column === 'total_purchases') {
+            return Math.floor(value || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
         }
 
         // Handle approval_rate which already has % suffix
@@ -413,6 +417,9 @@ export default function Index({
                                 <SelectItem value="stock_requests">
                                     Laporan Permintaan Stok
                                 </SelectItem>
+                                <SelectItem value="stock_request_items">
+                                    Laporan Detail Item Permintaan
+                                </SelectItem>
                                 <SelectItem value="stock_request_rankings">
                                     Ranking Permintaan per Departemen
                                 </SelectItem>
@@ -421,6 +428,9 @@ export default function Index({
                                 </SelectItem>
                                 <SelectItem value="purchases">
                                     Laporan Pembelian
+                                </SelectItem>
+                                <SelectItem value="purchase_items">
+                                    Laporan Detail Item Pembelian
                                 </SelectItem>
                                 <SelectItem value="purchase_item_rankings">
                                     Ranking Item Paling Banyak Dibeli
@@ -465,8 +475,8 @@ export default function Index({
 
                                     {/* Conditional Filters based on report type */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {/* Department filter - for stock_requests and stock_request_item_rankings */}
-                                        {['stock_requests', 'stock_request_item_rankings'].includes(localFilters.report_type) && (
+                                        {/* Department filter - for stock_requests, stock_request_items and stock_request_item_rankings */}
+                                        {['stock_requests', 'stock_request_items', 'stock_request_item_rankings'].includes(localFilters.report_type) && (
                                             <div className="grid gap-2">
                                                 <Label>Departemen</Label>
                                                 <Popover open={openDepartment} onOpenChange={setOpenDepartment}>
@@ -528,8 +538,8 @@ export default function Index({
                                             </div>
                                         )}
 
-                                        {/* Supplier filter - for purchases and purchase_item_rankings */}
-                                        {['purchases', 'purchase_item_rankings'].includes(localFilters.report_type) && (
+                                        {/* Supplier filter - for purchases, purchase_items and purchase_item_rankings */}
+                                        {['purchases', 'purchase_items', 'purchase_item_rankings'].includes(localFilters.report_type) && (
                                             <div className="grid gap-2">
                                                 <Label>Supplier</Label>
                                                 <Popover open={openSupplier} onOpenChange={setOpenSupplier}>
@@ -591,8 +601,8 @@ export default function Index({
                                             </div>
                                         )}
 
-                                        {/* Status filter - for stock_requests and purchases only */}
-                                        {(localFilters.report_type === 'stock_requests' || localFilters.report_type === 'purchases') && (
+                                        {/* Status filter - for stock_requests, stock_request_items, purchases, purchase_items */}
+                                        {['stock_requests', 'stock_request_items', 'purchases', 'purchase_items'].includes(localFilters.report_type) && (
                                             <div className="grid gap-2">
                                                 <Label>Status</Label>
                                                 <Popover open={openStatus} onOpenChange={setOpenStatus}>
@@ -641,8 +651,8 @@ export default function Index({
                                             </div>
                                         )}
 
-                                        {/* Item filter - for stock_requests and purchases only */}
-                                        {(localFilters.report_type === 'stock_requests' || localFilters.report_type === 'purchases') && (
+                                        {/* Item filter - for stock_requests, stock_request_items, purchases, purchase_items */}
+                                        {['stock_requests', 'stock_request_items', 'purchases', 'purchase_items'].includes(localFilters.report_type) && (
                                             <div className="grid gap-2">
                                                 <Label>Item</Label>
                                                 <Popover open={openItem} onOpenChange={setOpenItem}>

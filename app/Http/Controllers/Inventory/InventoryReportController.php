@@ -39,6 +39,8 @@ class InventoryReportController extends Controller
             'stock_request_rankings' => 'department_rankings',
             'stock_request_item_rankings' => 'item_request_rankings',
             'purchase_item_rankings' => 'item_purchase_rankings',
+            'stock_request_items' => 'stock_request_items',
+            'purchase_items' => 'purchase_items',
             default => $reportType,
         };
         
@@ -81,6 +83,26 @@ class InventoryReportController extends Controller
                 'per_page' => count($rankingsData),
                 'total' => count($rankingsData),
             ];
+        } elseif ($reportType === 'stock_request_items') {
+            // Show detail stock request items
+            $reportData = $this->getStockRequestItemsReport(
+                $user,
+                $dateFrom,
+                $dateTo,
+                $departmentId,
+                $status,
+                $itemId
+            );
+        } elseif ($reportType === 'purchase_items') {
+            // Show detail purchase items
+            $reportData = $this->getPurchaseItemsReport(
+                $user,
+                $dateFrom,
+                $dateTo,
+                $supplierId,
+                $status,
+                $itemId
+            );
         } elseif ($reportType === 'stock_requests') {
             $reportData = $this->getStockRequestsReport(
                 $user,
@@ -270,6 +292,102 @@ class InventoryReportController extends Controller
     }
 
     /**
+     * Get stock request items detail report data
+     */
+    private function getStockRequestItemsReport($user, $dateFrom, $dateTo, $departmentId, $status, $itemId)
+    {
+        $query = \App\Models\Inventory\StockRequestItem::with([
+            'stockRequest.department',
+            'item.category'
+        ])->whereHas('stockRequest', function ($q) use ($user, $dateFrom, $dateTo, $departmentId, $status) {
+            // Apply user department filter if not logistics
+            if (!$user->isLogistics() && $user->department_id) {
+                $q->where('department_id', $user->department_id);
+            }
+
+            if ($dateFrom) $q->whereDate('request_date', '>=', $dateFrom);
+            if ($dateTo) $q->whereDate('request_date', '<=', $dateTo);
+            if ($departmentId) $q->where('department_id', $departmentId);
+            if ($status) $q->where('status', $status);
+        });
+
+        if ($itemId) {
+            $query->where('item_id', $itemId);
+        }
+
+        // Order by request date desc
+        $query->orderBy(
+            StockRequest::select('request_date')
+                ->whereColumn('stock_requests.id', 'stock_request_items.stock_request_id')
+                ->limit(1),
+            'desc'
+        );
+
+        return $query->paginate(20)->through(function ($item) {
+            return [
+                'id' => $item->id,
+                'request_number' => $item->stockRequest->request_number,
+                'request_date' => $item->stockRequest->request_date,
+                'item_code' => $item->item->code,
+                'item_name' => $item->item->name,
+                'category_name' => $item->item->category?->name ?? '-',
+                'department_name' => $item->stockRequest->department->name,
+                'quantity_requested' => $item->quantity_requested,
+                'quantity_approved' => $item->quantity_approved,
+                'quantity_fulfilled' => $item->quantity_fulfilled,
+                'status' => $item->stockRequest->status,
+                'unit_name' => $item->item->unit_of_measure ?? '-',
+            ];
+        });
+    }
+
+    /**
+     * Get purchase items detail report data
+     */
+    private function getPurchaseItemsReport($user, $dateFrom, $dateTo, $supplierId, $status, $itemId)
+    {
+        $query = \App\Models\Inventory\PurchaseItem::with([
+            'purchase.supplier',
+            'item.category'
+        ])->whereHas('purchase', function ($q) use ($dateFrom, $dateTo, $supplierId, $status) {
+            if ($dateFrom) $q->whereDate('purchase_date', '>=', $dateFrom);
+            if ($dateTo) $q->whereDate('purchase_date', '<=', $dateTo);
+            if ($supplierId) $q->where('supplier_id', $supplierId);
+            if ($status) $q->where('status', $status);
+        });
+
+        if ($itemId) {
+            $query->where('item_id', $itemId);
+        }
+
+        // Order by purchase date desc
+        $query->orderBy(
+            Purchase::select('purchase_date')
+                ->whereColumn('purchases.id', 'purchase_items.purchase_id')
+                ->limit(1),
+            'desc'
+        );
+
+        return $query->paginate(20)->through(function ($item) {
+            return [
+                'id' => $item->id,
+                'purchase_number' => $item->purchase->purchase_number,
+                'purchase_date' => $item->purchase->purchase_date,
+                'item_code' => $item->item->code,
+                'item_name' => $item->item->name,
+                'category_name' => $item->item->category?->name ?? '-',
+                'supplier_name' => $item->purchase->supplier->name,
+                'quantity_ordered' => $item->quantity_ordered,
+                'quantity_received' => $item->quantity_received,
+                'unit_price' => $item->unit_price,
+                'total_price' => $item->total_price,
+                'status' => $item->purchase->status,
+                'unit_name' => $item->item->unit_of_measure ?? '-',
+            ];
+        });
+    }
+
+    /**
      * Get default columns for each report type
      */
     private function getDefaultColumns($reportType)
@@ -280,6 +398,8 @@ class InventoryReportController extends Controller
             'department_rankings' => 'rank,department_name,total_requests,total_items,total_approved,approval_rate',
             'item_request_rankings' => 'rank,item_code,item_name,category_name,total_requests,total_quantity_requested,total_quantity_approved,approval_rate',
             'item_purchase_rankings' => 'rank,item_code,item_name,category_name,total_purchases,total_quantity,total_amount,avg_unit_price',
+            'stock_request_items' => 'item_name,department_name,quantity_requested',
+            'purchase_items' => 'item_name,supplier_name,quantity_ordered,total_price',
         ];
 
         return $defaults[$reportType] ?? '';
@@ -351,6 +471,33 @@ class InventoryReportController extends Controller
                 ['value' => 'total_amount', 'label' => 'Total Nilai'],
                 ['value' => 'avg_unit_price', 'label' => 'Rata-rata Harga'],
             ],
+            'stock_request_items' => [
+                ['value' => 'request_number', 'label' => 'No. Permintaan'],
+                ['value' => 'request_date', 'label' => 'Tanggal'],
+                ['value' => 'item_code', 'label' => 'Kode Item'],
+                ['value' => 'item_name', 'label' => 'Nama Barang'],
+                ['value' => 'category_name', 'label' => 'Kategori'],
+                ['value' => 'department_name', 'label' => 'Unit Peminta'],
+                ['value' => 'quantity_requested', 'label' => 'Jumlah Diminta'],
+                ['value' => 'quantity_approved', 'label' => 'Jumlah Disetujui'],
+                ['value' => 'quantity_fulfilled', 'label' => 'Jumlah Dipenuhi'],
+                ['value' => 'unit_name', 'label' => 'Satuan'],
+                ['value' => 'status', 'label' => 'Status'],
+            ],
+            'purchase_items' => [
+                ['value' => 'purchase_number', 'label' => 'No. Pembelian'],
+                ['value' => 'purchase_date', 'label' => 'Tanggal'],
+                ['value' => 'item_code', 'label' => 'Kode Item'],
+                ['value' => 'item_name', 'label' => 'Nama Barang'],
+                ['value' => 'category_name', 'label' => 'Kategori'],
+                ['value' => 'supplier_name', 'label' => 'Nama Supplier'],
+                ['value' => 'quantity_ordered', 'label' => 'Jumlah Barang'],
+                ['value' => 'quantity_received', 'label' => 'Jumlah Diterima'],
+                ['value' => 'unit_price', 'label' => 'Harga Satuan'],
+                ['value' => 'total_price', 'label' => 'Total Harga'],
+                ['value' => 'unit_name', 'label' => 'Satuan'],
+                ['value' => 'status', 'label' => 'Status'],
+            ],
         ];
 
         return $columns[$reportType] ?? [];
@@ -408,6 +555,26 @@ class InventoryReportController extends Controller
             // Use default columns if none selected
             if (empty($selectedColumns)) {
                 $selectedColumns = ['rank', 'item_code', 'item_name', 'category_name', 'total_purchases', 'total_quantity', 'total_amount', 'avg_unit_price'];
+            }
+        } elseif ($reportType === 'stock_request_items') {
+            // Export Stock Request Items Detail
+            $data = $this->getStockRequestItemsExportData($user, $dateFrom, $dateTo, $departmentId, $status, $itemId);
+            $fileName = 'laporan-detail-item-permintaan-' . date('Y-m-d');
+            $title = 'Laporan Detail Item Permintaan';
+            $reportTypeForExport = 'stock_request_items';
+            // Use default columns if none selected
+            if (empty($selectedColumns)) {
+                $selectedColumns = ['item_name', 'department_name', 'quantity_requested'];
+            }
+        } elseif ($reportType === 'purchase_items') {
+            // Export Purchase Items Detail
+            $data = $this->getPurchaseItemsExportData($user, $dateFrom, $dateTo, $supplierId, $status, $itemId);
+            $fileName = 'laporan-detail-item-pembelian-' . date('Y-m-d');
+            $title = 'Laporan Detail Item Pembelian';
+            $reportTypeForExport = 'purchase_items';
+            // Use default columns if none selected
+            if (empty($selectedColumns)) {
+                $selectedColumns = ['item_name', 'supplier_name', 'quantity_ordered', 'total_price'];
             }
         } else {
             // Regular export
@@ -660,6 +827,82 @@ class InventoryReportController extends Controller
                 'approved_by' => $purchase->approver?->name,
                 'approved_at' => $purchase->approved_at,
                 'completed_at' => $purchase->completed_at,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Get stock request items export data
+     */
+    private function getStockRequestItemsExportData($user, $dateFrom, $dateTo, $departmentId, $status, $itemId)
+    {
+        $query = \App\Models\Inventory\StockRequestItem::with([
+            'stockRequest.department',
+            'item.category'
+        ])->whereHas('stockRequest', function ($q) use ($user, $dateFrom, $dateTo, $departmentId, $status) {
+            if (!$user->isLogistics() && $user->department_id) {
+                $q->where('department_id', $user->department_id);
+            }
+            if ($dateFrom) $q->whereDate('request_date', '>=', $dateFrom);
+            if ($dateTo) $q->whereDate('request_date', '<=', $dateTo);
+            if ($departmentId) $q->where('department_id', $departmentId);
+            if ($status) $q->where('status', $status);
+        });
+
+        if ($itemId) {
+            $query->where('item_id', $itemId);
+        }
+
+        return $query->get()->map(function ($item) {
+            return [
+                'request_number' => $item->stockRequest->request_number,
+                'request_date' => $item->stockRequest->request_date,
+                'item_code' => $item->item->code,
+                'item_name' => $item->item->name,
+                'category_name' => $item->item->category?->name ?? '-',
+                'department_name' => $item->stockRequest->department->name,
+                'quantity_requested' => $item->quantity_requested,
+                'quantity_approved' => $item->quantity_approved,
+                'quantity_fulfilled' => $item->quantity_fulfilled,
+                'unit_name' => $item->item->unit_of_measure ?? '-',
+                'status' => $item->stockRequest->status,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Get purchase items export data
+     */
+    private function getPurchaseItemsExportData($user, $dateFrom, $dateTo, $supplierId, $status, $itemId)
+    {
+        $query = \App\Models\Inventory\PurchaseItem::with([
+            'purchase.supplier',
+            'item.category'
+        ])->whereHas('purchase', function ($q) use ($dateFrom, $dateTo, $supplierId, $status) {
+            if ($dateFrom) $q->whereDate('purchase_date', '>=', $dateFrom);
+            if ($dateTo) $q->whereDate('purchase_date', '<=', $dateTo);
+            if ($supplierId) $q->where('supplier_id', $supplierId);
+            if ($status) $q->where('status', $status);
+        });
+
+        if ($itemId) {
+            $query->where('item_id', $itemId);
+        }
+
+        return $query->get()->map(function ($item) {
+            return [
+                'purchase_number' => $item->purchase->purchase_number,
+                'purchase_date' => $item->purchase->purchase_date,
+                'item_code' => $item->item->code,
+                'item_name' => $item->item->name,
+                'category_name' => $item->item->category?->name ?? '-',
+                'supplier_name' => $item->purchase->supplier->name,
+                'quantity_ordered' => $item->quantity_ordered,
+                'quantity_received' => $item->quantity_received,
+                'unit_price' => $item->unit_price,
+                'total_price' => $item->total_price,
+                'unit_name' => $item->item->unit_of_measure ?? '-',
+                'status' => $item->purchase->status,
             ];
         })->toArray();
     }
