@@ -198,6 +198,12 @@ const mainNavItems: NavItem[] = [
                 permission: 'inventory.departments.view',
             },
             {
+                title: 'Laporan Inventory',
+                href: '/inventory-reports',
+                icon: FileBarChart,
+                permission: 'inventory.reports.view',
+            },
+            {
                 title: 'Laporan Kepatuhan Opname',
                 href: '/reports/stock-opname-compliance',
                 icon: BarChart,

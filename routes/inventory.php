@@ -266,4 +266,17 @@ Route::middleware(['auth'])->group(function () {
             ->name('opname-compliance.export')
             ->middleware('permission:inventory.stock-opnames.view');
     });
+
+    // =============================================
+    // INVENTORY REPORTS
+    // =============================================
+    Route::prefix('inventory-reports')->name('inventory-reports.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Inventory\InventoryReportController::class, 'index'])
+            ->name('index')
+            ->middleware('permission:inventory.reports.view');
+        
+        Route::get('/export', [\App\Http\Controllers\Inventory\InventoryReportController::class, 'export'])
+            ->name('export')
+            ->middleware('permission:inventory.reports.export');
+    });
 });

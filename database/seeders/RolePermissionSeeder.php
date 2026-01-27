@@ -178,6 +178,10 @@ class RolePermissionSeeder extends Seeder
             // Inventory - Department Stocks
             ['name' => 'inventory.department-stocks.view', 'display_name' => 'Lihat Stok Department', 'description' => 'Dapat melihat stok per department', 'module' => 'Stok Department'],
             
+            // Inventory - Reports
+            ['name' => 'inventory.reports.view', 'display_name' => 'Lihat Laporan Inventory', 'description' => 'Dapat melihat laporan inventory (permintaan stok, pembelian, dll)', 'module' => 'Laporan Inventory'],
+            ['name' => 'inventory.reports.export', 'display_name' => 'Export Laporan Inventory', 'description' => 'Dapat export laporan inventory ke Excel/PDF', 'module' => 'Laporan Inventory'],
+            
             // Inventory - Requisitions (OLD - Keep for backward compatibility)
             ['name' => 'inventory.requisitions.view', 'display_name' => 'Lihat Requisitions', 'description' => 'Dapat melihat daftar requisitions', 'module' => 'Requisitions (Deprecated)'],
             ['name' => 'inventory.requisitions.create', 'display_name' => 'Tambah Requisitions', 'description' => 'Dapat menambah requisition baru', 'module' => 'Requisitions (Deprecated)'],
