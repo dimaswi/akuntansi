@@ -47,7 +47,7 @@ class RevisionApprovalController extends Controller
             $query->whereDate('revised_at', '<=', $request->date_to);
         }
 
-        $revisions = $query->paginate(15);
+        $revisions = $query->paginate(10);
 
         // Get statistics
         $stats = [

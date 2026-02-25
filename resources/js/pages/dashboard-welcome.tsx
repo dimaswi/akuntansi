@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, type BreadcrumbItem } from '@/types';
+import { LayoutDashboard } from 'lucide-react';
 
 interface DashboardWelcomeProps {
     auth: {
@@ -18,16 +18,21 @@ export default function DashboardWelcome({ auth }: DashboardWelcomeProps) {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title="Dashboard" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-2xl">Selamat Datang, {auth.user.name}!</CardTitle>
-                            <CardDescription>
-                                Sistem Back-Office Klinik Rawat Inap Utama Muhammadiyah Kedungadem
-                            </CardDescription>
-                        </CardHeader>
-                    </Card>
+            <div className="flex flex-col gap-6 p-6">
+                <div className="flex items-center gap-3 pb-4 border-b">
+                    <div className="p-2 rounded-lg bg-muted">
+                        <LayoutDashboard className="h-5 w-5 text-foreground" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-semibold">Selamat Datang, {auth.user.name}</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Sistem Back-Office Klinik Rawat Inap Utama Muhammadiyah Kedungadem
+                        </p>
+                    </div>
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                    Gunakan menu di sidebar untuk mengakses fitur sistem.
                 </div>
             </div>
         </AppLayout>

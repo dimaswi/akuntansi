@@ -1,21 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import AppLayout from "@/layouts/app-layout";
-import { BreadcrumbItem } from "@/types";
-import { Head, router, useForm, usePage } from "@inertiajs/react";
-import { ArrowLeft, Save, Landmark } from "lucide-react";
-import { toast } from "sonner";
-import { route } from "ziggy-js";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/app-layout';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { ArrowLeft, Landmark, Save } from 'lucide-react';
+import { toast } from 'sonner';
+import { route } from 'ziggy-js';
 
 interface BankAccount {
     id: number;
@@ -31,55 +24,55 @@ interface Props {
 }
 
 const breadcrumbs = [
-    { title: <Landmark className="h-4 w-4" />, href: route("kas.index") },
-    { title: "Transaksi Bank", href: route("kas.bank-transactions.index") },
-    { title: "Tambah Transaksi", href: "#" },
+    { title: <Landmark className="h-4 w-4" />, href: route('kas.index') },
+    { title: 'Transaksi Bank', href: route('kas.bank-transactions.index') },
+    { title: 'Tambah Transaksi', href: '#' },
 ];
 
 export default function CreateBankTransaction() {
     const { bank_accounts } = usePage<Props>().props;
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        nomor_transaksi: "",
+        nomor_transaksi: '',
         tanggal_transaksi: new Date().toISOString().split('T')[0],
-        tanggal_efektif: "",
-        bank_account_id: "",
-        jenis_transaksi: "",
-        jumlah: "",
-        kategori_transaksi: "",
-        keterangan: "",
-        pihak_terkait: "",
-        nomor_referensi: "",
-        status: "draft",
+        tanggal_efektif: '',
+        bank_account_id: '',
+        jenis_transaksi: '',
+        jumlah: '',
+        kategori_transaksi: '',
+        keterangan: '',
+        pihak_terkait: '',
+        nomor_referensi: '',
+        status: 'draft',
     });
 
-    const selectedBankAccount = bank_accounts.find(account => account.id.toString() === data.bank_account_id);
+    const selectedBankAccount = bank_accounts.find((account) => account.id.toString() === data.bank_account_id);
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
 
-        post(route("kas.bank-transactions.store"), {
+        post(route('kas.bank-transactions.store'), {
             onSuccess: () => {
-                toast.success("Transaksi bank berhasil ditambahkan");
+                toast.success('Transaksi bank berhasil ditambahkan');
                 // Reset form untuk membuat transaksi baru
                 reset();
                 setData({
-                    nomor_transaksi: "",
+                    nomor_transaksi: '',
                     tanggal_transaksi: new Date().toISOString().split('T')[0],
-                    tanggal_efektif: "",
-                    bank_account_id: "",
-                    jenis_transaksi: "",
-                    jumlah: "",
-                    kategori_transaksi: "",
-                    keterangan: "",
-                    pihak_terkait: "",
-                    nomor_referensi: "",
-                    status: "draft",
+                    tanggal_efektif: '',
+                    bank_account_id: '',
+                    jenis_transaksi: '',
+                    jumlah: '',
+                    kategori_transaksi: '',
+                    keterangan: '',
+                    pihak_terkait: '',
+                    nomor_referensi: '',
+                    status: 'draft',
                 });
             },
             onError: (errors) => {
-                console.error("Form errors:", errors);
-                toast.error("Terjadi kesalahan saat menyimpan data");
+                console.error('Form errors:', errors);
+                toast.error('Terjadi kesalahan saat menyimpan data');
             },
         });
     }
@@ -87,22 +80,22 @@ export default function CreateBankTransaction() {
     function submitAndGoBack(e: React.FormEvent) {
         e.preventDefault();
 
-        post(route("kas.bank-transactions.store"), {
+        post(route('kas.bank-transactions.store'), {
             onSuccess: () => {
-                toast.success("Transaksi bank berhasil ditambahkan");
-                router.visit(route("kas.bank-transactions.index"));
+                toast.success('Transaksi bank berhasil ditambahkan');
+                router.visit(route('kas.bank-transactions.index'));
             },
             onError: (errors) => {
-                console.error("Form errors:", errors);
-                toast.error("Terjadi kesalahan saat menyimpan data");
+                console.error('Form errors:', errors);
+                toast.error('Terjadi kesalahan saat menyimpan data');
             },
         });
     }
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
         }).format(amount);
     };
 
@@ -111,37 +104,31 @@ export default function CreateBankTransaction() {
             <Head title="Tambah Transaksi Bank" />
 
             <div className="p-4">
-                <div className="flex items-center justify-between pb-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="p-2 rounded-lg">
-                            <Landmark className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Tambah Transaksi Bank</h1>
-                        </div>
-                    </div>
-                    <Button
-                        variant="outline"
-                        onClick={() => router.visit(route("kas.bank-transactions.index"))}
-                    >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Kembali
-                    </Button>
-                </div>
-
                 <form onSubmit={submit} className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                         {/* Main Form */}
                         <div className="lg:col-span-2">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Informasi Transaksi</CardTitle>
-                                    <CardDescription>
-                                        Isi informasi lengkap transaksi bank
-                                    </CardDescription>
+                                    <div className='flex items-center gap-2'>
+                                        <div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => window.history.back()}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <ArrowLeft className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div>
+                                            <CardTitle>Informasi Transaksi</CardTitle>
+                                            <CardDescription>Isi informasi lengkap transaksi bank</CardDescription>
+                                        </div>
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                         <div className="space-y-2">
                                             <Label htmlFor="nomor_transaksi">
                                                 Nomor Transaksi <span className="text-red-500">*</span>
@@ -150,13 +137,11 @@ export default function CreateBankTransaction() {
                                                 id="nomor_transaksi"
                                                 type="text"
                                                 value={data.nomor_transaksi}
-                                                onChange={(e) => setData("nomor_transaksi", e.target.value)}
+                                                onChange={(e) => setData('nomor_transaksi', e.target.value)}
                                                 placeholder="Masukkan nomor transaksi"
-                                                className={errors.nomor_transaksi ? "border-red-500" : ""}
+                                                className={errors.nomor_transaksi ? 'border-red-500' : ''}
                                             />
-                                            {errors.nomor_transaksi && (
-                                                <p className="text-sm text-red-500">{errors.nomor_transaksi}</p>
-                                            )}
+                                            {errors.nomor_transaksi && <p className="text-sm text-red-500">{errors.nomor_transaksi}</p>}
                                         </div>
 
                                         <div className="space-y-2">
@@ -167,12 +152,10 @@ export default function CreateBankTransaction() {
                                                 id="tanggal_transaksi"
                                                 type="date"
                                                 value={data.tanggal_transaksi}
-                                                onChange={(e) => setData("tanggal_transaksi", e.target.value)}
-                                                className={errors.tanggal_transaksi ? "border-red-500" : ""}
+                                                onChange={(e) => setData('tanggal_transaksi', e.target.value)}
+                                                className={errors.tanggal_transaksi ? 'border-red-500' : ''}
                                             />
-                                            {errors.tanggal_transaksi && (
-                                                <p className="text-sm text-red-500">{errors.tanggal_transaksi}</p>
-                                            )}
+                                            {errors.tanggal_transaksi && <p className="text-sm text-red-500">{errors.tanggal_transaksi}</p>}
                                         </div>
 
                                         <div className="space-y-2">
@@ -181,16 +164,12 @@ export default function CreateBankTransaction() {
                                                 id="tanggal_efektif"
                                                 type="date"
                                                 value={data.tanggal_efektif}
-                                                onChange={(e) => setData("tanggal_efektif", e.target.value)}
-                                                className={errors.tanggal_efektif ? "border-red-500" : ""}
+                                                onChange={(e) => setData('tanggal_efektif', e.target.value)}
+                                                className={errors.tanggal_efektif ? 'border-red-500' : ''}
                                                 placeholder="Kosongkan jika sama dengan tanggal transaksi"
                                             />
-                                            {errors.tanggal_efektif && (
-                                                <p className="text-sm text-red-500">{errors.tanggal_efektif}</p>
-                                            )}
-                                            <p className="text-xs text-gray-500">
-                                                Kosongkan jika sama dengan tanggal transaksi
-                                            </p>
+                                            {errors.tanggal_efektif && <p className="text-sm text-red-500">{errors.tanggal_efektif}</p>}
+                                            <p className="text-xs text-gray-500">Kosongkan jika sama dengan tanggal transaksi</p>
                                         </div>
 
                                         <div className="space-y-2">
@@ -199,9 +178,9 @@ export default function CreateBankTransaction() {
                                             </Label>
                                             <Select
                                                 value={data.bank_account_id || undefined}
-                                                onValueChange={(value) => setData("bank_account_id", value)}
+                                                onValueChange={(value) => setData('bank_account_id', value)}
                                             >
-                                                <SelectTrigger className={errors.bank_account_id ? "border-red-500" : ""}>
+                                                <SelectTrigger className={errors.bank_account_id ? 'border-red-500' : ''}>
                                                     <SelectValue placeholder="Pilih bank account" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -212,9 +191,7 @@ export default function CreateBankTransaction() {
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            {errors.bank_account_id && (
-                                                <p className="text-sm text-red-500">{errors.bank_account_id}</p>
-                                            )}
+                                            {errors.bank_account_id && <p className="text-sm text-red-500">{errors.bank_account_id}</p>}
                                         </div>
 
                                         <div className="space-y-2">
@@ -223,9 +200,9 @@ export default function CreateBankTransaction() {
                                             </Label>
                                             <Select
                                                 value={data.jenis_transaksi || undefined}
-                                                onValueChange={(value) => setData("jenis_transaksi", value)}
+                                                onValueChange={(value) => setData('jenis_transaksi', value)}
                                             >
-                                                <SelectTrigger className={errors.jenis_transaksi ? "border-red-500" : ""}>
+                                                <SelectTrigger className={errors.jenis_transaksi ? 'border-red-500' : ''}>
                                                     <SelectValue placeholder="Pilih jenis transaksi" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -235,9 +212,7 @@ export default function CreateBankTransaction() {
                                                     <SelectItem value="transfer_keluar">Transfer Keluar</SelectItem>
                                                 </SelectContent>
                                             </Select>
-                                            {errors.jenis_transaksi && (
-                                                <p className="text-sm text-red-500">{errors.jenis_transaksi}</p>
-                                            )}
+                                            {errors.jenis_transaksi && <p className="text-sm text-red-500">{errors.jenis_transaksi}</p>}
                                         </div>
 
                                         <div className="space-y-2">
@@ -250,13 +225,11 @@ export default function CreateBankTransaction() {
                                                 min="0"
                                                 step="0.01"
                                                 value={data.jumlah}
-                                                onChange={(e) => setData("jumlah", e.target.value)}
+                                                onChange={(e) => setData('jumlah', e.target.value)}
                                                 placeholder="0.00"
-                                                className={errors.jumlah ? "border-red-500" : ""}
+                                                className={errors.jumlah ? 'border-red-500' : ''}
                                             />
-                                            {errors.jumlah && (
-                                                <p className="text-sm text-red-500">{errors.jumlah}</p>
-                                            )}
+                                            {errors.jumlah && <p className="text-sm text-red-500">{errors.jumlah}</p>}
                                         </div>
 
                                         <div className="space-y-2">
@@ -265,9 +238,9 @@ export default function CreateBankTransaction() {
                                             </Label>
                                             <Select
                                                 value={data.kategori_transaksi || undefined}
-                                                onValueChange={(value) => setData("kategori_transaksi", value)}
+                                                onValueChange={(value) => setData('kategori_transaksi', value)}
                                             >
-                                                <SelectTrigger className={errors.kategori_transaksi ? "border-red-500" : ""}>
+                                                <SelectTrigger className={errors.kategori_transaksi ? 'border-red-500' : ''}>
                                                     <SelectValue placeholder="Pilih kategori transaksi" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -290,9 +263,7 @@ export default function CreateBankTransaction() {
                                                     )}
                                                 </SelectContent>
                                             </Select>
-                                            {errors.kategori_transaksi && (
-                                                <p className="text-sm text-red-500">{errors.kategori_transaksi}</p>
-                                            )}
+                                            {errors.kategori_transaksi && <p className="text-sm text-red-500">{errors.kategori_transaksi}</p>}
                                         </div>
 
                                         <div className="space-y-2">
@@ -301,7 +272,7 @@ export default function CreateBankTransaction() {
                                                 id="pihak_terkait"
                                                 type="text"
                                                 value={data.pihak_terkait}
-                                                onChange={(e) => setData("pihak_terkait", e.target.value)}
+                                                onChange={(e) => setData('pihak_terkait', e.target.value)}
                                                 placeholder="Nama pihak terkait"
                                             />
                                         </div>
@@ -312,7 +283,7 @@ export default function CreateBankTransaction() {
                                                 id="nomor_referensi"
                                                 type="text"
                                                 value={data.nomor_referensi}
-                                                onChange={(e) => setData("nomor_referensi", e.target.value)}
+                                                onChange={(e) => setData('nomor_referensi', e.target.value)}
                                                 placeholder="No. referensi/dokumen"
                                             />
                                         </div>
@@ -325,14 +296,12 @@ export default function CreateBankTransaction() {
                                         <Textarea
                                             id="keterangan"
                                             value={data.keterangan}
-                                            onChange={(e) => setData("keterangan", e.target.value)}
+                                            onChange={(e) => setData('keterangan', e.target.value)}
                                             placeholder="Deskripsi transaksi"
                                             rows={3}
-                                            className={errors.keterangan ? "border-red-500" : ""}
+                                            className={errors.keterangan ? 'border-red-500' : ''}
                                         />
-                                        {errors.keterangan && (
-                                            <p className="text-sm text-red-500">{errors.keterangan}</p>
-                                        )}
+                                        {errors.keterangan && <p className="text-sm text-red-500">{errors.keterangan}</p>}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -360,9 +329,7 @@ export default function CreateBankTransaction() {
                                         </div>
                                         <div>
                                             <p className="text-sm text-muted-foreground">Saldo Berjalan</p>
-                                            <p className="text-lg font-bold text-blue-600">
-                                                {formatCurrency(selectedBankAccount.saldo_berjalan)}
-                                            </p>
+                                            <p className="text-lg font-bold text-blue-600">{formatCurrency(selectedBankAccount.saldo_berjalan)}</p>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -373,7 +340,7 @@ export default function CreateBankTransaction() {
                                     <CardTitle>Cash Management</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <ul className="text-sm text-muted-foreground space-y-2">
+                                    <ul className="space-y-2 text-sm text-muted-foreground">
                                         <li>• Transaksi disimpan untuk tracking arus kas</li>
                                         <li>• Saldo bank diupdate secara real-time</li>
                                         <li>• Laporan arus kas generate otomatis</li>
@@ -386,11 +353,7 @@ export default function CreateBankTransaction() {
                     </div>
 
                     <div className="flex justify-end space-x-4">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => router.visit(route("kas.bank-transactions.index"))}
-                        >
+                        <Button type="button" variant="outline" onClick={() => router.visit(route('kas.bank-transactions.index'))}>
                             Batal
                         </Button>
                         <Button type="submit" disabled={processing}>
@@ -398,12 +361,7 @@ export default function CreateBankTransaction() {
                             {!processing && <Save className="mr-2 h-4 w-4" />}
                             Simpan & Buat Lagi
                         </Button>
-                        <Button 
-                            type="button" 
-                            variant="secondary" 
-                            onClick={submitAndGoBack}
-                            disabled={processing}
-                        >
+                        <Button type="button" variant="secondary" onClick={submitAndGoBack} disabled={processing}>
                             {processing && <Save className="mr-2 h-4 w-4 animate-spin" />}
                             {!processing && <Save className="mr-2 h-4 w-4" />}
                             Simpan & Kembali

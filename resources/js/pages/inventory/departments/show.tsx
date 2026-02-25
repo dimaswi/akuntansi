@@ -110,7 +110,6 @@ export default function DepartmentShow() {
                                     className="gap-2"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
-                                    Kembali
                                 </Button>
                                 <div>
                                     <div className="flex items-center gap-3">

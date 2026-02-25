@@ -4,16 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { ItemSearchableDropdown } from '@/components/ui/item-searchable-dropdown';
 import { Label } from '@/components/ui/label';
-import { SupplierSearchableDropdown } from '@/components/ui/supplier-searchable-dropdown';
 import { SearchableAccountSelect } from '@/components/ui/searchable-account-select';
+import { SupplierSearchableDropdown } from '@/components/ui/supplier-searchable-dropdown';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { toast } from '@/lib/toast';
 import { BreadcrumbItem, PageProps } from '@/types';
-import { Head, router, usePage, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Package, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface Supplier {
@@ -63,7 +63,7 @@ export default function PurchaseCreate() {
     const { suppliers, items, akunKas } = usePage<Props>().props;
     const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-    
+
     const { data, setData, post, processing, errors } = useForm({
         supplier_id: '',
         purchase_date: new Date().toISOString().split('T')[0],
@@ -147,12 +147,12 @@ export default function PurchaseCreate() {
                 expected_delivery_date: data.expected_delivery_date || null,
                 akun_kas_id: parseInt(data.akun_kas_id),
                 notes: data.notes || null,
-                items: purchaseItems.map(item => ({
+                items: purchaseItems.map((item) => ({
                     item_id: item.item_id,
                     quantity_ordered: parseFloat(item.quantity_ordered.toString()),
                     unit_price: parseFloat(item.unit_price.toString()),
-                    notes: item.notes || null
-                }))
+                    notes: item.notes || null,
+                })),
             },
             {
                 onError: (errors) => {
@@ -169,8 +169,8 @@ export default function PurchaseCreate() {
                         const firstError = Object.keys(errors)[0];
                         toast.error(`${firstError}: ${errors[firstError]}`);
                     }
-                }
-            }
+                },
+            },
         );
     };
 
@@ -178,27 +178,28 @@ export default function PurchaseCreate() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title="Create Purchase Order" />
 
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Buat Purchase Order</h1>
-                            <p className="text-muted-foreground">Buat pesanan pembelian baru untuk item inventaris</p>
-                        </div>
-                        <Button onClick={() => router.visit(route('purchases.index'))} className="flex items-center gap-2">
-                            <ArrowLeft className="h-4 w-4" />
-                            Kembali
-                        </Button>
-                    </div>
-                </div>
-
+            <div className="p-4 sm:px-6 lg:px-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Purchase Order Details */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Purchase Order Details</CardTitle>
-                            <CardDescription>Enter the basic information for the purchase order</CardDescription>
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.visit(route('purchases.index'))}
+                                        className="gap-2"
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle>Purchase Order Details</CardTitle>
+                                    <CardDescription>Fill in the details for this purchase order</CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

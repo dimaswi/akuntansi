@@ -24,7 +24,7 @@ class DepartmentController extends Controller
         
         $filters = [
             'search' => $request->input('search', ''),
-            'perPage' => $request->input('perPage', 15),
+            'perPage' => $request->input('perPage', 10),
             'is_active' => $request->input('is_active', ''),
         ];
 

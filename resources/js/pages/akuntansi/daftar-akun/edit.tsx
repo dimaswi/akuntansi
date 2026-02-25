@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -123,25 +123,19 @@ export default function DaftarAkunEdit({ daftarAkun, indukAkun }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Edit Akun - ${daftarAkun.nama_akun}`} />
             <div className="p-4">
-                <div className="mb-4">
-                    <Button
-                        variant="outline"
-                        onClick={() => router.visit('/akuntansi/daftar-akun')}
-                        className="flex items-center gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Kembali
-                    </Button>
-                </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Edit Daftar Akun</CardTitle>
-                        <CardDescription>
-                            Perbarui informasi akun {daftarAkun.kode_akun} - {daftarAkun.nama_akun}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                <div className="rounded-lg border bg-white">
+                    <div className="flex items-center">
+                        <div>
+                            <Button variant="outline" onClick={() => router.visit('/akuntansi/daftar-akun')} className="m-4 flex items-center gap-2">
+                                <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">Edit Daftar Akun</h2>
+                            <p className="text-sm text-gray-600">Perbarui informasi akun yang dipilih</p>
+                        </div>
+                    </div>
+                    <div className="p-4">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Kode Akun */}
@@ -319,8 +313,8 @@ export default function DaftarAkunEdit({ daftarAkun, indukAkun }: Props) {
                                 </Button>
                             </div>
                         </form>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </AppLayout>
     );

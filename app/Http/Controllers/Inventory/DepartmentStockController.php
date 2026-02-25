@@ -113,7 +113,7 @@ class DepartmentStockController extends Controller
             $query->orderBy($sortBy, $sortOrder);
         }
 
-        $stocks = $query->paginate(15)->withQueryString();
+        $stocks = $query->paginate(10)->withQueryString();
 
         // Transform stocks data
         $stocks->getCollection()->transform(function ($stock) {

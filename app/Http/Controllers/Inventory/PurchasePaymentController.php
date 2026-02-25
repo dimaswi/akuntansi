@@ -31,7 +31,7 @@ class PurchasePaymentController extends Controller
             'date_from' => $request->get('date_from', ''),
             'date_to' => $request->get('date_to', ''),
             'posted_only' => $request->get('posted_only', ''),
-            'perPage' => (int) $request->get('perPage', 15),
+            'perPage' => (int) $request->get('perPage', 10),
         ];
 
         $query = PurchasePayment::with(['purchase.supplier', 'bankAccount', 'createdBy'])

@@ -326,73 +326,63 @@ export default function approve() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title={`Approve Permintaan Stok - ${stockRequest.request_number}`} />
 
-            <div className="space-y-6 mt-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.visit(route('stock-requests.show', stockRequest.id))}
-                        >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Kembali
-                        </Button>
-                        <div>
-                            <h1 className="text-2xl font-semibold text-gray-900">
-                                Approve Permintaan Stok
-                            </h1>
-                            <p className="text-sm text-gray-600 mt-1">
-                                {stockRequest.request_number}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {!showRejectForm ? (
-                            <>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setShowRejectForm(true)}
-                                    disabled={processing}
-                                >
-                                    <XCircle className="h-4 w-4 mr-2" />
-                                    Tolak
-                                </Button>
-                                <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={handleApprove}
-                                    disabled={processing}
-                                >
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    {processing ? 'Memproses...' : 'Approve Permintaan'}
-                                </Button>
-                            </>
-                        ) : (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowRejectForm(false)}
-                                disabled={processing}
-                            >
-                                Batal Tolak
-                            </Button>
-                        )}
-                    </div>
-                </div>
-
+            <div className="p-4 space-y-4">
                 {/* Request Summary */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Package className="h-5 w-5" />
-                            Ringkasan Permintaan
-                        </CardTitle>
-                        <CardDescription>
-                            Tinjau detail permintaan stok sebelum approval
-                        </CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => router.visit(route('stock-requests.show', stockRequest.id))}
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Package className="h-5 w-5" />
+                                        {stockRequest.request_number}
+                                        {getPriorityBadge(stockRequest.priority)}
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Tinjau detail permintaan stok sebelum approval
+                                    </CardDescription>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {!showRejectForm ? (
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowRejectForm(true)}
+                                            disabled={processing}
+                                        >
+                                            <XCircle className="h-4 w-4 mr-2" />
+                                            Tolak
+                                        </Button>
+                                        <Button
+                                            variant="default"
+                                            size="sm"
+                                            onClick={handleApprove}
+                                            disabled={processing}
+                                        >
+                                            <CheckCircle className="h-4 w-4 mr-2" />
+                                            {processing ? 'Memproses...' : 'Approve Permintaan'}
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowRejectForm(false)}
+                                        disabled={processing}
+                                    >
+                                        Batal Tolak
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

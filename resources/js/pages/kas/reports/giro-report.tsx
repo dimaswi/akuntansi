@@ -358,7 +358,7 @@ export default function GiroReport() {
                     <button
                         onClick={() => setActiveTab('summary')}
                         className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === 'summary'
-                                ? 'bg-background text-foreground shadow-sm'
+                                ? 'bg-background text-foreground'
                                 : 'text-muted-foreground hover:text-foreground'
                             }`}
                     >
@@ -367,7 +367,7 @@ export default function GiroReport() {
                     <button
                         onClick={() => setActiveTab('detail')}
                         className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === 'detail'
-                                ? 'bg-background text-foreground shadow-sm'
+                                ? 'bg-background text-foreground'
                                 : 'text-muted-foreground hover:text-foreground'
                             }`}
                     >
@@ -376,7 +376,7 @@ export default function GiroReport() {
                     <button
                         onClick={() => setActiveTab('daily')}
                         className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === 'daily'
-                                ? 'bg-background text-foreground shadow-sm'
+                                ? 'bg-background text-foreground'
                                 : 'text-muted-foreground hover:text-foreground'
                             }`}
                     >

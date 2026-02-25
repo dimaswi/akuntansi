@@ -1,14 +1,14 @@
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem } from '@/types';
-import { Head, useForm, router } from '@inertiajs/react';
-import { Truck, Save, ArrowLeft, AlertCircle, Package } from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { BreadcrumbItem } from '@/types';
+import { Head, router, useForm } from '@inertiajs/react';
+import { AlertCircle, ArrowLeft, Package, Save } from 'lucide-react';
 import { route } from 'ziggy-js';
 
 interface SupplierFormData {
@@ -43,7 +43,7 @@ export default function SuppliersCreate() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         post(route('suppliers.store'), {
             onSuccess: () => {
                 router.visit(route('suppliers.index'));
@@ -62,36 +62,22 @@ export default function SuppliersCreate() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Tambah Supplier" />
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Truck className="h-6 w-6 text-blue-600" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Tambah Supplier Baru</h1>
-                                <p className="text-sm text-gray-600">Buat supplier baru untuk sistem inventory</p>
-                            </div>
-                        </div>
-                        <Button 
-                            variant="outline"
-                            onClick={handleBack}
-                            className="flex items-center gap-2"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            Kembali
-                        </Button>
-                    </div>
-                </div>
-
+            <div className="p-4 sm:px-6 lg:px-8">
                 {/* Form Card */}
                 <form onSubmit={handleSubmit}>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Informasi Supplier</CardTitle>
-                            <CardDescription>
-                                Isi informasi lengkap untuk supplier baru
-                            </CardDescription>
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle>Informasi Supplier</CardTitle>
+                                    <CardDescription>Isi informasi lengkap untuk supplier baru</CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* Error Alert */}
@@ -105,7 +91,7 @@ export default function SuppliersCreate() {
                             )}
 
                             {/* Basic Information */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">
                                         Nama Supplier <span className="text-red-500">*</span>
@@ -118,9 +104,7 @@ export default function SuppliersCreate() {
                                         placeholder="Masukkan nama supplier"
                                         className={errors.name ? 'border-red-500' : ''}
                                     />
-                                    {errors.name && (
-                                        <p className="text-sm text-red-500">{errors.name}</p>
-                                    )}
+                                    {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -133,9 +117,7 @@ export default function SuppliersCreate() {
                                         placeholder="Contoh: 021-1234567"
                                         className={errors.phone ? 'border-red-500' : ''}
                                     />
-                                    {errors.phone && (
-                                        <p className="text-sm text-red-500">{errors.phone}</p>
-                                    )}
+                                    {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
                                 </div>
                             </div>
 
@@ -149,9 +131,7 @@ export default function SuppliersCreate() {
                                     placeholder="Contoh: supplier@example.com"
                                     className={errors.email ? 'border-red-500' : ''}
                                 />
-                                {errors.email && (
-                                    <p className="text-sm text-red-500">{errors.email}</p>
-                                )}
+                                {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
                             </div>
 
                             <div className="space-y-2">
@@ -164,26 +144,20 @@ export default function SuppliersCreate() {
                                     rows={3}
                                     className={errors.address ? 'border-red-500' : ''}
                                 />
-                                {errors.address && (
-                                    <p className="text-sm text-red-500">{errors.address}</p>
-                                )}
+                                {errors.address && <p className="text-sm text-red-500">{errors.address}</p>}
                             </div>
 
                             {/* Status */}
                             <div className="space-y-4">
                                 <div className="border-t pt-4">
                                     <h3 className="text-lg font-medium">Pengaturan Status</h3>
-                                    <p className="text-sm text-gray-600">
-                                        Tentukan status aktif untuk supplier ini
-                                    </p>
+                                    <p className="text-sm text-gray-600">Tentukan status aktif untuk supplier ini</p>
                                 </div>
-                                
-                                <div className="flex items-center justify-between p-4 border rounded-lg">
+
+                                <div className="flex items-center justify-between rounded-lg border p-4">
                                     <div className="space-y-1">
                                         <Label htmlFor="is_active">Status Aktif</Label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Supplier yang aktif dapat digunakan dalam transaksi
-                                        </p>
+                                        <p className="text-sm text-muted-foreground">Supplier yang aktif dapat digunakan dalam transaksi</p>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <Input
@@ -204,8 +178,8 @@ export default function SuppliersCreate() {
                             <Alert>
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertDescription>
-                                    <strong>Catatan:</strong> Field yang ditandai dengan tanda bintang (*) wajib diisi. 
-                                    Pastikan informasi yang dimasukkan akurat dan lengkap.
+                                    <strong>Catatan:</strong> Field yang ditandai dengan tanda bintang (*) wajib diisi. Pastikan informasi yang
+                                    dimasukkan akurat dan lengkap.
                                 </AlertDescription>
                             </Alert>
                         </CardContent>
@@ -213,20 +187,11 @@ export default function SuppliersCreate() {
 
                     {/* Action Buttons */}
                     <div className="mt-6 flex items-center justify-end gap-4">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleBack}
-                            disabled={processing}
-                        >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
+                        <Button type="button" variant="outline" onClick={handleBack} disabled={processing}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />
                             Batal
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={processing}
-                            className="flex items-center gap-2"
-                        >
+                        <Button type="submit" disabled={processing} className="flex items-center gap-2">
                             <Save className="h-4 w-4" />
                             {processing ? 'Menyimpan...' : 'Simpan Supplier'}
                         </Button>

@@ -194,7 +194,7 @@ class JurnalPenyesuaianController extends Controller
         }
 
         $jurnalPenyesuaian->load(['details.daftarAkun']);
-        $akuns = DaftarAkun::where('is_active', true)->orderBy('kode_akun')->get();
+        $akuns = DaftarAkun::where('is_aktif', true)->orderBy('kode_akun')->get();
 
         return Inertia::render('akuntansi/jurnal-penyesuaian/edit', [
             'jurnal' => $jurnalPenyesuaian,

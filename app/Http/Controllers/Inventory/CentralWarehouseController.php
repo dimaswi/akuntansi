@@ -57,7 +57,7 @@ class CentralWarehouseController extends Controller
             $query->orderBy('item_stocks.' . $sortBy, $sortOrder);
         }
 
-        $stocks = $query->paginate(15)->withQueryString();
+        $stocks = $query->paginate(10)->withQueryString();
 
         // Transform stocks data
         $stocks->getCollection()->transform(function ($stock) {

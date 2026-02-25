@@ -69,7 +69,7 @@ class StockRequestController extends Controller
             });
         }
         
-        $stockRequests = $query->paginate(15)->through(function($request) {
+        $stockRequests = $query->paginate(10)->through(function($request) {
             return [
                 'id' => $request->id,
                 'request_number' => $request->request_number,

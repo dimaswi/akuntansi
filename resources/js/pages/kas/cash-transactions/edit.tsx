@@ -121,7 +121,17 @@ export default function CashTransactionEdit() {
             <div className="p-4">
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => window.history.back()}    
+                                    className="gap-2"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                            </div>
                             <div>
                                 <CardTitle className="flex items-center gap-2">
                                     <Wallet className="h-5 w-5" />
@@ -131,14 +141,7 @@ export default function CashTransactionEdit() {
                                     {cashTransaction.nomor_transaksi}
                                 </CardDescription>
                             </div>
-                            <Button
-                                variant="outline"
-                                onClick={() => router.visit(`/kas/cash-transactions/${cashTransaction.id}`)}
-                                className="gap-2"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Kembali
-                            </Button>
+                            
                         </div>
                     </CardHeader>
                     <CardContent>

@@ -1,14 +1,14 @@
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, SharedData } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, InfoIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, InfoIcon } from 'lucide-react';
 import { useState } from 'react';
 import { route } from 'ziggy-js';
 
@@ -66,7 +66,7 @@ export default function Edit({ transfer, departments, items }: Props) {
     });
 
     const [selectedItem, setSelectedItem] = useState<Item | null>(() => {
-        return items.find(i => i.id === transfer.item_id) || null;
+        return items.find((i) => i.id === transfer.item_id) || null;
     });
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -87,12 +87,10 @@ export default function Edit({ transfer, departments, items }: Props) {
     // Get available items for selected from_department with quantity > 0
     const getAvailableItems = () => {
         if (!data.from_department_id) return [];
-        
+
         return items.filter((item) => {
             // Find stock for this specific department
-            const deptStock = item.department_stocks.find(
-                (stock) => stock.department_id.toString() === data.from_department_id
-            );
+            const deptStock = item.department_stocks.find((stock) => stock.department_id.toString() === data.from_department_id);
             // Only return item if stock exists AND quantity > 0
             return deptStock && deptStock.quantity_on_hand > 0;
         });
@@ -101,10 +99,8 @@ export default function Edit({ transfer, departments, items }: Props) {
     // Get available stock for selected item based on from_department_id
     const getAvailableStock = (): number => {
         if (!selectedItem || !data.from_department_id) return 0;
-        
-        const deptStock = selectedItem.department_stocks.find(
-            (stock) => stock.department_id.toString() === data.from_department_id
-        );
+
+        const deptStock = selectedItem.department_stocks.find((stock) => stock.department_id.toString() === data.from_department_id);
         return deptStock ? deptStock.quantity_on_hand : 0;
     };
 
@@ -134,14 +130,7 @@ export default function Edit({ transfer, departments, items }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit Transfer Stok" />
 
-            <div className="mt-4 space-y-4">
-                <div className="flex items-center justify-between">
-                    <Button variant="outline" onClick={() => router.visit(route('stock-transfers.show', transfer.id))} className="gap-2">
-                        <ArrowLeft className="h-4 w-4" />
-                        Kembali
-                    </Button>
-                </div>
-
+            <div className="space-y-4 p-4">
                 {/* Alert Info */}
                 <Alert>
                     <InfoIcon className="h-4 w-4" />
@@ -153,10 +142,20 @@ export default function Edit({ transfer, departments, items }: Props) {
                 <form onSubmit={handleSubmit}>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Edit Transfer Stok</CardTitle>
-                            <CardDescription>
-                                Ubah informasi transfer barang antar departemen
-                            </CardDescription>
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <ArrowRightLeft className="h-5 w-5" />
+                                        Edit Transfer Stok
+                                    </CardTitle>
+                                    <CardDescription>Ubah informasi transfer barang antar departemen</CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* Tanggal Transfer */}
@@ -171,9 +170,7 @@ export default function Edit({ transfer, departments, items }: Props) {
                                     onChange={(e) => setData('tanggal_transfer', e.target.value)}
                                     className={errors.tanggal_transfer ? 'border-red-500' : ''}
                                 />
-                                {errors.tanggal_transfer && (
-                                    <p className="text-sm text-red-500">{errors.tanggal_transfer}</p>
-                                )}
+                                {errors.tanggal_transfer && <p className="text-sm text-red-500">{errors.tanggal_transfer}</p>}
                             </div>
 
                             {/* From Department */}
@@ -188,9 +185,7 @@ export default function Edit({ transfer, departments, items }: Props) {
                                     placeholder="Pilih departemen asal"
                                     searchPlaceholder="Cari departemen..."
                                 />
-                                {errors.from_department_id && (
-                                    <p className="text-sm text-red-500">{errors.from_department_id}</p>
-                                )}
+                                {errors.from_department_id && <p className="text-sm text-red-500">{errors.from_department_id}</p>}
                             </div>
 
                             {/* To Department */}
@@ -208,9 +203,7 @@ export default function Edit({ transfer, departments, items }: Props) {
                                     placeholder="Pilih departemen tujuan"
                                     searchPlaceholder="Cari departemen..."
                                 />
-                                {errors.to_department_id && (
-                                    <p className="text-sm text-red-500">{errors.to_department_id}</p>
-                                )}
+                                {errors.to_department_id && <p className="text-sm text-red-500">{errors.to_department_id}</p>}
                             </div>
 
                             {/* Item */}
@@ -219,7 +212,7 @@ export default function Edit({ transfer, departments, items }: Props) {
                                     Barang <span className="text-red-500">*</span>
                                 </Label>
                                 {!data.from_department_id ? (
-                                    <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                                    <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
                                         <span className="text-sm text-amber-700">Pilih department asal terlebih dahulu</span>
                                     </div>
                                 ) : (
@@ -242,25 +235,25 @@ export default function Edit({ transfer, departments, items }: Props) {
                             {selectedItem && (
                                 <Card className="border-2 border-gray-200">
                                     <CardContent className="p-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Item Terpilih</h4>
+                                        <div className="mb-3 flex items-center justify-between">
+                                            <h4 className="text-sm font-semibold tracking-wide text-gray-700 uppercase">Item Terpilih</h4>
                                         </div>
                                         <div className="grid grid-cols-3 gap-4">
                                             <div>
-                                                <p className="text-xs text-gray-500 mb-1">Kode Barang</p>
+                                                <p className="mb-1 text-xs text-gray-500">Kode Barang</p>
                                                 <p className="text-sm font-semibold">{selectedItem.code}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-500 mb-1">Nama Barang</p>
+                                                <p className="mb-1 text-xs text-gray-500">Nama Barang</p>
                                                 <p className="text-sm font-semibold">{selectedItem.name}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-500 mb-1">Stok Tersedia</p>
+                                                <p className="mb-1 text-xs text-gray-500">Stok Tersedia</p>
                                                 <p className="text-sm font-semibold text-blue-600">
                                                     {formatNumber(getAvailableStock())} {selectedItem.unit}
                                                 </p>
                                                 {!data.from_department_id && (
-                                                    <p className="text-xs text-amber-600 mt-1">Pilih department asal dulu</p>
+                                                    <p className="mt-1 text-xs text-amber-600">Pilih department asal dulu</p>
                                                 )}
                                             </div>
                                         </div>
@@ -299,7 +292,7 @@ export default function Edit({ transfer, departments, items }: Props) {
                             </div>
 
                             {/* Submit Buttons */}
-                            <div className="flex justify-end gap-2 pt-4 border-t">
+                            <div className="flex justify-end gap-2 border-t pt-4">
                                 <Button
                                     type="button"
                                     variant="outline"

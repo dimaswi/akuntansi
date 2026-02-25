@@ -271,7 +271,7 @@ export default function ItemsIndex() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Manajemen Items" />
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
+            <div className="p-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between">

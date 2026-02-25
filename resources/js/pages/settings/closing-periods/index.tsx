@@ -1,12 +1,10 @@
+import { type Column, type FilterField, DataTable } from '@/components/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Edit3, Eye, Filter, PlusCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { BookOpenCheck, Edit3, Eye, PlusCircle } from 'lucide-react';
 
 interface ClosingPeriod {
     id: number;
@@ -20,287 +18,103 @@ interface ClosingPeriod {
     status: 'open' | 'soft_close' | 'hard_close';
 }
 
-interface PaginatedData {
-    data: ClosingPeriod[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number;
-    to: number;
-}
-
 interface Props {
-    periods: PaginatedData;
+    periods: { data: ClosingPeriod[]; current_page: number; last_page: number; per_page: number; total: number; from: number; to: number };
     years: number[];
-    filters: {
-        status: string;
-        year: string;
-    };
+    filters: { status: string; year: string };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: <BookOpenCheck className="h-4 w-4" />,
-        href: '/settings/closing-periods/list',
-    },
-    {
-        title: 'Periode Tutup Buku',
-        href: '/settings/closing-periods/list',
-    },
+    { title: <BookOpenCheck className="h-4 w-4" />, href: '/settings/closing-periods/list' },
+    { title: 'Periode Tutup Buku', href: '' },
 ];
 
-const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-    });
-};
+const fmtDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
 
-const getStatusBadge = (status: string) => {
-    const statusConfig = {
-        open: { label: 'Open', variant: 'default' as const, className: 'bg-emerald-500' },
-        soft_close: { label: 'Soft Close', variant: 'secondary' as const, className: 'bg-amber-500 text-white' },
-        hard_close: { label: 'Hard Close', variant: 'destructive' as const, className: 'bg-red-500' },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.open;
-    return (
-        <Badge variant={config.variant} className={config.className}>
-            {config.label}
-        </Badge>
-    );
+const statusCfg: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive'; className: string }> = {
+    open: { label: 'Open', variant: 'default', className: 'bg-emerald-500' },
+    soft_close: { label: 'Soft Close', variant: 'secondary', className: 'bg-amber-500 text-white' },
+    hard_close: { label: 'Hard Close', variant: 'destructive', className: 'bg-red-500' },
 };
 
 export default function ClosingPeriodsIndex({ periods, years, filters }: Props) {
-    const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+    const navigate = (p: Record<string, any>) =>
+        router.get(route('settings.closing-periods.list'), p, { preserveState: true, replace: true });
 
-    const hasActiveFilters = (filters.status && filters.status !== '') || (filters.year && filters.year !== '');
-    const activeFilterCount = [filters.status && filters.status !== '', filters.year && filters.year !== ''].filter(Boolean).length;
+    const fp = { status: filters.status || '', year: filters.year || '' };
 
-    useEffect(() => {
-        if (hasActiveFilters) {
-            setIsFilterExpanded(true);
-        }
-    }, [hasActiveFilters]);
+    const columns: Column<ClosingPeriod>[] = [
+        { key: 'no', label: 'No', className: 'w-[60px] font-medium', render: (_row, _index, meta) => meta.rowNumber },
+        {
+            key: 'nama_periode', label: 'Nama Periode',
+            className: 'font-medium',
+            render: (row) => (
+                <div>
+                    <div>{row.period_name}</div>
+                    <div className="text-xs text-muted-foreground">{row.period_code}</div>
+                </div>
+            ),
+        },
+        { key: 'tipe', label: 'Tipe', className: 'text-muted-foreground capitalize', render: (row) => row.period_type },
+        { key: 'tanggal_mulai', label: 'Tanggal Mulai', className: 'text-muted-foreground', render: (row) => fmtDate(row.period_start) },
+        { key: 'tanggal_selesai', label: 'Tanggal Selesai', className: 'text-muted-foreground', render: (row) => fmtDate(row.period_end) },
+        { key: 'cutoff_date', label: 'Cutoff Date', className: 'text-muted-foreground', render: (row) => fmtDate(row.cutoff_date) },
+        {
+            key: 'status', label: 'Status',
+            render: (row) => {
+                const c = statusCfg[row.status] || statusCfg.open;
+                return <Badge variant={c.variant} className={c.className}>{c.label}</Badge>;
+            },
+        },
+        {
+            key: 'aksi', label: 'Aksi',
+            className: 'text-right',
+            render: (row) => (
+                <div className="flex items-center justify-end gap-2">
+                    {row.status === 'open' && (
+                        <Button variant="ghost" size="icon" onClick={() => router.visit(route('settings.closing-periods.edit', row.id))} title="Edit">
+                            <Edit3 className="h-4 w-4" />
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="icon" onClick={() => router.visit(route('settings.closing-periods.show', row.id))} title="Detail">
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+        },
+    ];
 
-    const handleFilterChange = (key: string, value: string) => {
-        router.get(
-            route('settings.closing-periods.list'),
-            {
-                ...filters,
-                [key]: value === 'all' ? '' : value,
-                page: 1,
-            },
-            {
-                preserveState: true,
-                replace: true,
-            },
-        );
-    };
-
-    const handleClearFilters = () => {
-        router.get(
-            route('settings.closing-periods.list'),
-            {},
-            {
-                preserveState: true,
-                replace: true,
-            },
-        );
-    };
-
-    const handlePageChange = (page: number) => {
-        router.get(
-            route('settings.closing-periods.list'),
-            {
-                ...filters,
-                page,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
-        );
-    };
+    const filterFields: FilterField[] = [
+        { name: 'status', label: 'Status', type: 'select', value: fp.status, options: [{ value: 'open', label: 'Open' }, { value: 'soft_close', label: 'Soft Close' }, { value: 'hard_close', label: 'Hard Close' }] },
+        { name: 'year', label: 'Tahun', type: 'select', value: fp.year, options: years.map((y) => ({ value: y.toString(), label: y.toString() })) },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Periode Tutup Buku" />
-
-            <div className="space-y-4 py-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold tracking-tight">Periode Tutup Buku</h1>
-                        <p className="text-sm text-muted-foreground">Kelola periode akuntansi dan cut off date</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                        variant={isFilterExpanded ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-                        className="relative"
-                    >
-                        <Filter className="mr-2 h-4 w-4" />
-                        Filter
-                        {activeFilterCount > 0 && (
-                            <Badge variant="destructive" className="ml-2 flex h-5 w-5 items-center justify-center rounded-full p-0">
-                                {activeFilterCount}
-                            </Badge>
-                        )}
-                    </Button>
-
-                    {hasActiveFilters && (
-                        <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                            Clear Filters
+            <div className="p-4">
+                <DataTable<ClosingPeriod>
+                    columns={columns}
+                    data={periods.data}
+                    pagination={periods}
+                    searchValue=""
+                    searchPlaceholder=""
+                    onSearch={() => {}}
+                    filters={filterFields}
+                    onFilterChange={(k, v) => navigate({ ...fp, [k]: v, page: 1 })}
+                    onFilterReset={() => navigate({ status: '', year: '', page: 1 })}
+                    onPageChange={(p) => navigate({ ...fp, page: p })}
+                    onPerPageChange={(n) => navigate({ ...fp, perPage: n, page: 1 })}
+                    headerActions={
+                        <Button onClick={() => router.visit(route('settings.closing-periods.create'))} className="gap-2">
+                            <PlusCircle className="h-4 w-4" />
+                            Buat Periode
                         </Button>
-                    )}
-                    <Button onClick={() => router.visit(route('settings.closing-periods.create'))}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Buat Periode
-                    </Button>
-                    </div>
-                </div>
-
-                {/* Filter Expanded */}
-                {isFilterExpanded && (
-                    <div className="rounded-lg border bg-card p-4">
-                        <div className="grid gap-4 md:grid-cols-3">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Status</label>
-                                <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Semua Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Semua Status</SelectItem>
-                                        <SelectItem value="open">Open</SelectItem>
-                                        <SelectItem value="soft_close">Soft Close</SelectItem>
-                                        <SelectItem value="hard_close">Hard Close</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Tahun</label>
-                                <Select value={filters.year || 'all'} onValueChange={(value) => handleFilterChange('year', value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Semua Tahun" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Semua Tahun</SelectItem>
-                                        {years.map((year) => (
-                                            <SelectItem key={year} value={year.toString()}>
-                                                {year}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Table */}
-                <div className="rounded-lg border bg-card">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[60px]">No</TableHead>
-                                <TableHead>Nama Periode</TableHead>
-                                <TableHead>Tipe</TableHead>
-                                <TableHead>Tanggal Mulai</TableHead>
-                                <TableHead>Tanggal Selesai</TableHead>
-                                <TableHead>Cutoff Date</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {periods.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                                        Belum ada periode tutup buku
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                periods.data.map((period, index) => (
-                                    <TableRow key={period.id}>
-                                        <TableCell className="font-medium">{periods.from + index}</TableCell>
-                                        <TableCell className="font-medium">
-                                            <div>
-                                                <div>{period.period_name}</div>
-                                                <div className="text-xs text-muted-foreground">{period.period_code}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground capitalize">{period.period_type}</TableCell>
-                                        <TableCell className="text-muted-foreground">{formatDate(period.period_start)}</TableCell>
-                                        <TableCell className="text-muted-foreground">{formatDate(period.period_end)}</TableCell>
-                                        <TableCell className="text-muted-foreground">{formatDate(period.cutoff_date)}</TableCell>
-                                        <TableCell>{getStatusBadge(period.status)}</TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                {period.status === 'open' && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => router.visit(route('settings.closing-periods.edit', period.id))}
-                                                        title="Edit"
-                                                    >
-                                                        <Edit3 className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => router.visit(route('settings.closing-periods.show', period.id))}
-                                                    title="Detail"
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {/* Pagination */}
-                {periods.last_page > 1 && (
-                    <div className="flex items-center justify-between">
-                        <div className="text-sm text-muted-foreground">
-                            Menampilkan {periods.from} - {periods.to} dari {periods.total} periode
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(periods.current_page - 1)}
-                                disabled={periods.current_page === 1}
-                            >
-                                <ChevronLeft className="mr-1 h-4 w-4" />
-                                Previous
-                            </Button>
-                            <div className="text-sm">
-                                Page {periods.current_page} of {periods.last_page}
-                            </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(periods.current_page + 1)}
-                                disabled={periods.current_page === periods.last_page}
-                            >
-                                Next
-                                <ChevronRight className="ml-1 h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                    }
+                    emptyIcon={<BookOpenCheck className="h-8 w-8 text-muted-foreground/50" />}
+                    emptyText="Belum ada periode tutup buku"
+                    rowKey={(p) => p.id}
+                />
             </div>
         </AppLayout>
     );

@@ -157,36 +157,24 @@ export default function CreateItem() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Tambah Item" />
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Package className="h-6 w-6 text-blue-600" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Tambah Item</h1>
-                                <p className="text-sm text-gray-600">Buat item baru dalam sistem inventory</p>
-                            </div>
-                        </div>
-                        <Button 
-                            variant="outline" 
-                            onClick={() => router.visit(route('items.index'))}
-                            className="flex items-center gap-2"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            Kembali
-                        </Button>
-                    </div>
-                </div>
-
+            <div className="p-4 sm:px-6 lg:px-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Basic Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Informasi Dasar</CardTitle>
+                            <div className='flex items-center gap-2'>
+                                <div>
+                                    <Button type='button' variant="outline" onClick={() => router.visit('/items')} className="gap-2">
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle>Informasi Dasar</CardTitle>
                             <CardDescription>
                                 Masukkan informasi dasar item
                             </CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

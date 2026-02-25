@@ -51,7 +51,7 @@ class CashTransactionController extends Controller
             $query->where('tanggal_transaksi', '<=', $request->tanggal_sampai);
         }
 
-        $perPage = (int) ($request->perPage ?? 15);
+        $perPage = (int) ($request->perPage ?? 10);
         $cashTransactions = $query->paginate($perPage);
 
         // Summary data
@@ -71,7 +71,7 @@ class CashTransactionController extends Controller
                 'status' => $request->status ?? '',
                 'tanggal_dari' => $request->tanggal_dari ?? '',
                 'tanggal_sampai' => $request->tanggal_sampai ?? '',
-                'perPage' => (int) ($request->perPage ?? 15),
+                'perPage' => (int) ($request->perPage ?? 10),
             ],
             'jenisTransaksi' => [
                 'penerimaan' => 'Penerimaan Kas',

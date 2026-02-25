@@ -2,14 +2,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem, SharedData } from '@/types';
+import { BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, ClipboardList, Save, Search } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { ArrowLeft, ClipboardList, Save } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { route } from 'ziggy-js';
 
 interface Item {
@@ -53,7 +53,7 @@ export default function CreateStockAdjustment() {
                 },
             });
             const result = await response.json();
-            setItems(Array.isArray(result) ? result : (result.data || []));
+            setItems(Array.isArray(result) ? result : result.data || []);
         } catch (error) {
             console.error('Error loading items:', error);
             setItems([]);
@@ -78,9 +78,7 @@ export default function CreateStockAdjustment() {
         }).format(amount);
     };
 
-    const estimatedValue = selectedItem && data.quantity 
-        ? selectedItem.harga_beli * parseFloat(data.quantity)
-        : 0;
+    const estimatedValue = selectedItem && data.quantity ? selectedItem.harga_beli * parseFloat(data.quantity) : 0;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -93,27 +91,34 @@ export default function CreateStockAdjustment() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Buat Adjustment Baru" />
 
-            <div className="mt-4 space-y-4">
-                {/* Back Button */}
-                <Button variant="outline" onClick={() => router.visit(route('stock-adjustments.index'))} className="gap-2">
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke List
-                </Button>
-
+            <div className="p-4">
                 <form onSubmit={handleSubmit}>
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <ClipboardList className="h-5 w-5" />
-                                Buat Stock Adjustment Baru
-                            </CardTitle>
-                            <CardDescription>
-                                Buat adjustment untuk mencatat selisih stok (shortage/overage)
-                            </CardDescription>
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.visit(route('stock-adjustments.index'))}
+                                        className="gap-2"
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <ClipboardList className="h-5 w-5" />
+                                        Buat Stock Adjustment Baru
+                                    </CardTitle>
+                                    <CardDescription>Catat penyesuaian stok untuk barang inventory Anda</CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* Search Item */}
-                            <div className="space-y-2 h-auto">
+                            <div className="h-auto space-y-2">
                                 <Label htmlFor="search_item">
                                     Cari Barang <span className="text-red-500">*</span>
                                 </Label>
@@ -137,8 +142,8 @@ export default function CreateStockAdjustment() {
                             {selectedItem && (
                                 <Card className="border-2 border-gray-200">
                                     <CardContent className="p-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Item Terpilih</h4>
+                                        <div className="mb-3 flex items-center justify-between">
+                                            <h4 className="text-sm font-semibold tracking-wide text-gray-700 uppercase">Item Terpilih</h4>
                                             <Button
                                                 type="button"
                                                 variant="ghost"
@@ -154,19 +159,19 @@ export default function CreateStockAdjustment() {
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
-                                                <p className="text-xs text-gray-500 uppercase tracking-wide">Nama Barang</p>
+                                                <p className="text-xs tracking-wide text-gray-500 uppercase">Nama Barang</p>
                                                 <p className="text-sm font-semibold text-gray-900">{selectedItem.nama_barang}</p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-xs text-gray-500 uppercase tracking-wide">Kode Barang</p>
-                                                <p className="text-sm font-mono font-medium text-gray-900">{selectedItem.kode_barang}</p>
+                                                <p className="text-xs tracking-wide text-gray-500 uppercase">Kode Barang</p>
+                                                <p className="font-mono text-sm font-medium text-gray-900">{selectedItem.kode_barang}</p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-xs text-gray-500 uppercase tracking-wide">Stok Pusat</p>
+                                                <p className="text-xs tracking-wide text-gray-500 uppercase">Stok Pusat</p>
                                                 <p className="text-sm font-bold text-gray-900">{selectedItem.stok_pusat} unit</p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-xs text-gray-500 uppercase tracking-wide">Harga Beli</p>
+                                                <p className="text-xs tracking-wide text-gray-500 uppercase">Harga Beli</p>
                                                 <p className="text-sm font-semibold text-gray-900">{formatCurrency(selectedItem.harga_beli)}</p>
                                             </div>
                                         </div>
@@ -187,9 +192,7 @@ export default function CreateStockAdjustment() {
                                         onChange={(e) => setData('tanggal_adjustment', e.target.value)}
                                         required
                                     />
-                                    {errors.tanggal_adjustment && (
-                                        <p className="text-sm text-red-500">{errors.tanggal_adjustment}</p>
-                                    )}
+                                    {errors.tanggal_adjustment && <p className="text-sm text-red-500">{errors.tanggal_adjustment}</p>}
                                 </div>
 
                                 {/* Tipe Adjustment */}
@@ -209,9 +212,7 @@ export default function CreateStockAdjustment() {
                                             <SelectItem value="overage">Overage (Kelebihan)</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {errors.tipe_adjustment && (
-                                        <p className="text-sm text-red-500">{errors.tipe_adjustment}</p>
-                                    )}
+                                    {errors.tipe_adjustment && <p className="text-sm text-red-500">{errors.tipe_adjustment}</p>}
                                 </div>
 
                                 {/* Quantity */}
@@ -237,9 +238,7 @@ export default function CreateStockAdjustment() {
                                     <div className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm">
                                         {formatCurrency(estimatedValue)}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Dihitung dari quantity × harga beli item
-                                    </p>
+                                    <p className="text-xs text-muted-foreground">Dihitung dari quantity × harga beli item</p>
                                 </div>
                             </div>
 

@@ -58,9 +58,7 @@ export default function EditStockAdjustment({ adjustment }: Props) {
         }).format(amount);
     };
 
-    const estimatedValue = adjustment.item && data.quantity
-        ? adjustment.item.harga_beli * parseFloat(data.quantity)
-        : 0;
+    const estimatedValue = adjustment.item && data.quantity ? adjustment.item.harga_beli * parseFloat(data.quantity) : 0;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -73,27 +71,30 @@ export default function EditStockAdjustment({ adjustment }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Edit ${adjustment.nomor_adjustment}`} />
 
-            <div className="mt-4 space-y-4">
-                {/* Back Button */}
-                <Button
-                    variant="outline"
-                    onClick={() => router.visit(route('stock-adjustments.show', adjustment.id))}
-                    className="gap-2"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke Detail
-                </Button>
-
+            <div className="p-4">
                 <form onSubmit={handleSubmit}>
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <ClipboardList className="h-5 w-5" />
-                                Edit Stock Adjustment
-                            </CardTitle>
-                            <CardDescription>
-                                Edit adjustment {adjustment.nomor_adjustment}
-                            </CardDescription>
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.visit(route('stock-adjustments.show', adjustment.id))}
+                                        className="gap-2"
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <ClipboardList className="h-5 w-5" />
+                                        Edit Stock Adjustment
+                                    </CardTitle>
+                                    <CardDescription>Ubah detail stock adjustment Anda. Item tidak bisa diubah.</CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* Item Info (Read-only) */}
@@ -116,9 +117,7 @@ export default function EditStockAdjustment({ adjustment }: Props) {
                                             </div>
                                             <div>
                                                 <p className="text-muted-foreground">Harga Beli:</p>
-                                                <p className="font-medium">
-                                                    {formatCurrency(adjustment.item.harga_beli)}
-                                                </p>
+                                                <p className="font-medium">{formatCurrency(adjustment.item.harga_beli)}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -138,9 +137,7 @@ export default function EditStockAdjustment({ adjustment }: Props) {
                                         onChange={(e) => setData('tanggal_adjustment', e.target.value)}
                                         required
                                     />
-                                    {errors.tanggal_adjustment && (
-                                        <p className="text-sm text-red-500">{errors.tanggal_adjustment}</p>
-                                    )}
+                                    {errors.tanggal_adjustment && <p className="text-sm text-red-500">{errors.tanggal_adjustment}</p>}
                                 </div>
 
                                 {/* Tipe Adjustment */}
@@ -150,23 +147,17 @@ export default function EditStockAdjustment({ adjustment }: Props) {
                                     </Label>
                                     <Select
                                         value={data.tipe_adjustment}
-                                        onValueChange={(value) =>
-                                            setData('tipe_adjustment', value as 'shortage' | 'overage')
-                                        }
+                                        onValueChange={(value) => setData('tipe_adjustment', value as 'shortage' | 'overage')}
                                     >
                                         <SelectTrigger id="tipe_adjustment">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="shortage">
-                                                Shortage (Kekurangan)
-                                            </SelectItem>
+                                            <SelectItem value="shortage">Shortage (Kekurangan)</SelectItem>
                                             <SelectItem value="overage">Overage (Kelebihan)</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {errors.tipe_adjustment && (
-                                        <p className="text-sm text-red-500">{errors.tipe_adjustment}</p>
-                                    )}
+                                    {errors.tipe_adjustment && <p className="text-sm text-red-500">{errors.tipe_adjustment}</p>}
                                 </div>
 
                                 {/* Quantity */}
@@ -183,9 +174,7 @@ export default function EditStockAdjustment({ adjustment }: Props) {
                                         placeholder="Jumlah selisih"
                                         required
                                     />
-                                    {errors.quantity && (
-                                        <p className="text-sm text-red-500">{errors.quantity}</p>
-                                    )}
+                                    {errors.quantity && <p className="text-sm text-red-500">{errors.quantity}</p>}
                                 </div>
 
                                 {/* Estimated Value */}
@@ -194,9 +183,7 @@ export default function EditStockAdjustment({ adjustment }: Props) {
                                     <div className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm">
                                         {formatCurrency(estimatedValue)}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Dihitung dari quantity × harga beli item
-                                    </p>
+                                    <p className="text-xs text-muted-foreground">Dihitung dari quantity × harga beli item</p>
                                 </div>
                             </div>
 
@@ -210,9 +197,7 @@ export default function EditStockAdjustment({ adjustment }: Props) {
                                     placeholder="Catatan atau alasan adjustment (opsional)"
                                     rows={3}
                                 />
-                                {errors.keterangan && (
-                                    <p className="text-sm text-red-500">{errors.keterangan}</p>
-                                )}
+                                {errors.keterangan && <p className="text-sm text-red-500">{errors.keterangan}</p>}
                             </div>
 
                             {/* Submit Buttons */}
@@ -220,9 +205,7 @@ export default function EditStockAdjustment({ adjustment }: Props) {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() =>
-                                        router.visit(route('stock-adjustments.show', adjustment.id))
-                                    }
+                                    onClick={() => router.visit(route('stock-adjustments.show', adjustment.id))}
                                     disabled={processing}
                                 >
                                     Batal

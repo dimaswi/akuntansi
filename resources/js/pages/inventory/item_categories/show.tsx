@@ -58,30 +58,33 @@ export default function ItemCategoryShow({ category }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Detail Kategori - ${category.name}`} />
 
-            <div className="space-y-6 mt-6">
+            <div className="p-4">
                 {/* Header */}
                 <Card>
                     <CardHeader>
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Package className="h-5 w-5" />
-                                    Detail Kategori Barang
-                                </CardTitle>
-                                <CardDescription>Informasi lengkap kategori barang</CardDescription>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button variant="outline" onClick={() => router.visit(route('item_categories.index'))}>
-                                    <ArrowLeft className="mr-2 h-4 w-4" />
-                                    Kembali
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type='button'
+                                    variant="outline"
+                                    onClick={() => router.visit(route('item_categories.index'))}
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
                                 </Button>
-                                {hasPermission('inventory.categories.edit') && (
-                                    <Button onClick={() => router.visit(route('item_categories.edit', category.id))}>
-                                        <Edit3 className="mr-2 h-4 w-4" />
-                                        Edit
-                                    </Button>
-                                )}
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Package className="h-5 w-5" />
+                                        Detail Kategori Barang
+                                    </CardTitle>
+                                    <CardDescription>Informasi lengkap kategori barang</CardDescription>
+                                </div>
                             </div>
+                            {hasPermission('inventory.categories.edit') && (
+                                <Button onClick={() => router.visit(route('item_categories.edit', category.id))}>
+                                    <Edit3 className="mr-2 h-4 w-4" />
+                                    Edit
+                                </Button>
+                            )}
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -171,7 +174,8 @@ export default function ItemCategoryShow({ category }: Props) {
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Calendar className="h-4 w-4" />
                                 <span>
-                                    Dibuat: {new Date(category.created_at).toLocaleDateString('id-ID', {
+                                    Dibuat:{' '}
+                                    {new Date(category.created_at).toLocaleDateString('id-ID', {
                                         day: 'numeric',
                                         month: 'long',
                                         year: 'numeric',
@@ -183,7 +187,8 @@ export default function ItemCategoryShow({ category }: Props) {
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Calendar className="h-4 w-4" />
                                 <span>
-                                    Diupdate: {new Date(category.updated_at).toLocaleDateString('id-ID', {
+                                    Diupdate:{' '}
+                                    {new Date(category.updated_at).toLocaleDateString('id-ID', {
                                         day: 'numeric',
                                         month: 'long',
                                         year: 'numeric',

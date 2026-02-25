@@ -108,21 +108,24 @@ export default function CreatePurchasePayment({ bankAccounts }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Buat Payment Baru" />
 
-            <div className="mt-4 space-y-4">
-                {/* Back Button */}
-                <Button variant="outline" onClick={() => router.visit(route('purchase-payments.index'))} className="gap-2">
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke List
-                </Button>
-
+            <div className="p-4">
                 <form onSubmit={handleSubmit}>
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <DollarSign className="h-5 w-5" />
-                                Buat Purchase Payment Baru
-                            </CardTitle>
-                            <CardDescription>Isi form untuk mencatat pembayaran ke supplier</CardDescription>
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Button type="button" variant="outline" onClick={() => router.visit(route('purchase-payments.index'))} className="gap-2">
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <DollarSign className="h-5 w-5" />
+                                        Buat Payment Baru
+                                    </CardTitle>
+                                    <CardDescription>Catat pembayaran untuk purchase order yang sudah ada</CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* Search Purchase Order */}

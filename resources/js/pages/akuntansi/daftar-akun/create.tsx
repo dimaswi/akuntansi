@@ -1,14 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SearchableAccountSelect } from "@/components/ui/searchable-account-select";
-import AppLayout from "@/layouts/app-layout";
-import { BreadcrumbItem, SharedData } from "@/types";
-import { Head, router, useForm } from "@inertiajs/react";
-import { ArrowLeft, Calculator, Save } from "lucide-react";
-import { toast } from "sonner";
+import { Button } from '@/components/ui/button';
+
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { SearchableAccountSelect } from '@/components/ui/searchable-account-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AppLayout from '@/layouts/app-layout';
+import { BreadcrumbItem, SharedData } from '@/types';
+import { Head, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, Calculator, Save } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface DaftarAkun {
     id: number;
@@ -84,7 +84,7 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         post('/akuntansi/daftar-akun', {
             onSuccess: () => {
                 toast.success('Akun berhasil ditambahkan');
@@ -109,7 +109,7 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
 
     const handleSubmitAndGoBack = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         post('/akuntansi/daftar-akun', {
             onSuccess: () => {
                 toast.success('Akun berhasil ditambahkan');
@@ -134,27 +134,21 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Tambah Daftar Akun" />
             <div className="p-4">
-                <div className="mb-4">
-                    <Button
-                        variant="outline"
-                        onClick={() => router.visit('/akuntansi/daftar-akun')}
-                        className="flex items-center gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Kembali
-                    </Button>
-                </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Tambah Daftar Akun</CardTitle>
-                        <CardDescription>
-                            Tambahkan akun baru ke dalam daftar akun
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                <div className="rounded-lg border bg-white">
+                    <div className="flex items-center">
+                        <div>
+                            <Button variant="outline" onClick={() => router.visit('/akuntansi/daftar-akun')} className="m-4 flex items-center gap-2">
+                                <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">Tambah Daftar Akun</h2>
+                            <p className="text-sm text-gray-600">Tambahkan akun baru ke dalam daftar akun</p>
+                        </div>
+                    </div>
+                    <div className="p-4">
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 {/* Kode Akun */}
                                 <div className="space-y-2">
                                     <Label htmlFor="kode_akun">Kode Akun *</Label>
@@ -166,9 +160,7 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                         placeholder="Contoh: 1100"
                                         className={errors.kode_akun ? 'border-red-500' : ''}
                                     />
-                                    {errors.kode_akun && (
-                                        <p className="text-sm text-red-500">{errors.kode_akun}</p>
-                                    )}
+                                    {errors.kode_akun && <p className="text-sm text-red-500">{errors.kode_akun}</p>}
                                 </div>
 
                                 {/* Nama Akun */}
@@ -182,18 +174,13 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                         placeholder="Contoh: Kas dan Bank"
                                         className={errors.nama_akun ? 'border-red-500' : ''}
                                     />
-                                    {errors.nama_akun && (
-                                        <p className="text-sm text-red-500">{errors.nama_akun}</p>
-                                    )}
+                                    {errors.nama_akun && <p className="text-sm text-red-500">{errors.nama_akun}</p>}
                                 </div>
 
                                 {/* Jenis Akun */}
                                 <div className="space-y-2">
                                     <Label htmlFor="jenis_akun">Jenis Akun *</Label>
-                                    <Select
-                                        value={data.jenis_akun}
-                                        onValueChange={handleJenisAkunChange}
-                                    >
+                                    <Select value={data.jenis_akun} onValueChange={handleJenisAkunChange}>
                                         <SelectTrigger className={errors.jenis_akun ? 'border-red-500' : ''}>
                                             <SelectValue placeholder="Pilih jenis akun" />
                                         </SelectTrigger>
@@ -205,42 +192,32 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.jenis_akun && (
-                                        <p className="text-sm text-red-500">{errors.jenis_akun}</p>
-                                    )}
+                                    {errors.jenis_akun && <p className="text-sm text-red-500">{errors.jenis_akun}</p>}
                                 </div>
 
                                 {/* Sub Jenis */}
                                 <div className="space-y-2">
                                     <Label htmlFor="sub_jenis">Sub Jenis *</Label>
-                                    <Select
-                                        value={data.sub_jenis}
-                                        onValueChange={(value) => setData('sub_jenis', value)}
-                                        disabled={!data.jenis_akun}
-                                    >
+                                    <Select value={data.sub_jenis} onValueChange={(value) => setData('sub_jenis', value)} disabled={!data.jenis_akun}>
                                         <SelectTrigger className={errors.sub_jenis ? 'border-red-500' : ''}>
                                             <SelectValue placeholder="Pilih sub jenis" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {data.jenis_akun && subJenisOptions[data.jenis_akun as keyof typeof subJenisOptions]?.map((option) => (
-                                                <SelectItem key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </SelectItem>
-                                            ))}
+                                            {data.jenis_akun &&
+                                                subJenisOptions[data.jenis_akun as keyof typeof subJenisOptions]?.map((option) => (
+                                                    <SelectItem key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </SelectItem>
+                                                ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.sub_jenis && (
-                                        <p className="text-sm text-red-500">{errors.sub_jenis}</p>
-                                    )}
+                                    {errors.sub_jenis && <p className="text-sm text-red-500">{errors.sub_jenis}</p>}
                                 </div>
 
                                 {/* Saldo Normal */}
                                 <div className="space-y-2">
                                     <Label htmlFor="saldo_normal">Saldo Normal *</Label>
-                                    <Select
-                                        value={data.saldo_normal}
-                                        onValueChange={(value: 'debit' | 'kredit') => setData('saldo_normal', value)}
-                                    >
+                                    <Select value={data.saldo_normal} onValueChange={(value: 'debit' | 'kredit') => setData('saldo_normal', value)}>
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
@@ -287,9 +264,7 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData('is_aktif', e.target.checked)}
                                             className="h-4 w-4"
                                         />
-                                        <Label htmlFor="is_aktif">
-                                            {data.is_aktif ? 'Aktif' : 'Tidak Aktif'}
-                                        </Label>
+                                        <Label htmlFor="is_aktif">{data.is_aktif ? 'Aktif' : 'Tidak Aktif'}</Label>
                                     </div>
                                 </div>
                             </div>
@@ -303,7 +278,7 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setData('keterangan', e.target.value)}
                                     placeholder="Keterangan tambahan (opsional)"
                                     rows={3}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 />
                             </div>
 
@@ -321,12 +296,7 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                         </>
                                     )}
                                 </Button>
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    onClick={handleSubmitAndGoBack}
-                                    disabled={processing}
-                                >
+                                <Button type="button" variant="secondary" onClick={handleSubmitAndGoBack} disabled={processing}>
                                     {processing ? (
                                         <>
                                             <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
@@ -339,17 +309,13 @@ export default function DaftarAkunCreate({ indukAkun }: Props) {
                                         </>
                                     )}
                                 </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => router.visit('/akuntansi/daftar-akun')}
-                                >
+                                <Button type="button" variant="outline" onClick={() => router.visit('/akuntansi/daftar-akun')}>
                                     Batal
                                 </Button>
                             </div>
                         </form>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </AppLayout>
     );

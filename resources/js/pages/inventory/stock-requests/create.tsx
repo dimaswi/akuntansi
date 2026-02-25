@@ -140,40 +140,27 @@ export default function create() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title="Buat Permintaan Stok" />
 
-            <div className="space-y-6 mt-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.visit(route('stock-requests.index'))}
-                        >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Kembali
-                        </Button>
-                        <div>
-                            <h1 className="text-2xl font-semibold text-gray-900">
-                                Buat Permintaan Stok
-                            </h1>
-                            <p className="text-sm text-gray-600 mt-1">
-                                Minta item dari gudang pusat
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="p-4 space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Request Information Card */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Package className="h-5 w-5" />
-                                Informasi Permintaan
-                            </CardTitle>
-                            <CardDescription>
-                                Isi informasi dasar untuk permintaan stok
-                            </CardDescription>
+                            <div className='flex items-center gap-2'>
+                                <div>
+                                    <Button type="button" variant="outline" onClick={() => window.history.back()} className="gap-2">
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Package className="h-5 w-5" />
+                                        Buat Permintaan Stok Baru
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Isi detail permintaan stok Anda dan tambahkan item yang diperlukan
+                                    </CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

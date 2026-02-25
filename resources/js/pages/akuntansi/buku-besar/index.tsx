@@ -140,9 +140,7 @@ export default function BukuBesarIndex({ bukuBesar, semuaAkun, filters, jenisAku
         <AppLayout>
             <Head title="Buku Besar" />
             
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div className="p-6 text-gray-900 dark:text-gray-100">
+            <div className="p-6 text-gray-900 dark:text-gray-100">
                         {/* Header - Compact Monochrome */}
                         <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                             <div className="flex items-center space-x-4">
@@ -501,8 +499,6 @@ export default function BukuBesarIndex({ bukuBesar, semuaAkun, filters, jenisAku
                             </CardContent>
                         </Card>
                     </div>
-                </div>
-            </div>
         </AppLayout>
     );
 }

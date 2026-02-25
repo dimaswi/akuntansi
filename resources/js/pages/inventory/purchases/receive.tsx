@@ -182,27 +182,29 @@ export default function PurchaseReceive() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title={`Receive Items - ${purchase.purchase_number}`} />
 
-            <div className="space-y-6 mt-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Receive Items</h1>
-                        <p className="text-muted-foreground">
-                            Purchase Order: {purchase.purchase_number}
-                        </p>
-                    </div>
-                    <Button variant="outline" asChild>
-                        <a href={route('purchases.show', purchase.id)}>
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back to Purchase Order
-                        </a>
-                    </Button>
-                </div>
-
+            <div className="space-y-6 p-4">
                 {/* Purchase Summary */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Purchase Order Summary</CardTitle>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => router.visit(route('purchases.show', purchase.id))}
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Package className="h-5 w-5" />
+                                        Receive Items
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Purchase Order: {purchase.purchase_number}
+                                    </CardDescription>
+                                </div>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

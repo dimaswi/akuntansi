@@ -237,7 +237,7 @@ export default function MySalary({ salarySlips, filters, summary, userName, user
 
                 {/* Summary Cards - Compact Monochrome */}
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-                    <div className="summary-card rounded-lg border bg-white p-2.5 transition-shadow hover:shadow-sm sm:p-3">
+                    <div className="summary-card rounded-lg border bg-white p-2.5 sm:p-3">
                         <div className="mb-0.5 flex items-center justify-between sm:mb-1">
                             <span className="text-xs font-medium text-gray-500">Slip Tersedia</span>
                             <FileText className="summary-icon h-3.5 w-3.5 text-gray-400 sm:h-4 sm:w-4" />
@@ -245,7 +245,7 @@ export default function MySalary({ salarySlips, filters, summary, userName, user
                         <p className="summary-value text-lg font-bold text-gray-900 sm:text-2xl">{summary.total_slips}</p>
                     </div>
 
-                    <div className="summary-card rounded-lg border bg-white p-2.5 transition-shadow hover:shadow-sm sm:p-3">
+                    <div className="summary-card rounded-lg border bg-white p-2.5 sm:p-3">
                         <div className="mb-0.5 flex items-center justify-between sm:mb-1">
                             <span className="text-xs font-medium text-gray-500">Total Diterima</span>
                             <DollarSign className="summary-icon h-3.5 w-3.5 text-gray-400 sm:h-4 sm:w-4" />
@@ -253,7 +253,7 @@ export default function MySalary({ salarySlips, filters, summary, userName, user
                         <p className="text-sm font-bold break-words text-gray-900 sm:text-lg">{formatRupiah(summary.total_gaji_bersih)}</p>
                     </div>
 
-                    <div className="summary-card rounded-lg border bg-white p-2.5 transition-shadow hover:shadow-sm sm:p-3">
+                    <div className="summary-card rounded-lg border bg-white p-2.5 sm:p-3">
                         <div className="mb-0.5 flex items-center justify-between sm:mb-1">
                             <span className="text-xs font-medium text-gray-500">Periode Terbaru</span>
                             <Calendar className="summary-icon h-3.5 w-3.5 text-gray-400 sm:h-4 sm:w-4" />
@@ -292,7 +292,7 @@ export default function MySalary({ salarySlips, filters, summary, userName, user
                                 const isExpanded = !isAllMonths || openSlipId === slip.id;
 
                                 return (
-                                    <div key={slip.id} className="rounded-lg border bg-white transition-shadow hover:shadow-md">
+                                    <div key={slip.id} className="rounded-lg border bg-white">
                                         {/* Header - clickable when collapsible */}
                                         <div
                                             className="slip-card-header cursor-pointer border-b bg-gray-50 px-3 py-2.5 sm:px-4 sm:py-3"

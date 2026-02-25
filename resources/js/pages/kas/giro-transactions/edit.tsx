@@ -109,23 +109,6 @@ export default function EditGiroTransaction() {
             <Head title={`Edit Transaksi Giro - ${giro_transaction.nomor_giro}`} />
 
             <div className="p-4">
-                <div className="flex items-center justify-between pb-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="p-2 rounded-lg">
-                            <Receipt className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Edit Transaksi Giro</h1>
-                        </div>
-                    </div>
-                    <Button
-                        variant="outline"
-                        onClick={() => router.visit(route("kas.giro-transactions.show", giro_transaction.id))}
-                    >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Kembali
-                    </Button>
-                </div>
 
                 <form onSubmit={submit} className="space-y-6">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -133,10 +116,19 @@ export default function EditGiroTransaction() {
                         <div className="lg:col-span-2">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Informasi Giro</CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        <div>
+                                            <Button type="button" variant="outline" onClick={() => window.history.back()} className="gap-2">
+                                                <ArrowLeft className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div>
+                                            <CardTitle>Informasi Giro</CardTitle>
                                     <CardDescription>
                                         Perbarui informasi transaksi giro
                                     </CardDescription>
+                                        </div>
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

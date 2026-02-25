@@ -35,7 +35,7 @@ class UserDepartmentController extends Controller
                 $query->where('department_id', $departmentId);
             })
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(10);
 
         return Inertia::render('users/departments/index', [
             'users' => $users,

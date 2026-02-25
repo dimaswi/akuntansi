@@ -1,457 +1,106 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import AppLayout from "@/layouts/app-layout";
-import { BreadcrumbItem, SharedData, Permission, PaginatedData } from "@/types";
-import { Head, Link, router, usePage } from "@inertiajs/react";
-import { Edit3, PlusCircle, Search, Trash, X, Loader2, Key, Plus } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-import { route } from "ziggy-js";
+import { type Column, DataTable, type FilterField } from '@/components/data-table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import AppLayout from '@/layouts/app-layout';
+import { BreadcrumbItem, SharedData, Permission, PaginatedData } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Edit3, Key, Loader2, Plus, PlusCircle, Trash } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { route } from 'ziggy-js';
 
 interface Props {
     permissions: PaginatedData<Permission>;
     modules: string[];
-    filters: {
-        search: string;
-        module: string;
-        perPage: number;
-    };
+    filters: { search: string; module: string; perPage: number };
 }
 
 export default function PermissionIndex({ permissions, modules, filters }: Props) {
-    const { props } = usePage<SharedData>();
-    const [search, setSearch] = useState(filters.search);
-    const [module, setModule] = useState(filters.module);
-    const [perPage, setPerPage] = useState(filters.perPage.toString());
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [permissionToDelete, setPermissionToDelete] = useState<Permission | null>(null);
-    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; permission: Permission | null; loading: boolean }>({ open: false, permission: null, loading: false });
     const [moduleModalOpen, setModuleModalOpen] = useState(false);
     const [newModuleName, setNewModuleName] = useState('');
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = [{ title: 'Permissions', href: '/master/permissions' }];
+
+    const navigate = (params: Record<string, any>) => router.get(route('permissions.index'), params, { preserveState: true, replace: true });
+    const currentFilters = () => ({ search: filters.search, module: filters.module, perPage: filters.perPage });
+
+    const handleDeleteConfirm = () => {
+        if (!deleteDialog.permission) return;
+        setDeleteDialog((p) => ({ ...p, loading: true }));
+        router.delete(route('permissions.destroy', deleteDialog.permission.id), {
+            onSuccess: () => { toast.success('Permission berhasil dihapus'); setDeleteDialog({ open: false, permission: null, loading: false }); },
+            onError: (errors) => { toast.error(Object.values(errors).flat().join(', ')); setDeleteDialog((p) => ({ ...p, loading: false })); },
+        });
+    };
+
+    const columns: Column<Permission>[] = [
+        { key: 'no', label: 'No.', className: 'w-[50px]', render: (_row, _i, meta) => meta?.rowNumber },
+        { key: 'name', label: 'Name', render: (row) => (<div className="flex items-center gap-2"><Key className="h-4 w-4 text-muted-foreground" /><span className="font-mono text-sm">{row.name}</span></div>) },
+        { key: 'display_name', label: 'Display Name', render: (row) => <span className="font-medium">{row.display_name}</span> },
+        { key: 'module', label: 'Module', render: (row) => <Badge variant="secondary">{row.module || 'No Module'}</Badge> },
+        { key: 'description', label: 'Description', className: 'max-w-xs', render: (row) => <span className="truncate block">{row.description || '-'}</span> },
         {
-            title: 'Permissions',
-            href: '/master/permissions',
+            key: 'roles', label: 'Roles', render: (row) => (
+                <div className="flex flex-wrap gap-1">
+                    {row.roles && row.roles.length > 0 ? row.roles.map((r: any) => <Badge key={r.id} variant="outline" className="text-xs">{r.display_name}</Badge>) : <span className="text-muted-foreground text-sm italic">Tidak ada role</span>}
+                </div>
+            ),
+        },
+        {
+            key: 'aksi', label: '', render: (row) => (
+                <div className="flex justify-end gap-1">
+                    <Button variant="outline" size="sm" onClick={() => router.visit(route('permissions.edit', row.id))}><Edit3 className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteDialog({ open: true, permission: row, loading: false })}><Trash className="h-4 w-4" /></Button>
+                </div>
+            ),
         },
     ];
 
-    const handleSearch = (value: string) => {
-        router.get(route("permissions.index"), {
-            search: value,
-            module: filters.module,
-            perPage: filters.perPage,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const handleModuleChange = (value: string) => {
-        router.get(route("permissions.index"), {
-            search: filters.search,
-            module: value,
-            perPage: filters.perPage,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const handlePerPageChange = (perPage: number) => {
-        router.get(route("permissions.index"), {
-            search: filters.search,
-            module: filters.module,
-            perPage,
-            page: 1,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const handleSearchSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        handleSearch(search);
-    };
-
-    const handleClearSearch = () => {
-        setSearch('');
-        handleSearch('');
-    };
-
-    const handleDeleteClick = (permission: Permission) => {
-        setPermissionToDelete(permission);
-        setDeleteModalOpen(true);
-    };
-
-    const handleDeleteConfirm = () => {
-        if (!permissionToDelete) return;
-
-        setDeleteLoading(true);
-        router.delete(route("permissions.destroy", permissionToDelete.id), {
-            onSuccess: () => {
-                toast.success("Permission berhasil dihapus");
-                setDeleteModalOpen(false);
-                setPermissionToDelete(null);
-            },
-            onError: (errors) => {
-                const errorMessage = Object.values(errors).flat().join(", ");
-                toast.error(errorMessage);
-            },
-            onFinish: () => {
-                setDeleteLoading(false);
-            },
-        });
-    };
-
-    const handleDeleteCancel = () => {
-        setDeleteModalOpen(false);
-        setPermissionToDelete(null);
-    };
-
-    const handleCreateModule = () => {
-        if (!newModuleName.trim()) return;
-        
-        // Navigate to create permission page with the new module name
-        router.visit(route("permissions.create", { module: newModuleName }));
-    };
-
-    const getModuleColor = (module: string | null | undefined) => {
-        const colors = [
-            "bg-blue-100 text-blue-800",
-            "bg-green-100 text-green-800",
-            "bg-yellow-100 text-yellow-800",
-            "bg-purple-100 text-purple-800",
-            "bg-pink-100 text-pink-800",
-            "bg-indigo-100 text-indigo-800",
-        ];
-        
-        if (!module) {
-            return "bg-gray-100 text-gray-800";
-        }
-        
-        const hash = module.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return colors[hash % colors.length];
-    };
+    const filterFields: FilterField[] = [
+        {
+            name: 'module', label: 'Module', type: 'select', placeholder: 'Semua Module',
+            options: [{ value: '', label: 'Semua Module' }, ...modules.map((m) => ({ value: m, label: m }))],
+            value: filters.module || '',
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Permissions" />
             <div className="p-4">
-                <div className="mb-4 flex items-center justify-between">
-                    <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="text"
-                                placeholder="Cari nama atau display name..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-10 pr-10 w-64"
-                            />
-                            {search && (
-                                <button
-                                    type="button"
-                                    onClick={handleClearSearch}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                            )}
-                        </div>
-                        <Button type="submit" variant="outline" size="sm">
-                            Cari
-                        </Button>
-                    </form>
-                    
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex items-center gap-2 hover:bg-green-200"
-                        onClick={() => router.visit(route("permissions.create"))}
-                    >
-                        <PlusCircle className="h-4 w-4 text-green-500" />
-                        Tambah Permission
-                    </Button>
-                </div>
-
-                {/* Secondary Filters */}
-                {(modules.length > 0 || filters.search || filters.module) && (
-                    <div className="mb-4 bg-gray-50 rounded-lg p-3 border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                {/* Module Filter */}
-                                {modules.length > 0 && (
-                                    <div className="flex items-center gap-2">
-                                        <label className="text-sm font-medium text-gray-700">Filter Module:</label>
-                                        <select
-                                            value={module}
-                                            onChange={(e) => {
-                                                setModule(e.target.value);
-                                                handleModuleChange(e.target.value);
-                                            }}
-                                            className="rounded border px-2 py-1 text-sm bg-white"
-                                        >
-                                            <option value="">Semua Module</option>
-                                            {modules.map((mod) => (
-                                                <option key={mod} value={mod}>
-                                                    {mod}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-
-                                {/* Add Module Button */}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setModuleModalOpen(true)}
-                                    className="flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                >
-                                    <Plus className="h-3 w-3" />
-                                    Tambah Module
-                                </Button>
-
-                                {/* Active filters */}
-                                <div className="flex items-center gap-2">
-                                    {filters.search && (
-                                        <Badge variant="outline" className="flex items-center gap-1 bg-white">
-                                            Search: {filters.search}
-                                            <button
-                                                onClick={handleClearSearch}
-                                                className="ml-1 h-3 w-3 rounded-full hover:bg-gray-200 flex items-center justify-center"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </Badge>
-                                    )}
-                                    {filters.module && (
-                                        <Badge variant="outline" className="flex items-center gap-1 bg-white">
-                                            Module: {filters.module}
-                                            <button
-                                                onClick={() => handleModuleChange('')}
-                                                className="ml-1 h-3 w-3 rounded-full hover:bg-gray-200 flex items-center justify-center"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </Badge>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Clear all filters */}
-                            {(filters.search || filters.module) && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                        setSearch('');
-                                        setModule('');
-                                        router.get(route("permissions.index"));
-                                    }}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    Clear all filters
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                )}
-                
-                <div className="w-full overflow-x-auto rounded-md border">
-                    <Table>
-                        <TableHeader className="bg-gray-100">
-                            <TableRow>
-                                <TableHead className="w-[50px]">No.</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Display Name</TableHead>
-                                <TableHead>Module</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead>Roles</TableHead>
-                                <TableHead className="w-[150px] text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {permissions.data.length > 0 ? (
-                                permissions.data.map((permission: Permission, index: number) => (
-                                    <TableRow key={permission.id}>
-                                        <TableCell>
-                                            {(permissions.current_page - 1) * permissions.per_page + index + 1}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <Key className="h-4 w-4 text-blue-500" />
-                                                <span className="font-mono text-sm">{permission.name}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="font-medium">{permission.display_name}</TableCell>
-                                        <TableCell>
-                                            <Badge className={getModuleColor(permission.module)}>
-                                                {permission.module || "No Module"}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="max-w-xs truncate">{permission.description || "-"}</TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-wrap gap-1">
-                                                {permission.roles && permission.roles.length > 0 ? (
-                                                    permission.roles.map((role: any) => (
-                                                        <Badge key={role.id} variant="outline" className="text-xs">
-                                                            {role.display_name}
-                                                        </Badge>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-gray-400 text-sm italic">Tidak ada role</span>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="flex justify-end space-x-2">
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                className="hover:bg-gray-200"
-                                                onClick={() => router.visit(route('permissions.edit', permission.id))}
-                                            >
-                                                <Edit3 className="h-4 w-4 text-yellow-500" />
-                                                Edit
-                                            </Button>
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                className="hover:bg-gray-200"
-                                                onClick={() => handleDeleteClick(permission)}
-                                            >
-                                                <Trash className="h-4 w-4 text-red-500" />
-                                                Hapus
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Key className="h-8 w-8 text-muted-foreground/50" />
-                                            <span>Tidak ada data permission yang ditemukan</span>
-                                            {(filters.search || filters.module) && (
-                                                <span className="text-sm">
-                                                    Coba ubah kata kunci pencarian atau hapus filter
-                                                </span>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {/* Pagination */}
-                <div className="flex items-center justify-between py-4">
-                    <div className="text-sm text-muted-foreground">
-                        Menampilkan {permissions.from} - {permissions.to} dari {permissions.total} data
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm">Baris per halaman:</span>
-                            <select
-                                className="rounded border px-2 py-1 text-sm"
-                                value={permissions.per_page}
-                                onChange={(e) => handlePerPageChange(Number(e.target.value))}
-                            >
-                                <option value={10}>10</option>
-                                <option value={20}>20</option>
-                                <option value={50}>50</option>
-                                <option value={100}>100</option>
-                            </select>
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => router.get(route("permissions.index"), {
-                                    search: filters.search,
-                                    module: filters.module,
-                                    perPage: filters.perPage,
-                                    page: permissions.current_page - 1
-                                })}
-                                disabled={permissions.current_page <= 1}
-                            >
-                                Previous
-                            </Button>
-                            
-                            <span className="text-sm">
-                                Page {permissions.current_page} of {permissions.last_page}
-                            </span>
-                            
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => router.get(route("permissions.index"), {
-                                    search: filters.search,
-                                    module: filters.module,
-                                    perPage: filters.perPage,
-                                    page: permissions.current_page + 1
-                                })}
-                                disabled={permissions.current_page >= permissions.last_page}
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                <DataTable<Permission>
+                    columns={columns} data={permissions.data} pagination={permissions} rowKey={(r) => r.id}
+                    searchValue={filters.search} searchPlaceholder="Cari nama atau display name..."
+                    onSearch={(search) => navigate({ ...currentFilters(), search, page: 1 })}
+                    filters={filterFields}
+                    onFilterChange={(name, value) => navigate({ ...currentFilters(), [name]: value, page: 1 })}
+                    onFilterReset={() => navigate({ search: '', perPage: filters.perPage })}
+                    onPageChange={(page) => navigate({ ...currentFilters(), page })}
+                    onPerPageChange={(perPage) => navigate({ ...currentFilters(), perPage, page: 1 })}
+                    perPageOptions={[10, 20, 50, 100]}
+                    emptyIcon={<Key className="h-8 w-8 text-muted-foreground/50" />}
+                    emptyText="Tidak ada data permission yang ditemukan"
+                    headerActions={<>
+                        <Button variant="outline" size="sm" onClick={() => setModuleModalOpen(true)} className="gap-2"><Plus className="h-4 w-4" />Tambah Module</Button>
+                        <Button size="sm" onClick={() => router.visit(route('permissions.create'))} className="gap-2"><PlusCircle className="h-4 w-4" />Tambah Permission</Button>
+                    </>}
+                />
             </div>
 
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={deleteModalOpen} onOpenChange={(open) => !open && handleDeleteCancel()}>
-                <DialogContent className="sm:max-w-2xl top-1/8">
+            {/* Delete Dialog */}
+            <Dialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, permission: null, loading: false })}>
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Konfirmasi Hapus Permission</DialogTitle>
-                        <DialogDescription>
-                            Apakah Anda yakin ingin menghapus permission <strong>{permissionToDelete?.display_name}</strong>?
-                            <br />
-                            <span className="text-red-600">Tindakan ini tidak dapat dibatalkan.</span>
-                        </DialogDescription>
+                        <DialogDescription>Apakah Anda yakin ingin menghapus permission <strong>{deleteDialog.permission?.display_name}</strong>? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={handleDeleteCancel}
-                            disabled={deleteLoading}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleDeleteConfirm}
-                            disabled={deleteLoading}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            {deleteLoading ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    Menghapus...
-                                </>
-                            ) : (
-                                <>
-                                    <Trash className="h-4 w-4 mr-2" />
-                                    Hapus Permission
-                                </>
-                            )}
-                        </Button>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteDialog({ open: false, permission: null, loading: false })} disabled={deleteDialog.loading}>Batal</Button>
+                        <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteDialog.loading} className="gap-2">{deleteDialog.loading && <Loader2 className="h-4 w-4 animate-spin" />}Hapus</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -461,48 +110,16 @@ export default function PermissionIndex({ permissions, modules, filters }: Props
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Tambah Module Baru</DialogTitle>
-                        <DialogDescription>
-                            Buat module baru untuk mengelompokkan permission.
-                        </DialogDescription>
+                        <DialogDescription>Buat module baru untuk mengelompokkan permission.</DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
-                        <Label htmlFor="moduleName" className="text-sm font-medium">
-                            Nama Module
-                        </Label>
-                        <Input
-                            id="moduleName"
-                            placeholder="Contoh: users, products, orders"
-                            value={newModuleName}
-                            onChange={(e) => setNewModuleName(e.target.value)}
-                            className="mt-2"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleCreateModule();
-                                }
-                            }}
-                        />
-                        <p className="text-xs text-gray-500 mt-2">
-                            Anda akan diarahkan ke halaman create permission dengan module ini.
-                        </p>
+                        <Label htmlFor="moduleName">Nama Module</Label>
+                        <Input id="moduleName" placeholder="Contoh: users, products, orders" value={newModuleName} onChange={(e) => setNewModuleName(e.target.value)} className="mt-2" onKeyDown={(e) => { if (e.key === 'Enter') router.visit(route('permissions.create', { module: newModuleName })); }} />
+                        <p className="text-xs text-muted-foreground mt-2">Anda akan diarahkan ke halaman create permission dengan module ini.</p>
                     </div>
-                    <DialogFooter className="gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setModuleModalOpen(false);
-                                setNewModuleName('');
-                            }}
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            onClick={handleCreateModule}
-                            disabled={!newModuleName.trim()}
-                            className="bg-blue-600 hover:bg-blue-700"
-                        >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Buat Module
-                        </Button>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => { setModuleModalOpen(false); setNewModuleName(''); }}>Batal</Button>
+                        <Button onClick={() => router.visit(route('permissions.create', { module: newModuleName }))} disabled={!newModuleName.trim()} className="gap-2"><Plus className="h-4 w-4" />Buat Module</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

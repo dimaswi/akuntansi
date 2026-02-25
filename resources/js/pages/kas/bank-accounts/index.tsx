@@ -1,17 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import FilterForm, { FilterField } from '@/components/filter-form';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { type Column, type FilterField, DataTable } from '@/components/data-table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -19,14 +8,14 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
-import AppLayout from "@/layouts/app-layout";
-import { BreadcrumbItem, SharedData } from "@/types";
-import { Head, Link, router, usePage } from "@inertiajs/react";
-import { Edit3, PlusCircle, Search, Trash, X, Loader2, Building2, Eye, RefreshCw, Plus } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-import { route } from "ziggy-js";
+} from '@/components/ui/dialog';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Building2, Edit3, Eye, Loader2, PlusCircle, RefreshCw, Trash } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { route } from 'ziggy-js';
 
 interface DaftarAkun {
     id: number;
@@ -114,7 +103,6 @@ const getJenisRekeningBadge = (jenis: string) => {
 
 export default function BankAccountIndex() {
     const { bankAccounts, filters } = usePage<Props>().props;
-    const [search, setSearch] = useState(filters.search);
     const [deleteDialog, setDeleteDialog] = useState<{
         open: boolean;
         account: BankAccount | null;
@@ -125,104 +113,19 @@ export default function BankAccountIndex() {
         loading: false,
     });
 
-    // Filter fields configuration
-    const filterFields: FilterField[] = [
-        {
-            name: 'jenis_rekening',
-            label: 'Jenis Rekening',
-            type: 'select',
-            placeholder: 'Semua Jenis',
-            options: [
-                { value: '', label: 'Semua Jenis' },
-                { value: 'giro', label: 'Giro' },
-                { value: 'tabungan', label: 'Tabungan' },
-                { value: 'deposito', label: 'Deposito' },
-            ],
-            value: filters.jenis_rekening || '',
-        },
-        {
-            name: 'status',
-            label: 'Status',
-            type: 'select',
-            placeholder: 'Semua Status',
-            options: [
-                { value: '', label: 'Semua Status' },
-                { value: '1', label: 'Aktif' },
-                { value: '0', label: 'Tidak Aktif' },
-            ],
-            value: filters.status || '',
-        },
-    ];
+    const navigate = (p: Record<string, any>) =>
+        router.get('/kas/bank-accounts', p, { preserveState: true, replace: true });
 
-    const handleSearch = (searchValue: string) => {
-        router.get('/kas/bank-accounts', {
-            search: searchValue,
-            perPage: filters.perPage,
-            status: filters.status,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const handleStatusChange = (status: string) => {
-        router.get('/kas/bank-accounts', {
-            search: filters.search,
-            perPage: filters.perPage,
-            status: status === 'all' ? '' : status,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const handlePerPageChange = (perPage: number) => {
-        router.get('/kas/bank-accounts', {
-            search: filters.search,
-            perPage,
-            status: filters.status,
-            page: 1,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const handlePageChange = (page: number) => {
-        router.get('/kas/bank-accounts', {
-            search: filters.search,
-            perPage: filters.perPage,
-            status: filters.status,
-            page,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
-
-    const handleSearchSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        handleSearch(search);
-    };
-
-    const handleClearSearch = () => {
-        setSearch('');
-        handleSearch('');
-    };
-
-    const handleDeleteClick = (account: BankAccount) => {
-        setDeleteDialog({
-            open: true,
-            account: account,
-            loading: false,
-        });
+    const fp = {
+        search: filters.search || '',
+        status: filters.status || '',
+        jenis_rekening: filters.jenis_rekening || '',
+        perPage: filters.perPage,
     };
 
     const handleDeleteConfirm = async () => {
         if (!deleteDialog.account) return;
-        
-        setDeleteDialog(prev => ({ ...prev, loading: true }));
-        
+        setDeleteDialog((prev) => ({ ...prev, loading: true }));
         try {
             await router.delete(route('kas.bank-accounts.destroy', deleteDialog.account.id), {
                 onSuccess: () => {
@@ -231,320 +134,149 @@ export default function BankAccountIndex() {
                 },
                 onError: () => {
                     toast.error('Gagal menghapus rekening');
-                    setDeleteDialog(prev => ({ ...prev, loading: false }));
-                }
+                    setDeleteDialog((prev) => ({ ...prev, loading: false }));
+                },
             });
-        } catch (error) {
+        } catch {
             toast.error('Terjadi kesalahan saat menghapus rekening');
-            setDeleteDialog(prev => ({ ...prev, loading: false }));
+            setDeleteDialog((prev) => ({ ...prev, loading: false }));
         }
     };
 
     const handleUpdateSaldo = (account: BankAccount) => {
         router.post(route('kas.bank-accounts.update-saldo', account.id), {}, {
-            onSuccess: () => {
-                toast.success('Saldo berhasil diperbarui');
-            },
-            onError: () => {
-                toast.error('Gagal memperbarui saldo');
-            }
+            onSuccess: () => toast.success('Saldo berhasil diperbarui'),
+            onError: () => toast.error('Gagal memperbarui saldo'),
         });
     };
 
-    const handleFilter = (filterValues: Record<string, any>) => {
-        router.get('/kas/bank-accounts', {
-            search: search,
-            perPage: filters.perPage,
-            status: filterValues.status || '',
-            jenis_rekening: filterValues.jenis_rekening || '',
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-    };
+    const columns: Column<BankAccount>[] = [
+        { key: 'kode', label: 'Kode', className: 'font-medium', render: (row) => row.kode_rekening },
+        {
+            key: 'bank',
+            label: 'Bank',
+            render: (row) => (
+                <div>
+                    <p className="font-medium">{row.nama_bank}</p>
+                    <p className="text-sm text-muted-foreground">{row.cabang}</p>
+                </div>
+            ),
+        },
+        {
+            key: 'rekening',
+            label: 'Rekening',
+            render: (row) => (
+                <div>
+                    <p className="font-medium">{row.nama_rekening}</p>
+                    <p className="text-sm text-muted-foreground font-mono">{row.nomor_rekening}</p>
+                </div>
+            ),
+        },
+        { key: 'jenis', label: 'Jenis', render: (row) => getJenisRekeningBadge(row.jenis_rekening) },
+        { key: 'saldo_awal', label: 'Saldo Awal', className: 'font-mono', render: (row) => formatCurrency(row.saldo_awal) },
+        { key: 'saldo_berjalan', label: 'Saldo Berjalan', className: 'font-mono', render: (row) => formatCurrency(row.saldo_berjalan) },
+        { key: 'status', label: 'Status', render: (row) => getStatusBadge(row.is_aktif) },
+        {
+            key: 'aksi',
+            label: 'Aksi',
+            render: (row) => (
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => router.visit(`/kas/bank-accounts/${row.id}`)}>
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => router.visit(`/kas/bank-accounts/${row.id}/edit`)}>
+                        <Edit3 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleUpdateSaldo(row)} className="text-blue-600 hover:text-blue-700" title="Update Saldo">
+                        <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setDeleteDialog({ open: true, account: row, loading: false })} className="text-destructive hover:text-destructive">
+                        <Trash className="h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+        },
+    ];
 
-    const handleResetFilter = () => {
-        router.get('/kas/bank-accounts', {
-            search: '',
-            perPage: filters.perPage,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
-        setSearch('');
-    };
+    const filterFields: FilterField[] = [
+        {
+            name: 'jenis_rekening',
+            label: 'Jenis Rekening',
+            type: 'select',
+            value: fp.jenis_rekening,
+            options: [
+                { value: 'giro', label: 'Giro' },
+                { value: 'tabungan', label: 'Tabungan' },
+                { value: 'deposito', label: 'Deposito' },
+            ],
+        },
+        {
+            name: 'status',
+            label: 'Status',
+            type: 'select',
+            value: fp.status,
+            options: [
+                { value: 'aktif', label: 'Aktif' },
+                { value: 'tidak_aktif', label: 'Tidak Aktif' },
+            ],
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Rekening Bank" />
-            <div className="p-4 space-y-4">
-                {/* Header */}
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold">Rekening Bank</h1>
-                        <p className="text-muted-foreground">Kelola daftar rekening bank perusahaan</p>
-                    </div>
-                    <Button asChild>
-                        <Link href="/kas/bank-accounts/create">
-                            <Plus className="h-4 w-4 mr-2" />
+            <div className="p-4">
+                <DataTable<BankAccount>
+                    pageTitle="Daftar Rekening Bank"
+                    pageSubtitle="Kelola data rekening bank Anda di sini"
+                    columns={columns}
+                    data={bankAccounts.data}
+                    pagination={bankAccounts}
+                    searchValue={fp.search}
+                    searchPlaceholder="Cari nama bank, nomor rekening..."
+                    onSearch={(v) => navigate({ ...fp, search: v, page: 1 })}
+                    filters={filterFields}
+                    onFilterChange={(k, v) => navigate({ ...fp, [k]: v, page: 1 })}
+                    onFilterReset={() => navigate({ search: '', status: '', jenis_rekening: '', perPage: fp.perPage, page: 1 })}
+                    onPageChange={(p) => navigate({ ...fp, page: p })}
+                    onPerPageChange={(n) => navigate({ ...fp, perPage: n, page: 1 })}
+                    headerActions={
+                        <Button onClick={() => router.visit('/kas/bank-accounts/create')} className="gap-2">
+                            <PlusCircle className="h-4 w-4" />
                             Tambah Rekening
-                        </Link>
-                    </Button>
-                </div>
-
-                {/* Filter Form */}
-                <FilterForm
-                    fields={filterFields}
-                    onFilter={handleFilter}
-                    onReset={handleResetFilter}
-                    searchValue={search}
-                    onSearchChange={setSearch}
-                    onSearchSubmit={() => handleSearch(search)}
+                        </Button>
+                    }
+                    emptyIcon={<Building2 className="h-8 w-8 text-muted-foreground/50" />}
+                    emptyText="Tidak ada data rekening bank"
+                    rowKey={(r) => r.id}
                 />
-
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Building2 className="h-5 w-5" />
-                                    Rekening Bank
-                                </CardTitle>
-                                <CardDescription>
-                                    Kelola data rekening bank perusahaan
-                                </CardDescription>
-                            </div>
-                            <Button
-                                onClick={() => router.visit('/kas/bank-accounts/create')}
-                                className="gap-2"
-                            >
-                                <PlusCircle className="h-4 w-4" />
-                                Tambah Rekening
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {/* Filters */}
-                        <div className="flex flex-col gap-4 md:flex-row md:items-end">
-                            <div className="flex-1">
-                                <Label htmlFor="search">Cari</Label>
-                                <form onSubmit={handleSearchSubmit} className="flex gap-2">
-                                    <Input
-                                        id="search"
-                                        placeholder="Cari nama bank, nomor rekening..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="flex-1"
-                                    />
-                                    <Button type="submit" variant="outline" size="icon">
-                                        <Search className="h-4 w-4" />
-                                    </Button>
-                                    {search && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={handleClearSearch}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </form>
-                            </div>
-                            <div className="flex gap-2">
-                                <div>
-                                    <Label>Status</Label>
-                                    <Select
-                                        value={filters.status}
-                                        onValueChange={handleStatusChange}
-                                    >
-                                        <SelectTrigger className="w-32">
-                                            <SelectValue placeholder="Status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Semua</SelectItem>
-                                            <SelectItem value="aktif">Aktif</SelectItem>
-                                            <SelectItem value="tidak_aktif">Tidak Aktif</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label>Per halaman</Label>
-                                    <Select
-                                        value={filters.perPage.toString()}
-                                        onValueChange={(value) => handlePerPageChange(parseInt(value))}
-                                    >
-                                        <SelectTrigger className="w-20">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="10">10</SelectItem>
-                                            <SelectItem value="25">25</SelectItem>
-                                            <SelectItem value="50">50</SelectItem>
-                                            <SelectItem value="100">100</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Table */}
-                        <div className="border rounded-md">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Kode</TableHead>
-                                        <TableHead>Bank</TableHead>
-                                        <TableHead>Rekening</TableHead>
-                                        <TableHead>Jenis</TableHead>
-                                        <TableHead>Saldo Awal</TableHead>
-                                        <TableHead>Saldo Berjalan</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Aksi</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {bankAccounts.data.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                                                Tidak ada data rekening bank
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        bankAccounts.data.map((account) => (
-                                            <TableRow key={account.id}>
-                                                <TableCell className="font-medium">
-                                                    {account.kode_rekening}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div>
-                                                        <p className="font-medium">{account.nama_bank}</p>
-                                                        <p className="text-sm text-muted-foreground">{account.cabang}</p>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div>
-                                                        <p className="font-medium">{account.nama_rekening}</p>
-                                                        <p className="text-sm text-muted-foreground font-mono">{account.nomor_rekening}</p>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {getJenisRekeningBadge(account.jenis_rekening)}
-                                                </TableCell>
-                                                <TableCell className="font-mono">
-                                                    {formatCurrency(account.saldo_awal)}
-                                                </TableCell>
-                                                <TableCell className="font-mono">
-                                                    {formatCurrency(account.saldo_berjalan)}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {getStatusBadge(account.is_aktif)}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => router.visit(`/kas/bank-accounts/${account.id}`)}
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => router.visit(`/kas/bank-accounts/${account.id}/edit`)}
-                                                        >
-                                                            <Edit3 className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleUpdateSaldo(account)}
-                                                            className="text-blue-600 hover:text-blue-700"
-                                                            title="Update Saldo"
-                                                        >
-                                                            <RefreshCw className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => handleDeleteClick(account)}
-                                                            className="text-destructive hover:text-destructive"
-                                                        >
-                                                            <Trash className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-
-                        {/* Pagination */}
-                        {bankAccounts.last_page > 1 && (
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-muted-foreground">
-                                    Menampilkan {bankAccounts.from} sampai {bankAccounts.to} dari {bankAccounts.total} entri
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handlePageChange(bankAccounts.current_page - 1)}
-                                        disabled={bankAccounts.current_page === 1}
-                                    >
-                                        Sebelumnya
-                                    </Button>
-                                    <span className="text-sm">
-                                        Halaman {bankAccounts.current_page} dari {bankAccounts.last_page}
-                                    </span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handlePageChange(bankAccounts.current_page + 1)}
-                                        disabled={bankAccounts.current_page === bankAccounts.last_page}
-                                    >
-                                        Selanjutnya
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* Delete Dialog */}
-                <Dialog open={deleteDialog.open} onOpenChange={(open) => !deleteDialog.loading && setDeleteDialog(prev => ({ ...prev, open }))}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Hapus Rekening Bank</DialogTitle>
-                            <DialogDescription>
-                                Apakah Anda yakin ingin menghapus rekening <strong>{deleteDialog.account?.nama_bank} - {deleteDialog.account?.nama_rekening}</strong>?
-                                Tindakan ini tidak dapat dibatalkan.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter>
-                            <Button
-                                variant="outline"
-                                onClick={() => setDeleteDialog({ open: false, account: null, loading: false })}
-                                disabled={deleteDialog.loading}
-                            >
-                                Batal
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                onClick={handleDeleteConfirm}
-                                disabled={deleteDialog.loading}
-                                className="gap-2"
-                            >
-                                {deleteDialog.loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                                Hapus
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
             </div>
+
+            {/* Delete Dialog */}
+            <Dialog open={deleteDialog.open} onOpenChange={(open) => !deleteDialog.loading && setDeleteDialog((prev) => ({ ...prev, open }))}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Hapus Rekening Bank</DialogTitle>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin menghapus rekening <strong>{deleteDialog.account?.nama_bank} - {deleteDialog.account?.nama_rekening}</strong>?
+                            Tindakan ini tidak dapat dibatalkan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteDialog({ open: false, account: null, loading: false })}
+                            disabled={deleteDialog.loading}
+                        >
+                            Batal
+                        </Button>
+                        <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteDialog.loading} className="gap-2">
+                            {deleteDialog.loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                            Hapus
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

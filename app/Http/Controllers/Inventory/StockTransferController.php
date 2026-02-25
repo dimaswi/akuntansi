@@ -76,7 +76,7 @@ class StockTransferController extends Controller
             $query->whereDate('tanggal_transfer', '<=', $request->date_to);
         }
 
-        $transfers = $query->paginate(15)->withQueryString();
+        $transfers = $query->paginate(10)->withQueryString();
 
         $transfers->getCollection()->transform(function ($transfer) {
             $data = $transfer->toArray();

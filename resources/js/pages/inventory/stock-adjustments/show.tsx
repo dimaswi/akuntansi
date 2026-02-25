@@ -135,27 +135,28 @@ export default function ShowStockAdjustment({ adjustment }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Adjustment ${adjustment.nomor_adjustment}`} />
 
-            <div className="mt-4 space-y-4">
-                {/* Back Button */}
-                <Button
-                    variant="outline"
-                    onClick={() => router.visit(route('stock-adjustments.index'))}
-                    className="gap-2"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke List
-                </Button>
-
+            <div className="p-4">
                 {/* Header Card */}
                 <Card>
                     <CardHeader>
                         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
+                            <div className='flex items-center gap-2'>
+                                <div>
+                                    <Button 
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.visit(route('stock-adjustments.index'))}
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
                                     <ClipboardList className="h-5 w-5" />
                                     Adjustment {adjustment.nomor_adjustment}
                                 </CardTitle>
                                 <CardDescription>Detail stock adjustment</CardDescription>
+                                </div>
                             </div>
                             <div className="flex gap-2">
                                 {adjustment.status === 'draft' &&

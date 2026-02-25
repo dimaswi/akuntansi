@@ -26,7 +26,7 @@ class ItemCategoryController extends Controller
             'search' => $request->get('search', ''),
             'category_type' => $request->get('category_type', ''),
             'is_active' => $request->get('is_active', ''),
-            'perPage' => (int) $request->get('perPage', 15),
+            'perPage' => (int) $request->get('perPage', 10),
         ];
 
         $categories = $this->repo->paginate($filters);

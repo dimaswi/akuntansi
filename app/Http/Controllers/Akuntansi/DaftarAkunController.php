@@ -15,7 +15,7 @@ class DaftarAkunController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search', '');
-        $perPage = $request->get('perPage', 15);
+        $perPage = $request->get('perPage', 10);
         $jenisAkun = $request->get('jenis_akun', '');
         $status = $request->get('status', '');
 

@@ -1,10 +1,8 @@
-import React from 'react';
-import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpenCheck, FileText, TrendingUp, DollarSign, Calculator, BarChart3 } from 'lucide-react';
-import { Link } from '@inertiajs/react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AppLayout from '@/layouts/app-layout';
+import { Head, Link } from '@inertiajs/react';
+import { BarChart3, BookOpenCheck, Calculator, DollarSign, FileText, TrendingUp } from 'lucide-react';
 
 interface Statistics {
     total_akun: number;
@@ -65,109 +63,93 @@ export default function AkuntansiIndex({ statistics }: Props) {
     return (
         <AppLayout>
             <Head title="Akuntansi" />
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div className="p-6 text-gray-900 dark:text-gray-100">
-                        <div className="mb-8">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <Card>
-                                    <CardContent className="p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                    Total Akun
-                                                </p>
-                                                <p className="text-2xl font-bold">{statistics.total_akun}</p>
-                                            </div>
-                                            <BookOpenCheck className="h-8 w-8 text-blue-500" />
+            <div>
+                <div className="p-6 text-gray-900 dark:text-gray-100">
+                    <div className="mb-8">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Akun</p>
+                                            <p className="text-2xl font-bold">{statistics.total_akun}</p>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                        <BookOpenCheck className="h-8 w-8 text-blue-500" />
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                <Card>
-                                    <CardContent className="p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                    Jurnal Bulan Ini
-                                                </p>
-                                                <p className="text-2xl font-bold">{statistics.jurnal_bulan_ini}</p>
-                                            </div>
-                                            <FileText className="h-8 w-8 text-green-500" />
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Jurnal Bulan Ini</p>
+                                            <p className="text-2xl font-bold">{statistics.jurnal_bulan_ini}</p>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                        <FileText className="h-8 w-8 text-green-500" />
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                <Card>
-                                    <CardContent className="p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                    Total Transaksi
-                                                </p>
-                                                <p className="text-2xl font-bold">{statistics.total_transaksi}</p>
-                                            </div>
-                                            <TrendingUp className="h-8 w-8 text-purple-500" />
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Transaksi</p>
+                                            <p className="text-2xl font-bold">{statistics.total_transaksi}</p>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                        <TrendingUp className="h-8 w-8 text-purple-500" />
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                <Card>
-                                    <CardContent className="p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                    Saldo Kas
-                                                </p>
-                                                <p className="text-2xl font-bold">{formatCurrency(statistics.saldo_kas)}</p>
-                                            </div>
-                                            <DollarSign className="h-8 w-8 text-orange-500" />
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Saldo Kas</p>
+                                            <p className="text-2xl font-bold">{formatCurrency(statistics.saldo_kas)}</p>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                                        <DollarSign className="h-8 w-8 text-orange-500" />
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </div>
+                    </div>
 
-                        <div className="mb-8">
-                            <h2 className="text-xl font-semibold mb-4">Menu Akuntansi</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="mb-8">
+                        <h2 className="mb-4 text-xl font-semibold">Menu Akuntansi</h2>
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {menuItems.map((item) => {
                                 const IconComponent = item.icon;
                                 return (
-                                    <Card key={item.title} className={`hover:shadow-lg transition-shadow ${item.disabled ? 'opacity-50' : ''}`}>
+                                    <Card key={item.title} className={`${item.disabled ? 'opacity-50' : ''}`}>
                                         <CardHeader className="pb-3">
                                             <div className="flex items-center space-x-3">
-                                                <div className={`p-2 rounded-lg ${item.color} text-white`}>
+                                                <div className={`rounded-lg p-2 ${item.color} text-white`}>
                                                     <IconComponent className="h-6 w-6" />
                                                 </div>
                                                 <div>
                                                     <CardTitle className="text-lg">{item.title}</CardTitle>
-                                                    {item.disabled && (
-                                                        <span className="text-xs text-gray-500">Coming Soon</span>
-                                                    )}
+                                                    {item.disabled && <span className="text-xs text-gray-500">Coming Soon</span>}
                                                 </div>
                                             </div>
                                         </CardHeader>
                                         <CardContent>
-                                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                                                {item.description}
-                                            </p>
+                                            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
                                             {item.disabled ? (
                                                 <Button variant="outline" disabled className="w-full">
                                                     Segera Hadir
                                                 </Button>
                                             ) : (
                                                 <Button asChild className="w-full">
-                                                    <Link href={item.href}>
-                                                        Buka {item.title}
-                                                    </Link>
+                                                    <Link href={item.href}>Buka {item.title}</Link>
                                                 </Button>
                                             )}
                                         </CardContent>
                                     </Card>
                                 );
                             })}
-                            </div>
                         </div>
                     </div>
                 </div>

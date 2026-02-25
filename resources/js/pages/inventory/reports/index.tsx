@@ -1,3 +1,4 @@
+import { type Column, DataTable, type RowMeta } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,14 +10,7 @@ import {
     SelectContent,
     SelectItem,
 } from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -376,11 +370,56 @@ export default function Index({
         return value !== undefined && value !== null && value !== '' ? value : '-';
     };
 
+    const reportColumns: Column<ReportItem>[] = [
+        ...(!isRankingReport
+            ? [
+                  {
+                      key: 'no',
+                      label: 'No',
+                      className: 'w-[60px]',
+                      render: (_row: ReportItem, _index: number, meta: RowMeta) => meta.rowNumber,
+                  },
+              ]
+            : []),
+        ...selectedColumns.map((colKey) => {
+            const columnInfo = currentColumns.find((c) => c.value === colKey);
+            return {
+                key: colKey,
+                label: columnInfo?.label || colKey,
+                render: (row: ReportItem) => renderCellValue(row, colKey),
+            };
+        }),
+        ...(!isRankingReport
+            ? [
+                  {
+                      key: 'aksi',
+                      label: 'Aksi',
+                      className: 'w-[80px] text-center',
+                      render: (_row: ReportItem) => (
+                          <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                          </Button>
+                      ),
+                  },
+              ]
+            : []),
+    ];
+
+    const reportPagination = {
+        current_page: reportData.current_page,
+        last_page: reportData.last_page,
+        per_page: reportData.per_page,
+        total: reportData.total,
+        from: reportData.data.length > 0 ? (reportData.current_page - 1) * reportData.per_page + 1 : 0,
+        to: Math.min(reportData.current_page * reportData.per_page, reportData.total),
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title="Laporan Inventory" />
 
-            <Card className="mt-4">
+            <div className="p-4 space-y-4">
+            <Card>
                 <CardHeader>
                     <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                         <div>
@@ -815,138 +854,27 @@ export default function Index({
                             </div>
                         </div>
                     )}
-
-                    {/* Data Table */}
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    {!isRankingReport && <TableHead className="w-[60px]">No</TableHead>}
-                                    {selectedColumns.map((column) => {
-                                        const columnInfo = currentColumns.find(
-                                            (c) => c.value === column
-                                        );
-                                        return (
-                                            <TableHead key={column}>
-                                                {columnInfo?.label || column}
-                                            </TableHead>
-                                        );
-                                    })}
-                                    {!isRankingReport && (
-                                        <TableHead className="w-[80px] text-center">
-                                            Aksi
-                                        </TableHead>
-                                    )}
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {reportData.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={selectedColumns.length + (isRankingReport ? 0 : 2)}
-                                            className="text-center py-8"
-                                        >
-                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                                <FileBarChart className="h-12 w-12" />
-                                                <p>Tidak ada data</p>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    reportData.data.map((item, index) => (
-                                        <TableRow key={isRankingReport ? index : item.id}>
-                                            {!isRankingReport && (
-                                                <TableCell>
-                                                    {(reportData.current_page - 1) *
-                                                        reportData.per_page +
-                                                        index +
-                                                        1}
-                                                </TableCell>
-                                            )}
-                                            {selectedColumns.map((column) => (
-                                                <TableCell key={column}>
-                                                    {renderCellValue(item, column)}
-                                                </TableCell>
-                                            ))}
-                                            {!isRankingReport && (
-                                                <TableCell className="text-center">
-                                                    <Button variant="ghost" size="sm">
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-                                                </TableCell>
-                                            )}
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-
-                    {/* Pagination */}
-                    {reportData.last_page > 1 && (
-                        <div className="flex items-center justify-between">
-                            <div className="text-sm text-muted-foreground">
-                                Menampilkan{' '}
-                                {(reportData.current_page - 1) * reportData.per_page + 1} sampai{' '}
-                                {Math.min(
-                                    reportData.current_page * reportData.per_page,
-                                    reportData.total
-                                )}{' '}
-                                dari {reportData.total} data
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        handlePageChange(reportData.current_page - 1)
-                                    }
-                                    disabled={reportData.current_page === 1}
-                                >
-                                    Sebelumnya
-                                </Button>
-                                <div className="flex items-center gap-1">
-                                    {Array.from(
-                                        { length: Math.min(5, reportData.last_page) },
-                                        (_, i) => {
-                                            const page =
-                                                Math.max(1, reportData.current_page - 2) + i;
-                                            if (page > reportData.last_page) return null;
-                                            return (
-                                                <Button
-                                                    key={page}
-                                                    variant={
-                                                        page === reportData.current_page
-                                                            ? 'default'
-                                                            : 'outline'
-                                                    }
-                                                    size="sm"
-                                                    onClick={() => handlePageChange(page)}
-                                                    className="w-8"
-                                                >
-                                                    {page}
-                                                </Button>
-                                            );
-                                        }
-                                    )}
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        handlePageChange(reportData.current_page + 1)
-                                    }
-                                    disabled={
-                                        reportData.current_page === reportData.last_page
-                                    }
-                                >
-                                    Selanjutnya
-                                </Button>
-                            </div>
-                        </div>
-                    )}
             </CardContent>
         </Card>
+
+                <DataTable<ReportItem>
+                    columns={reportColumns}
+                    data={reportData.data}
+                    pagination={reportPagination}
+                    onPageChange={handlePageChange}
+                    onPerPageChange={(n) => {
+                        router.get(route('inventory-reports.index'), {
+                            ...localFilters,
+                            columns: selectedColumns.join(','),
+                            page: 1,
+                            perPage: n,
+                        }, { preserveState: true, replace: true });
+                    }}
+                    emptyIcon={<FileBarChart className="h-8 w-8 text-muted-foreground/50" />}
+                    emptyText="Tidak ada data"
+                    rowKey={(r) => isRankingReport ? `row-${r.rank ?? r.id ?? Math.random()}` : String(r.id)}
+                />
+            </div>
         </AppLayout>
     );
 }

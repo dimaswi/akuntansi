@@ -141,22 +141,25 @@ export default function ShowPurchasePayment({ payment }: Props) {
             <Head title={`Payment ${payment.payment_number}`} />
 
             <div className="mt-4 space-y-4">
-                {/* Back Button */}
-                <Button variant="outline" onClick={() => router.visit(route('purchase-payments.index'))} className="gap-2">
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke List
-                </Button>
-
                 {/* Header Card */}
                 <Card>
                     <CardHeader>
-                        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <DollarSign className="h-5 w-5" />
-                                    Payment {payment.payment_number}
-                                </CardTitle>
-                                <CardDescription>Detail pembayaran ke supplier</CardDescription>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => router.visit(route('purchase-payments.index'))}
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <DollarSign className="h-5 w-5" />
+                                        Detail Purchase Payment
+                                    </CardTitle>
+                                    <CardDescription>Payment #{payment.payment_number}</CardDescription>
+                                </div>
                             </div>
                             <div className="flex gap-2">
                                 {!payment.jurnal_posted && hasPermission('inventory.purchases.create-payment') && (

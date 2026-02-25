@@ -1,6 +1,3 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
     AlertDialog,
@@ -12,25 +9,15 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import { toast } from '@/lib/toast';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { 
-    Truck, 
-    ArrowLeft, 
-    Edit, 
-    Trash2, 
-    Phone, 
-    Mail, 
-    MapPin, 
-    Calendar,
-    Package,
-    Power,
-    PowerOff,
-    AlertCircle
-} from 'lucide-react';
+import { AlertCircle, ArrowLeft, Calendar, Edit, Mail, MapPin, Package, Phone, Power, PowerOff, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface Supplier {
@@ -99,15 +86,19 @@ export default function SuppliersShow() {
     const handleToggleStatus = async () => {
         const action = supplier.is_active ? 'dinonaktifkan' : 'diaktifkan';
         try {
-            router.post(route('suppliers.toggle-status', supplier.id), {}, {
-                onSuccess: () => {
-                    setToggleDialogOpen(false);
+            router.post(
+                route('suppliers.toggle-status', supplier.id),
+                {},
+                {
+                    onSuccess: () => {
+                        setToggleDialogOpen(false);
+                    },
+                    onError: (errors) => {
+                        console.error('Toggle status errors:', errors);
+                        toast.error(errors?.message || `Gagal ${action === 'diaktifkan' ? 'mengaktifkan' : 'menonaktifkan'} supplier`);
+                    },
                 },
-                onError: (errors) => {
-                    console.error('Toggle status errors:', errors);
-                    toast.error(errors?.message || `Gagal ${action === 'diaktifkan' ? 'mengaktifkan' : 'menonaktifkan'} supplier`);
-                },
-            });
+            );
         } catch (error) {
             toast.error(`Gagal ${action === 'diaktifkan' ? 'mengaktifkan' : 'menonaktifkan'} supplier`);
         }
@@ -116,12 +107,12 @@ export default function SuppliersShow() {
     const getStatusBadge = (isActive: boolean) => {
         return isActive ? (
             <Badge variant="default" className="bg-green-100 text-green-800">
-                <Power className="h-3 w-3 mr-1" />
+                <Power className="mr-1 h-3 w-3" />
                 Aktif
             </Badge>
         ) : (
             <Badge variant="destructive" className="bg-red-100 text-red-800">
-                <PowerOff className="h-3 w-3 mr-1" />
+                <PowerOff className="mr-1 h-3 w-3" />
                 Nonaktif
             </Badge>
         );
@@ -133,93 +124,42 @@ export default function SuppliersShow() {
             month: 'long',
             year: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Detail Supplier - ${supplier.name}`} />
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Truck className="h-6 w-6 text-blue-600" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Detail Supplier</h1>
-                                <p className="text-sm text-gray-600">Informasi lengkap supplier: {supplier.name}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button 
-                                variant="outline"
-                                onClick={handleBack}
-                                className="flex items-center gap-2"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Kembali
-                            </Button>
-                            <Button 
-                                variant="outline"
-                                onClick={handleEdit}
-                                className="flex items-center gap-2"
-                            >
-                                <Edit className="h-4 w-4" />
-                                Edit
-                            </Button>
-                            <Button 
-                                variant={supplier.is_active ? "outline" : "default"}
-                                onClick={() => setToggleDialogOpen(true)}
-                                className="flex items-center gap-2"
-                            >
-                                {supplier.is_active ? (
-                                    <>
-                                        <PowerOff className="h-4 w-4" />
-                                        Nonaktifkan
-                                    </>
-                                ) : (
-                                    <>
-                                        <Power className="h-4 w-4" />
-                                        Aktifkan
-                                    </>
-                                )}
-                            </Button>
-                            <Button 
-                                variant="destructive"
-                                onClick={() => setDeleteDialogOpen(true)}
-                                className="flex items-center gap-2"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                                Hapus
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="p-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Basic Information */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="space-y-6 lg:col-span-2">
                         <Card>
                             <CardHeader>
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
                                     <div>
-                                        <CardTitle className="flex items-center gap-2">
-                                            {supplier.name}
-                                            {getStatusBadge(supplier.is_active)}
-                                        </CardTitle>
-                                        <CardDescription>
-                                            ID Supplier: {supplier.id}
-                                        </CardDescription>
+                                        <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                                            <ArrowLeft className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="flex items-center gap-2">
+                                                {supplier.name}
+                                                {getStatusBadge(supplier.is_active)}
+                                            </CardTitle>
+                                            <CardDescription>ID Supplier: {supplier.id}</CardDescription>
+                                        </div>
                                     </div>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {/* Contact Information */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div className="space-y-3">
-                                        <h4 className="font-medium text-sm text-gray-700">Kontak</h4>
-                                        
+                                        <h4 className="text-sm font-medium text-gray-700">Kontak</h4>
+
                                         {supplier.phone ? (
                                             <div className="flex items-center gap-2">
                                                 <Phone className="h-4 w-4 text-muted-foreground" />
@@ -246,10 +186,10 @@ export default function SuppliersShow() {
                                     </div>
 
                                     <div className="space-y-3">
-                                        <h4 className="font-medium text-sm text-gray-700">Alamat</h4>
+                                        <h4 className="text-sm font-medium text-gray-700">Alamat</h4>
                                         {supplier.address ? (
                                             <div className="flex items-start gap-2">
-                                                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                                                <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
                                                 <span className="text-sm">{supplier.address}</span>
                                             </div>
                                         ) : (
@@ -263,8 +203,8 @@ export default function SuppliersShow() {
 
                                 {/* Statistics */}
                                 <div className="border-t pt-4">
-                                    <h4 className="font-medium text-sm text-gray-700 mb-3">Statistik</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <h4 className="mb-3 text-sm font-medium text-gray-700">Statistik</h4>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                         <div className="flex items-center gap-2">
                                             <Package className="h-4 w-4 text-blue-600" />
                                             <div>
@@ -276,14 +216,14 @@ export default function SuppliersShow() {
                                             <Calendar className="h-4 w-4 text-green-600" />
                                             <div>
                                                 <p className="text-sm text-muted-foreground">Dibuat</p>
-                                                <p className="font-medium text-sm">{formatDate(supplier.created_at)}</p>
+                                                <p className="text-sm font-medium">{formatDate(supplier.created_at)}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Calendar className="h-4 w-4 text-orange-600" />
                                             <div>
                                                 <p className="text-sm text-muted-foreground">Diperbarui</p>
-                                                <p className="font-medium text-sm">{formatDate(supplier.updated_at)}</p>
+                                                <p className="text-sm font-medium">{formatDate(supplier.updated_at)}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -298,23 +238,19 @@ export default function SuppliersShow() {
                                     <Package className="h-5 w-5" />
                                     Items Terkait
                                 </CardTitle>
-                                <CardDescription>
-                                    Daftar item yang disuplai oleh supplier ini
-                                </CardDescription>
+                                <CardDescription>Daftar item yang disuplai oleh supplier ini</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {!supplier.items || supplier.items.length === 0 ? (
-                                    <div className="text-center py-8">
+                                    <div className="py-8 text-center">
                                         <Package className="mx-auto h-12 w-12 text-gray-400" />
                                         <h3 className="mt-2 text-sm font-medium text-gray-900">Belum ada items</h3>
-                                        <p className="mt-1 text-sm text-gray-500">
-                                            Supplier ini belum memiliki item yang terkait.
-                                        </p>
+                                        <p className="mt-1 text-sm text-gray-500">Supplier ini belum memiliki item yang terkait.</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
                                         {supplier.items.map((item) => (
-                                            <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                            <div key={item.id} className="flex items-center justify-between rounded-lg border p-3">
                                                 <div>
                                                     <p className="font-medium">{item.name}</p>
                                                     <p className="text-sm text-muted-foreground">Kode: {item.code}</p>
@@ -339,7 +275,7 @@ export default function SuppliersShow() {
                                     <span className="text-sm">Status Aktif</span>
                                     {getStatusBadge(supplier.is_active)}
                                 </div>
-                                
+
                                 {!supplier.is_active && (
                                     <Alert className="border-orange-200 bg-orange-50">
                                         <AlertCircle className="h-4 w-4 text-orange-600" />
@@ -357,39 +293,27 @@ export default function SuppliersShow() {
                                 <CardTitle>Aksi Cepat</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                <Button 
-                                    variant="outline" 
-                                    className="w-full justify-start"
-                                    onClick={handleEdit}
-                                >
-                                    <Edit className="h-4 w-4 mr-2" />
+                                <Button variant="outline" className="w-full justify-start" onClick={handleEdit}>
+                                    <Edit className="mr-2 h-4 w-4" />
                                     Edit Supplier
                                 </Button>
-                                
-                                <Button 
-                                    variant="outline" 
-                                    className="w-full justify-start"
-                                    onClick={() => setToggleDialogOpen(true)}
-                                >
+
+                                <Button variant="outline" className="w-full justify-start" onClick={() => setToggleDialogOpen(true)}>
                                     {supplier.is_active ? (
                                         <>
-                                            <PowerOff className="h-4 w-4 mr-2" />
+                                            <PowerOff className="mr-2 h-4 w-4" />
                                             Nonaktifkan
                                         </>
                                     ) : (
                                         <>
-                                            <Power className="h-4 w-4 mr-2" />
+                                            <Power className="mr-2 h-4 w-4" />
                                             Aktifkan
                                         </>
                                     )}
                                 </Button>
-                                
-                                <Button 
-                                    variant="destructive" 
-                                    className="w-full justify-start"
-                                    onClick={() => setDeleteDialogOpen(true)}
-                                >
-                                    <Trash2 className="h-4 w-4 mr-2" />
+
+                                <Button variant="destructive" className="w-full justify-start" onClick={() => setDeleteDialogOpen(true)}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
                                     Hapus Supplier
                                 </Button>
                             </CardContent>
@@ -427,9 +351,7 @@ export default function SuppliersShow() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Batal</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleToggleStatus}>
-                            {supplier.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                        </AlertDialogAction>
+                        <AlertDialogAction onClick={handleToggleStatus}>{supplier.is_active ? 'Nonaktifkan' : 'Aktifkan'}</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

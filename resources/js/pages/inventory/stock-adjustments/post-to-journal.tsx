@@ -98,26 +98,7 @@ export default function PostToJournal({ adjustments }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Post Stock Adjustment ke Jurnal" />
 
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                            Post to Jurnal - Stock Adjustment
-                        </h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Posting adjustment inventory ke jurnal akuntansi
-                        </p>
-                    </div>
-                    <Button
-                        variant="outline"
-                        onClick={() => router.visit(route('stock-adjustments.index'))}
-                        className="gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Kembali
-                    </Button>
-                </div>
+            <div className="p-4 space-y-4">
 
                 {/* Info Card - Penjelasan Jurnal Entry */}
                 <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700">

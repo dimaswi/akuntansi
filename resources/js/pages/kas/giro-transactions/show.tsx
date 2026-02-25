@@ -1,13 +1,12 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import AppLayout from "@/layouts/app-layout";
-import { BreadcrumbItem } from "@/types";
-import { Head, router, usePage } from "@inertiajs/react";
-import { ArrowLeft, Edit3, Receipt, Calendar, User, Hash, Clock, FileText, CheckCircle, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
-import { route } from "ziggy-js";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import AppLayout from '@/layouts/app-layout';
+import { Head, router, usePage } from '@inertiajs/react';
+import { AlertCircle, ArrowLeft, Calendar, CheckCircle, Clock, Edit3, FileText, Hash, Receipt, User } from 'lucide-react';
+import { toast } from 'sonner';
+import { route } from 'ziggy-js';
 
 interface BankAccount {
     id: number;
@@ -57,70 +56,78 @@ export default function ShowGiroTransaction() {
     const { giro_transaction } = usePage<Props>().props;
 
     const breadcrumbs = [
-        { title: <Receipt className="h-4 w-4" />, href: route("kas.index") },
-        { title: "Transaksi Giro", href: route("kas.giro-transactions.index") },
-        { title: giro_transaction.nomor_giro, href: "#" },
+        { title: <Receipt className="h-4 w-4" />, href: route('kas.index') },
+        { title: 'Transaksi Giro', href: route('kas.giro-transactions.index') },
+        { title: giro_transaction.nomor_giro, href: '#' },
     ];
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
         }).format(amount);
     };
 
     const formatDate = (date: string) => {
-        return new Date(date).toLocaleDateString("id-ID", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
+        return new Date(date).toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
         });
     };
 
     const formatDateOnly = (date: string) => {
-        return new Date(date).toLocaleDateString("id-ID", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
+        return new Date(date).toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
         });
     };
 
     const handlePost = () => {
-        router.visit(route("kas.giro-transactions.show-post-to-journal", { id: giro_transaction.id }));
+        router.visit(route('kas.giro-transactions.show-post-to-journal', { id: giro_transaction.id }));
     };
 
     const handleCair = () => {
-        router.post(route("kas.giro-transactions.cair", giro_transaction.id), {}, {
-            onSuccess: () => {
-                toast.success("Giro berhasil dicairkan");
+        router.post(
+            route('kas.giro-transactions.cair', giro_transaction.id),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Giro berhasil dicairkan');
+                },
+                onError: (error) => {
+                    console.error('Cair error:', error);
+                    toast.error('Gagal mencairkan giro');
+                },
             },
-            onError: (error) => {
-                console.error("Cair error:", error);
-                toast.error("Gagal mencairkan giro");
-            },
-        });
+        );
     };
 
     const handleTolak = () => {
-        router.post(route("kas.giro-transactions.tolak", giro_transaction.id), {}, {
-            onSuccess: () => {
-                toast.success("Giro berhasil ditolak");
+        router.post(
+            route('kas.giro-transactions.tolak', giro_transaction.id),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Giro berhasil ditolak');
+                },
+                onError: (error) => {
+                    console.error('Tolak error:', error);
+                    toast.error('Gagal menolak giro');
+                },
             },
-            onError: (error) => {
-                console.error("Tolak error:", error);
-                toast.error("Gagal menolak giro");
-            },
-        });
+        );
     };
 
     const getStatusGiroBadge = (status: string) => {
         const statusConfig = {
-            pending: { variant: "secondary" as const, label: "Pending" },
-            cair: { variant: "default" as const, label: "Cair" },
-            tolak: { variant: "destructive" as const, label: "Tolak" },
-            jatuh_tempo: { variant: "outline" as const, label: "Jatuh Tempo" },
+            pending: { variant: 'secondary' as const, label: 'Pending' },
+            cair: { variant: 'default' as const, label: 'Cair' },
+            tolak: { variant: 'destructive' as const, label: 'Tolak' },
+            jatuh_tempo: { variant: 'outline' as const, label: 'Jatuh Tempo' },
         };
 
         const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -129,8 +136,8 @@ export default function ShowGiroTransaction() {
 
     const getJenisGiroBadge = (jenis: string) => {
         const jenisConfig = {
-            masuk: { variant: "default" as const, label: "Giro Masuk", color: "text-green-700 bg-green-50" },
-            keluar: { variant: "secondary" as const, label: "Giro Keluar", color: "text-red-700 bg-red-50" },
+            masuk: { variant: 'default' as const, label: 'Giro Masuk', color: 'text-green-700 bg-green-50' },
+            keluar: { variant: 'secondary' as const, label: 'Giro Keluar', color: 'text-red-700 bg-red-50' },
         };
 
         const config = jenisConfig[jenis as keyof typeof jenisConfig] || jenisConfig.masuk;
@@ -160,76 +167,54 @@ export default function ShowGiroTransaction() {
             <Head title={`Transaksi Giro - ${giro_transaction.nomor_giro}`} />
 
             <div className="p-4">
-                <div className="flex items-center justify-between pb-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="p-2 rounded-lg">
-                            <Receipt className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight">
-                                Detail Transaksi Giro
-                            </h1>
-                        </div>
-                    </div>
-                    <div className="flex space-x-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => router.visit(route("kas.giro-transactions.index"))}
-                        >
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Kembali
-                        </Button>
-                        {!giro_transaction.is_posted && (
-                            <>
-                                <Button
-                                    variant="outline"
-                                    onClick={handlePost}
-                                >
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    Post Transaksi
-                                </Button>
-                                <Button
-                                    onClick={() => router.visit(route("kas.giro-transactions.edit", giro_transaction.id))}
-                                >
-                                    <Edit3 className="mr-2 h-4 w-4" />
-                                    Edit
-                                </Button>
-                            </>
-                        )}
-                        {giro_transaction.status_giro === 'pending' && (
-                            <>
-                                <Button
-                                    variant="default"
-                                    onClick={handleCair}
-                                >
-                                    ✓ Cairkan
-                                </Button>
-                                <Button
-                                    variant="destructive"
-                                    onClick={handleTolak}
-                                >
-                                    ✗ Tolak
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Main Information */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="space-y-6 lg:col-span-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center space-x-2">
-                                    <Receipt className="h-5 w-5" />
-                                    <span>Informasi Giro</span>
-                                </CardTitle>
-                                <CardDescription>
-                                    Detail informasi transaksi giro
-                                </CardDescription>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div>
+                                            <Button type="button" variant="outline" onClick={() => window.history.back()} className="gap-2">
+                                                <ArrowLeft className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div>
+                                            <CardTitle className="flex items-center space-x-2">
+                                                <Receipt className="h-5 w-5" />
+                                                <span>Informasi Giro</span>
+                                            </CardTitle>
+                                            <CardDescription>Detail informasi transaksi giro</CardDescription>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {!giro_transaction.is_posted && (
+                                            <>
+                                                <Button variant="outline" onClick={handlePost}>
+                                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                                    Post Transaksi
+                                                </Button>
+                                                <Button onClick={() => router.visit(route('kas.giro-transactions.edit', giro_transaction.id))}>
+                                                    <Edit3 className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </Button>
+                                            </>
+                                        )}
+                                        {giro_transaction.status_giro === 'pending' && (
+                                            <>
+                                                <Button variant="default" onClick={handleCair}>
+                                                    ✓ Cairkan
+                                                </Button>
+                                                <Button variant="destructive" onClick={handleTolak}>
+                                                    ✗ Tolak
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div className="space-y-2">
                                         <div className="flex items-center text-sm font-medium text-muted-foreground">
                                             <Hash className="mr-2 h-4 w-4" />
@@ -263,29 +248,23 @@ export default function ShowGiroTransaction() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <div className="flex items-center text-sm font-medium text-muted-foreground">
-                                            Jenis Giro
-                                        </div>
+                                        <div className="flex items-center text-sm font-medium text-muted-foreground">Jenis Giro</div>
                                         <div>{getJenisGiroBadge(giro_transaction.jenis_giro)}</div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <div className="flex items-center text-sm font-medium text-muted-foreground">
-                                            Jumlah
-                                        </div>
-                                        <p className={`text-2xl font-bold ${
-                                            giro_transaction.jenis_giro === "masuk"
-                                                ? "text-green-600"
-                                                : "text-red-600"
-                                        }`}>
+                                        <div className="flex items-center text-sm font-medium text-muted-foreground">Jumlah</div>
+                                        <p
+                                            className={`text-2xl font-bold ${
+                                                giro_transaction.jenis_giro === 'masuk' ? 'text-green-600' : 'text-red-600'
+                                            }`}
+                                        >
                                             {formatCurrency(giro_transaction.jumlah)}
                                         </p>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <div className="flex items-center text-sm font-medium text-muted-foreground">
-                                            Status Giro
-                                        </div>
+                                        <div className="flex items-center text-sm font-medium text-muted-foreground">Status Giro</div>
                                         <div>{getStatusGiroBadge(giro_transaction.status_giro)}</div>
                                     </div>
 
@@ -317,9 +296,7 @@ export default function ShowGiroTransaction() {
                                         <FileText className="mr-2 h-4 w-4" />
                                         Keterangan
                                     </div>
-                                    <p className="text-gray-700 leading-relaxed">
-                                        {giro_transaction.keterangan}
-                                    </p>
+                                    <p className="leading-relaxed text-gray-700">{giro_transaction.keterangan}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -328,22 +305,16 @@ export default function ShowGiroTransaction() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Bank Account</CardTitle>
-                                <CardDescription>
-                                    Informasi rekening bank yang terkait
-                                </CardDescription>
+                                <CardDescription>Informasi rekening bank yang terkait</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
                                     <div className="space-y-1">
-                                        <p className="font-semibold text-lg">
-                                            {giro_transaction.bank_account.nama_bank}
-                                        </p>
+                                        <p className="text-lg font-semibold">{giro_transaction.bank_account.nama_bank}</p>
                                         <p className="text-sm text-muted-foreground">
                                             {giro_transaction.bank_account.kode_rekening} • {giro_transaction.bank_account.nama_rekening}
                                         </p>
-                                        <p className="text-sm font-medium">
-                                            Saldo: {formatCurrency(giro_transaction.bank_account.saldo_berjalan)}
-                                        </p>
+                                        <p className="text-sm font-medium">Saldo: {formatCurrency(giro_transaction.bank_account.saldo_berjalan)}</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -354,19 +325,15 @@ export default function ShowGiroTransaction() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Akun Terkait</CardTitle>
-                                    <CardDescription>
-                                        Pemetaan ke akun dalam chart of accounts
-                                    </CardDescription>
+                                    <CardDescription>Pemetaan ke akun dalam chart of accounts</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
                                         <div>
                                             <p className="font-semibold">
                                                 {giro_transaction.daftar_akun.kode_akun} - {giro_transaction.daftar_akun.nama_akun}
                                             </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {giro_transaction.daftar_akun.jenis_akun}
-                                            </p>
+                                            <p className="text-sm text-muted-foreground">{giro_transaction.daftar_akun.jenis_akun}</p>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -386,7 +353,7 @@ export default function ShowGiroTransaction() {
                                     <span className="text-sm font-medium">Status Giro</span>
                                     {getStatusGiroBadge(giro_transaction.status_giro)}
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm font-medium">Posting</span>
                                     {giro_transaction.is_posted ? (
@@ -398,23 +365,23 @@ export default function ShowGiroTransaction() {
                                         <Badge variant="secondary">Draft</Badge>
                                     )}
                                 </div>
-                                
+
                                 <Separator />
-                                
+
                                 <div className="space-y-3">
                                     <div className="flex items-center space-x-2 text-sm">
                                         <Calendar className="h-4 w-4 text-muted-foreground" />
                                         <span className="text-muted-foreground">Dibuat:</span>
                                     </div>
-                                    <p className="text-sm ml-6">{formatDate(giro_transaction.created_at)}</p>
+                                    <p className="ml-6 text-sm">{formatDate(giro_transaction.created_at)}</p>
                                 </div>
-                                
+
                                 <div className="space-y-3">
                                     <div className="flex items-center space-x-2 text-sm">
                                         <Calendar className="h-4 w-4 text-muted-foreground" />
                                         <span className="text-muted-foreground">Diperbarui:</span>
                                     </div>
-                                    <p className="text-sm ml-6">{formatDate(giro_transaction.updated_at)}</p>
+                                    <p className="ml-6 text-sm">{formatDate(giro_transaction.updated_at)}</p>
                                 </div>
 
                                 {giro_transaction.user && (
@@ -423,7 +390,7 @@ export default function ShowGiroTransaction() {
                                             <User className="h-4 w-4 text-muted-foreground" />
                                             <span className="text-muted-foreground">Dibuat oleh:</span>
                                         </div>
-                                        <p className="text-sm ml-6">{giro_transaction.user.name}</p>
+                                        <p className="ml-6 text-sm">{giro_transaction.user.name}</p>
                                     </div>
                                 )}
                             </CardContent>
@@ -438,14 +405,18 @@ export default function ShowGiroTransaction() {
                                 <div className="space-y-3 text-sm">
                                     <div className="flex justify-between">
                                         <span>Hari sampai jatuh tempo:</span>
-                                        <span className={getDaysToMaturity(giro_transaction.tanggal_jatuh_tempo) < 0 ? "text-red-600 font-semibold" : "text-gray-600"}>
+                                        <span
+                                            className={
+                                                getDaysToMaturity(giro_transaction.tanggal_jatuh_tempo) < 0
+                                                    ? 'font-semibold text-red-600'
+                                                    : 'text-gray-600'
+                                            }
+                                        >
                                             {getDaysToMaturity(giro_transaction.tanggal_jatuh_tempo)} hari
                                         </span>
                                     </div>
                                     {isJatuhTempo(giro_transaction.tanggal_jatuh_tempo) && giro_transaction.status_giro === 'pending' && (
-                                        <div className="text-xs text-red-600 font-medium">
-                                            ⚠️ Giro sudah jatuh tempo!
-                                        </div>
+                                        <div className="text-xs font-medium text-red-600">⚠️ Giro sudah jatuh tempo!</div>
                                     )}
                                 </div>
                             </CardContent>
@@ -460,19 +431,15 @@ export default function ShowGiroTransaction() {
                                 <div className="space-y-3 text-sm">
                                     <div className="flex justify-between">
                                         <span>Saldo Bank:</span>
-                                        <span className={
-                                            giro_transaction.jenis_giro === "masuk"
-                                                ? "text-green-600"
-                                                : "text-red-600"
-                                        }>
-                                            {giro_transaction.jenis_giro === "masuk" ? "+" : "-"}
+                                        <span className={giro_transaction.jenis_giro === 'masuk' ? 'text-green-600' : 'text-red-600'}>
+                                            {giro_transaction.jenis_giro === 'masuk' ? '+' : '-'}
                                             {formatCurrency(giro_transaction.jumlah)}
                                         </span>
                                     </div>
                                     <div className="text-xs text-muted-foreground">
-                                        {giro_transaction.is_posted 
-                                            ? "Saldo akan terupdate saat giro dicairkan" 
-                                            : "Saldo akan terupdate setelah posting dan pencairan"}
+                                        {giro_transaction.is_posted
+                                            ? 'Saldo akan terupdate saat giro dicairkan'
+                                            : 'Saldo akan terupdate setelah posting dan pencairan'}
                                     </div>
                                 </div>
                             </CardContent>

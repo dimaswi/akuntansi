@@ -168,24 +168,23 @@ export default function CashTransactionShow({ cashTransaction }: Props) {
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Button type="button" variant="outline" onClick={() => router.visit('/kas/cash-transactions')} className="gap-2">
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
                                     <Wallet className="h-5 w-5" />
                                     Detail Transaksi Kas
                                 </CardTitle>
                                 <CardDescription>
                                     {cashTransaction.nomor_transaksi}
                                 </CardDescription>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => router.visit('/kas/cash-transactions')}
-                                    className="gap-2"
-                                >
-                                    <ArrowLeft className="h-4 w-4" />
-                                    Kembali
-                                </Button>
                                 {cashTransaction.status === 'draft' && (
                                     <>
                                         <Button

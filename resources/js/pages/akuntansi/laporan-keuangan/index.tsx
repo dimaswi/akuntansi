@@ -39,9 +39,7 @@ export default function LaporanKeuanganIndex({ laporanTypes }: Props) {
         <AppLayout>
             <Head title="Laporan Keuangan" />
             
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div className="p-6 text-gray-900 dark:text-gray-100">
+            <div className="p-6 text-gray-900 dark:text-gray-100">
                         {/* Header */}
                         <div className="mb-8">
                             <div className="flex items-center justify-between">
@@ -146,8 +144,6 @@ export default function LaporanKeuanganIndex({ laporanTypes }: Props) {
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
         </AppLayout>
     );
 }

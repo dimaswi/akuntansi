@@ -169,7 +169,7 @@ export default function PostToJournal({ batches, journalPreview, daftarAkun, nom
             <Head title="Post to Journal - Penggajian" />
 
             <div className="py-6">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="px-4 sm:px-6 lg:px-8">
                     <Card>
                         <CardHeader>
                             <CardTitle>Post to Journal - Gaji Karyawan</CardTitle>

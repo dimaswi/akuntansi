@@ -211,112 +211,107 @@ export default function PurchaseShow() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title={`Purchase Order - ${purchase.purchase_number}`} />
 
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">{purchase.purchase_number}</h1>
-                            <p className="text-muted-foreground">Purchase order details and items</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Button onClick={() => router.visit(route('purchases.index'))} className="flex items-center gap-2">
-                                <ArrowLeft className="h-4 w-4" />
-                                Kembali
-                            </Button>
-
-                            {canEdit && purchase.status === 'draft' && (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => router.visit(route('purchases.edit', purchase.id))}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        Edit
-                                    </Button>
-                                    <Button onClick={handleSubmit}>
-                                        <Send className="mr-2 h-4 w-4" />
-                                        Submit for Approval
-                                    </Button>
-                                </>
-                            )}
-
-                            {canApprove && purchase.status === 'pending' && (
-                                <Button onClick={handleApprove}>
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    Approve
-                                </Button>
-                            )}
-
-                            {purchase.status === 'approved' && (
-                                <Button onClick={handleMarkAsOrdered} className="flex items-center gap-2">
-                                    <Truck className="mr-2 h-4 w-4" />
-                                    Mark as Ordered
-                                </Button>
-                            )}
-
-                            {canReceive && (purchase.status === 'approved' || purchase.status === 'ordered' || purchase.status === 'partial') && (
-                                <Button onClick={() => router.visit(route('purchases.receive', purchase.id))} className="flex items-center gap-2">
-                                    <Package className="mr-2 h-4 w-4" />
-                                    Receive Items
-                                </Button>
-                            )}
-
-                            {/* ACCOUNTING ACTIONS */}
-                            {/* 1. POST TO JURNAL - Jika sudah approved/completed tapi BELUM diposting */}
-                            {(purchase.status === 'approved' || purchase.status === 'ordered' || purchase.status === 'partial' || purchase.status === 'completed') && 
-                             !purchase.jurnal_posted && 
-                             hasPermission('inventory.purchases.post-to-journal') && (
-                                <Button 
-                                    onClick={() => router.visit(route('purchases.showPostToJournal') + '?id=' + purchase.id)}
-                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                                    variant="default"
-                                >
-                                    <BookOpen className="mr-2 h-4 w-4" />
-                                    Post to Jurnal
-                                </Button>
-                            )}
-
-                            {/* 2. CREATE PAYMENT - Jika sudah diposting dan ada outstanding AP */}
-                            {purchase.jurnal_posted && 
-                             purchase.ap_outstanding > 0 && 
-                             hasPermission('inventory.purchases.create-payment') && (
-                                <Button 
-                                    onClick={() => router.visit(route('purchase-payments.create') + '?purchase_id=' + purchase.id)}
-                                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                                    variant="default"
-                                >
-                                    <DollarSign className="mr-2 h-4 w-4" />
-                                    Create Payment
-                                </Button>
-                            )}
-
-                            {(purchase.status === 'draft' || purchase.status === 'pending') && canEdit && (
-                                <>
-                                    <Button variant="outline" onClick={() => setCancelDialogOpen(true)}>
-                                        <XCircle className="mr-2 h-4 w-4" />
-                                        Cancel
-                                    </Button>
-                                    <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
+            <div className="p-4 sm:px-6 lg:px-8">
                 {/* Purchase Details */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <div className="lg:col-span-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <ShoppingCart className="h-5 w-5" />
-                                    Purchase Order Details
-                                </CardTitle>
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <Button onClick={() => router.visit(route('purchases.index'))} variant="outline">
+                                            <ArrowLeft className="h-4 w-4" />
+                                        </Button>
+                                        <div>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <ShoppingCart className="h-5 w-5" />
+                                                {purchase.purchase_number}
+                                            </CardTitle>
+                                            <CardDescription>Purchase order details and items</CardDescription>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {canEdit && purchase.status === 'draft' && (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => router.visit(route('purchases.edit', purchase.id))}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </Button>
+                                                <Button onClick={handleSubmit}>
+                                                    <Send className="mr-2 h-4 w-4" />
+                                                    Submit for Approval
+                                                </Button>
+                                            </>
+                                        )}
+
+                                        {canApprove && purchase.status === 'pending' && (
+                                            <Button onClick={handleApprove}>
+                                                <CheckCircle className="mr-2 h-4 w-4" />
+                                                Approve
+                                            </Button>
+                                        )}
+
+                                        {purchase.status === 'approved' && (
+                                            <Button onClick={handleMarkAsOrdered} className="flex items-center gap-2">
+                                                <Truck className="mr-2 h-4 w-4" />
+                                                Mark as Ordered
+                                            </Button>
+                                        )}
+
+                                        {canReceive && (purchase.status === 'approved' || purchase.status === 'ordered' || purchase.status === 'partial') && (
+                                            <Button onClick={() => router.visit(route('purchases.receive', purchase.id))} className="flex items-center gap-2">
+                                                <Package className="mr-2 h-4 w-4" />
+                                                Receive Items
+                                            </Button>
+                                        )}
+
+                                        {/* ACCOUNTING ACTIONS */}
+                                        {/* 1. POST TO JURNAL - Jika sudah approved/completed tapi BELUM diposting */}
+                                        {(purchase.status === 'approved' || purchase.status === 'ordered' || purchase.status === 'partial' || purchase.status === 'completed') && 
+                                         !purchase.jurnal_posted && 
+                                         hasPermission('inventory.purchases.post-to-journal') && (
+                                            <Button 
+                                                onClick={() => router.visit(route('purchases.showPostToJournal') + '?id=' + purchase.id)}
+                                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                                                variant="default"
+                                            >
+                                                <BookOpen className="mr-2 h-4 w-4" />
+                                                Post to Jurnal
+                                            </Button>
+                                        )}
+
+                                        {/* 2. CREATE PAYMENT - Jika sudah diposting dan ada outstanding AP */}
+                                        {purchase.jurnal_posted && 
+                                         purchase.ap_outstanding > 0 && 
+                                         hasPermission('inventory.purchases.create-payment') && (
+                                            <Button 
+                                                onClick={() => router.visit(route('purchase-payments.create') + '?purchase_id=' + purchase.id)}
+                                                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                                                variant="default"
+                                            >
+                                                <DollarSign className="mr-2 h-4 w-4" />
+                                                Create Payment
+                                            </Button>
+                                        )}
+
+                                        {(purchase.status === 'draft' || purchase.status === 'pending') && canEdit && (
+                                            <>
+                                                <Button variant="outline" onClick={() => setCancelDialogOpen(true)}>
+                                                    <XCircle className="mr-2 h-4 w-4" />
+                                                    Cancel
+                                                </Button>
+                                                <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="space-y-6">

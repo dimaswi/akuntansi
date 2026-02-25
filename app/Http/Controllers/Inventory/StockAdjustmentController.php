@@ -78,7 +78,7 @@ class StockAdjustmentController extends Controller
             $query->whereDate('tanggal_adjustment', '<=', $request->date_to);
         }
 
-        $adjustments = $query->paginate(15)->withQueryString();
+        $adjustments = $query->paginate(10)->withQueryString();
 
         // Transform item data untuk setiap adjustment
         $adjustments->getCollection()->transform(function ($adjustment) {

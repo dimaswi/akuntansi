@@ -1,10 +1,10 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Package, ArrowLeft, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Edit, Package, XCircle } from 'lucide-react';
 import { route } from 'ziggy-js';
 
 interface Item {
@@ -101,51 +101,34 @@ export default function ShowItem() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Detail Item - ${item.name}`} />
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Package className="h-6 w-6 text-blue-600" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">{item.name}</h1>
-                                <p className="text-sm text-gray-600">{item.code}</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button 
-                                variant="outline" 
-                                onClick={() => router.visit(route('items.index'))}
-                                className="flex items-center gap-2"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Kembali
-                            </Button>
-                            <Button 
-                                onClick={() => router.visit(route('items.edit', item.id))}
-                                className="flex items-center gap-2"
-                            >
-                                <Edit className="h-4 w-4" />
-                                Edit
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="p-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Basic Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Informasi Dasar</CardTitle>
-                            <CardDescription>
-                                Detail umum tentang item
-                            </CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div>
+                                        <Button type="button" variant="outline" onClick={() => router.visit('/items')} className="gap-2">
+                                            <ArrowLeft className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <div>
+                                        <CardTitle>Informasi Dasar</CardTitle>
+                                        <CardDescription>Detail umum tentang item</CardDescription>
+                                    </div>
+                                </div>
+                                <Button onClick={() => router.visit(route('items.edit', item.id))} className="flex items-center gap-2">
+                                    <Edit className="h-4 w-4" />
+                                    Edit
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Kode Item</p>
-                                    <p className="text-sm font-mono">{item.code}</p>
+                                    <p className="font-mono text-sm">{item.code}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Tipe Inventory</p>
@@ -189,9 +172,7 @@ export default function ShowItem() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Status & Pengaturan</CardTitle>
-                            <CardDescription>
-                                Status aktif dan pengaturan khusus
-                            </CardDescription>
+                            <CardDescription>Status aktif dan pengaturan khusus</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -270,9 +251,7 @@ export default function ShowItem() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Informasi Inventory</CardTitle>
-                            <CardDescription>
-                                Detail stok, satuan, dan harga
-                            </CardDescription>
+                            <CardDescription>Detail stok, satuan, dan harga</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -321,9 +300,7 @@ export default function ShowItem() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Detail Farmasi</CardTitle>
-                                <CardDescription>
-                                    Informasi khusus farmasi
-                                </CardDescription>
+                                <CardDescription>Informasi khusus farmasi</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
@@ -357,10 +334,10 @@ export default function ShowItem() {
                                         <p className="text-sm font-medium text-gray-500">Klasifikasi Obat</p>
                                         <p className="text-sm">
                                             {item.pharmacy_detail.drug_classification ? (
-                                                <Badge variant="outline">
-                                                    {item.pharmacy_detail.drug_classification}
-                                                </Badge>
-                                            ) : '-'}
+                                                <Badge variant="outline">{item.pharmacy_detail.drug_classification}</Badge>
+                                            ) : (
+                                                '-'
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -368,7 +345,7 @@ export default function ShowItem() {
                                 {item.pharmacy_detail.atc_code && (
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">ATC Code</p>
-                                        <p className="text-sm font-mono">{item.pharmacy_detail.atc_code}</p>
+                                        <p className="font-mono text-sm">{item.pharmacy_detail.atc_code}</p>
                                     </div>
                                 )}
 
@@ -402,9 +379,7 @@ export default function ShowItem() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Detail Umum</CardTitle>
-                                <CardDescription>
-                                    Informasi khusus item umum
-                                </CardDescription>
+                                <CardDescription>Informasi khusus item umum</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
@@ -454,12 +429,12 @@ export default function ShowItem() {
                                         <p className="text-sm font-medium text-gray-500">Garansi</p>
                                         <p className="text-sm">{item.general_detail.warranty_months} bulan</p>
                                     </div>
-                                ) : 
-                                <div>
+                                ) : (
+                                    <div>
                                         <p className="text-sm font-medium text-gray-500">Garansi</p>
                                         <p className="text-sm">0 bulan</p>
                                     </div>
-                                }
+                                )}
 
                                 {item.general_detail.usage_instructions ? (
                                     <div>

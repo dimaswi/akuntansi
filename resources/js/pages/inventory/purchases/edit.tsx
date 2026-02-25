@@ -1,32 +1,18 @@
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-    Select,
-    SelectTrigger,
-    SelectValue,
-    SelectContent,
-    SelectItem,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SupplierSearchableDropdown } from '@/components/ui/supplier-searchable-dropdown';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { toast } from '@/lib/toast';
 import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ShoppingCart, Plus, Trash2, Save, ArrowLeft, Package } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { toast } from '@/lib/toast';
+import { ArrowLeft, Package, Plus, Save, ShoppingCart, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { route } from 'ziggy-js';
 
 interface Supplier {
@@ -97,16 +83,16 @@ export default function PurchaseEdit() {
         { title: <Package className="h-4 w-4" />, href: '#' },
         { title: 'Purchase Orders', href: route('purchases.index') },
         { title: purchase.purchase_number, href: route('purchases.show', purchase.id) },
-        { title: 'Edit', href: '' }
+        { title: 'Edit', href: '' },
     ];
 
     // Initialize purchase items from existing data
     useEffect(() => {
-        const initialItems: PurchaseItem[] = purchase.items.map(item => ({
+        const initialItems: PurchaseItem[] = purchase.items.map((item) => ({
             item_id: item.item_id,
             quantity_ordered: item.quantity_ordered,
             unit_price: item.unit_price,
-            notes: item.notes || ''
+            notes: item.notes || '',
         }));
         setPurchaseItems(initialItems);
     }, [purchase.items]);
@@ -117,7 +103,7 @@ export default function PurchaseEdit() {
             return;
         }
 
-        const itemExists = purchaseItems.find(item => item.item_id === parseInt(selectedItemId));
+        const itemExists = purchaseItems.find((item) => item.item_id === parseInt(selectedItemId));
         if (itemExists) {
             toast.error('Item already added');
             return;
@@ -127,7 +113,7 @@ export default function PurchaseEdit() {
             item_id: parseInt(selectedItemId),
             quantity_ordered: 1,
             unit_price: 0,
-            notes: ''
+            notes: '',
         };
 
         setPurchaseItems([...purchaseItems, newItem]);
@@ -135,35 +121,33 @@ export default function PurchaseEdit() {
     };
 
     const removeItem = (itemId: number) => {
-        setPurchaseItems(purchaseItems.filter(item => item.item_id !== itemId));
+        setPurchaseItems(purchaseItems.filter((item) => item.item_id !== itemId));
     };
 
     const updateItem = (itemId: number, field: keyof PurchaseItem, value: any) => {
-        setPurchaseItems(purchaseItems.map(item =>
-            item.item_id === itemId ? { ...item, [field]: value } : item
-        ));
+        setPurchaseItems(purchaseItems.map((item) => (item.item_id === itemId ? { ...item, [field]: value } : item)));
     };
 
     const getSelectedItem = (itemId: number) => {
-        return items.find(item => item.id === itemId);
+        return items.find((item) => item.id === itemId);
     };
 
     const getTotalAmount = () => {
         return purchaseItems.reduce((total, item) => {
-            return total + (item.quantity_ordered * item.unit_price);
+            return total + item.quantity_ordered * item.unit_price;
         }, 0);
     };
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
-            currency: 'IDR'
+            currency: 'IDR',
         }).format(amount);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (purchaseItems.length === 0) {
             toast.error('Please add at least one item');
             return;
@@ -173,7 +157,7 @@ export default function PurchaseEdit() {
         const submitData = {
             ...formData,
             items: purchaseItems,
-            _method: 'PUT'
+            _method: 'PUT',
         };
 
         try {
@@ -182,9 +166,9 @@ export default function PurchaseEdit() {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                 },
-                body: JSON.stringify(submitData)
+                body: JSON.stringify(submitData),
             });
 
             if (response.ok) {
@@ -206,45 +190,45 @@ export default function PurchaseEdit() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title={`Edit Purchase Order - ${purchase.purchase_number}`} />
 
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">Edit Purchase Order</h1>
-                            <p className="text-muted-foreground">Update purchase order: {purchase.purchase_number}</p>
-                        </div>
-                        <Button onClick={() => router.visit(route('purchases.index'))} className="flex items-center gap-2">
-                            <ArrowLeft className="h-4 w-4" />
-                            Kembali
-                        </Button>
-                    </div>
-                </div>
-
+            <div className="p-4 sm:px-6 lg:px-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Purchase Order Details */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Purchase Order Details</CardTitle>
-                            <CardDescription>
-                                Update the basic information for the purchase order
-                            </CardDescription>
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.visit(route('purchases.show', purchase.id))}
+                                        className="gap-2"
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <ShoppingCart className="h-5 w-5" />
+                                        Edit Purchase Order - {purchase.purchase_number}
+                                    </CardTitle>
+                                    <CardDescription>Update details and items for this purchase order</CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="supplier_id">Supplier *</Label>
                                     <SupplierSearchableDropdown
                                         value={formData.supplier_id ? parseInt(formData.supplier_id) : null}
-                                        onValueChange={(value) => setFormData({...formData, supplier_id: value ? value.toString() : ''})}
+                                        onValueChange={(value) => setFormData({ ...formData, supplier_id: value ? value.toString() : '' })}
                                         placeholder="Pilih supplier..."
                                         error={!!errors.supplier_id}
-                                        suppliers={suppliers.map(s => ({...s, is_active: s.is_active ?? true}))}
+                                        suppliers={suppliers.map((s) => ({ ...s, is_active: s.is_active ?? true }))}
                                         className={errors.supplier_id ? 'border-red-500' : ''}
                                     />
-                                    {errors.supplier_id && (
-                                        <p className="text-sm text-red-500">{errors.supplier_id}</p>
-                                    )}
+                                    {errors.supplier_id && <p className="text-sm text-red-500">{errors.supplier_id}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -252,12 +236,10 @@ export default function PurchaseEdit() {
                                     <Input
                                         type="date"
                                         value={formData.purchase_date}
-                                        onChange={(e) => setFormData({...formData, purchase_date: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
                                         className={errors.purchase_date ? 'border-red-500' : ''}
                                     />
-                                    {errors.purchase_date && (
-                                        <p className="text-sm text-red-500">{errors.purchase_date}</p>
-                                    )}
+                                    {errors.purchase_date && <p className="text-sm text-red-500">{errors.purchase_date}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -265,12 +247,10 @@ export default function PurchaseEdit() {
                                     <Input
                                         type="date"
                                         value={formData.expected_delivery_date}
-                                        onChange={(e) => setFormData({...formData, expected_delivery_date: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, expected_delivery_date: e.target.value })}
                                         className={errors.expected_delivery_date ? 'border-red-500' : ''}
                                     />
-                                    {errors.expected_delivery_date && (
-                                        <p className="text-sm text-red-500">{errors.expected_delivery_date}</p>
-                                    )}
+                                    {errors.expected_delivery_date && <p className="text-sm text-red-500">{errors.expected_delivery_date}</p>}
                                 </div>
                             </div>
 
@@ -278,13 +258,11 @@ export default function PurchaseEdit() {
                                 <Label htmlFor="notes">Notes</Label>
                                 <Textarea
                                     value={formData.notes}
-                                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                     placeholder="Additional notes for this purchase order..."
                                     className={errors.notes ? 'border-red-500' : ''}
                                 />
-                                {errors.notes && (
-                                    <p className="text-sm text-red-500">{errors.notes}</p>
-                                )}
+                                {errors.notes && <p className="text-sm text-red-500">{errors.notes}</p>}
                             </div>
                         </CardContent>
                     </Card>
@@ -293,9 +271,7 @@ export default function PurchaseEdit() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Purchase Items</CardTitle>
-                            <CardDescription>
-                                Update items in this purchase order
-                            </CardDescription>
+                            <CardDescription>Update items in this purchase order</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {/* Add Item Form */}
@@ -307,14 +283,16 @@ export default function PurchaseEdit() {
                                             <SelectValue placeholder="Select item to add" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {items.filter(item => !purchaseItems.find(pi => pi.item_id === item.id)).map((item) => (
-                                                <SelectItem key={item.id} value={item.id.toString()}>
-                                                    {item.code} - {item.name}
-                                                    <Badge variant="outline" className="ml-2">
-                                                        {item.unit_of_measure}
-                                                    </Badge>
-                                                </SelectItem>
-                                            ))}
+                                            {items
+                                                .filter((item) => !purchaseItems.find((pi) => pi.item_id === item.id))
+                                                .map((item) => (
+                                                    <SelectItem key={item.id} value={item.id.toString()}>
+                                                        {item.code} - {item.name}
+                                                        <Badge variant="outline" className="ml-2">
+                                                            {item.unit_of_measure}
+                                                        </Badge>
+                                                    </SelectItem>
+                                                ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -342,7 +320,7 @@ export default function PurchaseEdit() {
                                             {purchaseItems.map((purchaseItem) => {
                                                 const item = getSelectedItem(purchaseItem.item_id);
                                                 const total = purchaseItem.quantity_ordered * purchaseItem.unit_price;
-                                                
+
                                                 return (
                                                     <TableRow key={purchaseItem.item_id}>
                                                         <TableCell>
@@ -362,7 +340,13 @@ export default function PurchaseEdit() {
                                                                 min="0.01"
                                                                 step="0.01"
                                                                 value={purchaseItem.quantity_ordered}
-                                                                onChange={(e) => updateItem(purchaseItem.item_id, 'quantity_ordered', parseFloat(e.target.value) || 0)}
+                                                                onChange={(e) =>
+                                                                    updateItem(
+                                                                        purchaseItem.item_id,
+                                                                        'quantity_ordered',
+                                                                        parseFloat(e.target.value) || 0,
+                                                                    )
+                                                                }
                                                                 className="w-24"
                                                             />
                                                         </TableCell>
@@ -372,7 +356,9 @@ export default function PurchaseEdit() {
                                                                 min="0"
                                                                 step="0.01"
                                                                 value={purchaseItem.unit_price}
-                                                                onChange={(e) => updateItem(purchaseItem.item_id, 'unit_price', parseFloat(e.target.value) || 0)}
+                                                                onChange={(e) =>
+                                                                    updateItem(purchaseItem.item_id, 'unit_price', parseFloat(e.target.value) || 0)
+                                                                }
                                                                 className="w-32"
                                                             />
                                                         </TableCell>
@@ -405,7 +391,7 @@ export default function PurchaseEdit() {
 
                                     {/* Total Summary */}
                                     <div className="border-t p-4">
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex items-center justify-between">
                                             <span className="text-lg font-medium">Total Amount:</span>
                                             <span className="text-lg font-bold">{formatCurrency(getTotalAmount())}</span>
                                         </div>

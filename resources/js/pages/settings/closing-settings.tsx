@@ -92,7 +92,7 @@ export default function ClosingSettings({ settings }: ClosingSettingsProps) {
         <AppLayout>
             <Head title="Konfigurasi Global Tutup Buku" />
 
-            <div className="p-6 max-w-7xl">
+            <div className="p-6">
                 {/* Header */}
                 <div className="mb-6">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md border bg-muted text-xs font-medium mb-3">

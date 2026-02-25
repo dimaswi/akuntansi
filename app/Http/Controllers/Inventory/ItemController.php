@@ -40,7 +40,7 @@ class ItemController extends Controller
             'requires_approval' => $request->get('requires_approval') === '1' ? true : null,
             'is_controlled_substance' => $request->get('is_controlled_substance') === '1' ? true : null,
             'stock_status' => $request->get('stock_status'), // Filter by stock status: out_of_stock, low_stock, below_safety
-            'perPage' => $request->get('perPage', 15),
+            'perPage' => $request->get('perPage', 10),
             'is_logistics' => $isLogistics, // Pass this to repository
         ];
 

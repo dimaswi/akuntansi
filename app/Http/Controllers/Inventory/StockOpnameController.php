@@ -66,7 +66,7 @@ class StockOpnameController extends Controller
         
         $opnames = $query->orderBy('opname_date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->paginate($request->get('perPage', 15));
+            ->paginate($request->get('perPage', 10));
         
         return Inertia::render('inventory/stock-opnames/index', [
             'opnames' => $opnames,
@@ -74,7 +74,7 @@ class StockOpnameController extends Controller
                 'search' => $request->search,
                 'status' => $request->status,
                 'department_id' => $request->department_id,
-                'perPage' => $request->get('perPage', 15),
+                'perPage' => $request->get('perPage', 10),
             ],
             'departments' => $user->isLogistics() 
                 ? Department::where('is_active', true)->orderBy('name')->get(['id', 'name'])

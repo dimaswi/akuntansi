@@ -130,69 +130,72 @@ export default function Show({ transfer }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Transfer ${transfer.nomor_transfer}`} />
 
-            <div className="mt-4 space-y-4">
-                {/* Header Actions */}
-                <div className="flex items-center justify-between">
-                    <Button variant="outline" onClick={() => router.visit(route('stock-transfers.index'))} className="gap-2">
-                        <ArrowLeft className="h-4 w-4" />
-                        Kembali
-                    </Button>
-                    <div className="flex gap-2">
-                        {canEdit && (
-                            <Button
-                                variant="outline"
-                                onClick={() => router.visit(route('stock-transfers.edit', transfer.id))}
-                                className="gap-2"
-                            >
-                                <Edit className="h-4 w-4" />
-                                Edit
-                            </Button>
-                        )}
-                        {canDelete && (
-                            <Button
-                                variant="destructive"
-                                onClick={() => setShowDeleteDialog(true)}
-                                className="gap-2"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                                Hapus
-                            </Button>
-                        )}
-                        {canApprove && (
-                            <Button
-                                onClick={() => setShowApproveDialog(true)}
-                                className="gap-2"
-                            >
-                                <CheckCircle className="h-4 w-4" />
-                                Approve & Kurangi Stok
-                            </Button>
-                        )}
-                        {canReceive && (
-                            <Button
-                                onClick={() => setShowReceiveDialog(true)}
-                                className="gap-2 bg-green-600 hover:bg-green-700"
-                            >
-                                <PackageCheck className="h-4 w-4" />
-                                Terima Barang
-                            </Button>
-                        )}
-                    </div>
-                </div>
-
+            <div className="p-4 space-y-4">
                 {/* Main Info Card */}
                 <Card>
                     <CardHeader>
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <ArrowRightLeft className="h-5 w-5" />
-                                    {transfer.nomor_transfer}
-                                </CardTitle>
-                                <CardDescription>
-                                    Dibuat pada {formatDateTime(transfer.tanggal_transfer)}
-                                </CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => router.visit(route('stock-transfers.index'))}
+                                >
+                                    <ArrowLeft className="h-4 w-4 mr-2" />
+                                    Kembali
+                                </Button>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <ArrowRightLeft className="h-5 w-5" />
+                                        {transfer.nomor_transfer}
+                                        {getStatusBadge(transfer.status)}
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Dibuat pada {formatDateTime(transfer.tanggal_transfer)}
+                                    </CardDescription>
+                                </div>
                             </div>
-                            {getStatusBadge(transfer.status)}
+                            <div className="flex items-center gap-2">
+                                {canEdit && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.visit(route('stock-transfers.edit', transfer.id))}
+                                    >
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Edit
+                                    </Button>
+                                )}
+                                {canDelete && (
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => setShowDeleteDialog(true)}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Hapus
+                                    </Button>
+                                )}
+                                {canApprove && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setShowApproveDialog(true)}
+                                    >
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                        Approve & Kurangi Stok
+                                    </Button>
+                                )}
+                                {canReceive && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setShowReceiveDialog(true)}
+                                        className="bg-green-600 hover:bg-green-700"
+                                    >
+                                        <PackageCheck className="h-4 w-4 mr-2" />
+                                        Terima Barang
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">

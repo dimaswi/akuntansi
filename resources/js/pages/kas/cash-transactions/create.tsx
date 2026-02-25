@@ -17,6 +17,7 @@ import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { Save, ArrowLeft, Wallet, AlertCircle } from "lucide-react";
 import { FormEventHandler } from "react";
 import { toast } from "sonner";
+import { Arrow } from "@radix-ui/react-tooltip";
 
 interface DaftarAkunKas {
     id: number;
@@ -126,7 +127,12 @@ export default function CashTransactionCreate() {
             <div className="p-4">
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div>
+                                <Button type="button" variant="outline" onClick={() => window.history.back()} className="gap-2">
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                            </div>
                             <div>
                                 <CardTitle className="flex items-center gap-2">
                                     <Wallet className="h-5 w-5" />
@@ -136,14 +142,6 @@ export default function CashTransactionCreate() {
                                     Buat transaksi penerimaan atau pengeluaran kas baru
                                 </CardDescription>
                             </div>
-                            <Button
-                                variant="outline"
-                                onClick={() => router.visit('/kas/cash-transactions')}
-                                className="gap-2"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Kembali
-                            </Button>
                         </div>
                     </CardHeader>
                     <CardContent>

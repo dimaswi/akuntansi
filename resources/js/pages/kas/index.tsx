@@ -68,7 +68,7 @@ export default function KasDashboard() {
                 {/* Quick Actions */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {hasPermission('kas.cash-management.daily-entry') && (
-                        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <Card className="cursor-pointer">
                             <Link href="/kas/cash-transactions/create">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">
@@ -87,7 +87,7 @@ export default function KasDashboard() {
                     )}
 
                     {hasPermission('kas.cash-management.daily-entry') && (
-                        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <Card className="cursor-pointer">
                             <Link href="/kas/bank-transactions/create">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">
@@ -106,7 +106,7 @@ export default function KasDashboard() {
                     )}
 
                     {hasPermission('kas.giro-transaction.create') && (
-                        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <Card className="cursor-pointer">
                             <Link href="/kas/giro-transactions/create">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">
@@ -125,7 +125,7 @@ export default function KasDashboard() {
                     )}
 
                     {hasPermission('kas.bank-account.create') && (
-                        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <Card className="cursor-pointer">
                             <Link href="/kas/bank-accounts/create">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">

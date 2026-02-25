@@ -63,7 +63,7 @@ class ItemCategoryRepository implements ItemCategoryRepositoryInterface
             $query->where('is_active', (bool) $filters['is_active']);
         }
 
-        $perPage = $filters['perPage'] ?? 15;
+        $perPage = $filters['perPage'] ?? 10;
         
         return $query->orderBy('code')->paginate($perPage);
     }

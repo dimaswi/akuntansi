@@ -83,35 +83,28 @@ export default function EditDepartment() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit Departemen" />
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Building2 className="h-6 w-6 text-blue-600" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Edit Departemen</h1>
-                                <p className="text-sm text-gray-600">Ubah detail departemen dalam sistem</p>
-                            </div>
-                        </div>
-                        <Button 
-                            variant="outline" 
-                            onClick={() => router.visit(route('departments.index'))}
-                            className="flex items-center gap-2"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            Kembali
-                        </Button>
-                    </div>
-                </div>
-
+            <div className="p-4 sm:px-6 lg:px-8">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Informasi Departemen</CardTitle>
-                            <CardDescription>
-                                Ubah detail departemen yang akan diupdate
-                            </CardDescription>
+                            <div className='flex items-center gap-2'>
+                                <div>
+                                    <Button
+                                        type='button'
+                                        variant="outline"
+                                        onClick={() => router.visit(route('departments.index'))}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle>Informasi Departemen</CardTitle>
+                                    <CardDescription>
+                                        Ubah detail departemen yang akan diupdate
+                                    </CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

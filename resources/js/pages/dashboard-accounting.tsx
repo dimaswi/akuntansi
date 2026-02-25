@@ -27,7 +27,6 @@ import {
     ResponsiveContainer,
     Area,
     AreaChart,
-    Cell
 } from 'recharts';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -140,11 +139,12 @@ export default function DashboardAccounting({
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-                    <p className="font-semibold text-sm mb-2">{label}</p>
+                <div className="bg-popover text-popover-foreground p-3 border border-border rounded-md shadow-md">
+                    <p className="font-semibold text-xs mb-1.5">{label}</p>
                     {payload.map((entry: any, index: number) => (
-                        <p key={index} style={{ color: entry.color }} className="text-xs font-medium">
-                            {entry.name}: {formatCurrencyFull(entry.value)}
+                        <p key={index} className="text-xs">
+                            <span className="text-muted-foreground">{entry.name}:</span>{' '}
+                            <span className="font-medium">{formatCurrencyFull(entry.value)}</span>
                         </p>
                     ))}
                 </div>
@@ -159,16 +159,16 @@ export default function DashboardAccounting({
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
                 {/* Tabs - Only show if user has access to inventory dashboard */}
                 {canAccessInventoryDashboard && (
-                    <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-full max-w-md">
+                    <div className="flex border-b mb-2 gap-0">
                         <button
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
+                            className="px-4 py-2 -mb-px border-b-2 text-sm font-medium transition-colors border-foreground text-foreground flex items-center gap-2"
                         >
                             <BarChart3 className="h-4 w-4" />
                             Akuntansi
                         </button>
                         <button
                             onClick={() => router.visit(route('inventory.dashboard'))}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                            className="px-4 py-2 -mb-px border-b-2 text-sm font-medium transition-colors border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground flex items-center gap-2"
                         >
                             <Package className="h-4 w-4" />
                             Inventory
@@ -179,19 +179,19 @@ export default function DashboardAccounting({
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard Akuntansi</h1>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <h1 className="text-xl font-semibold">Dashboard Akuntansi</h1>
+                        <p className="text-sm text-muted-foreground">
                             {isEmpty ? 'Pilih bulan untuk melihat data' : 'Ringkasan performa keuangan perusahaan'}
                         </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                         <input 
                             type="month"
                             value={selectedMonth}
                             onChange={handleMonthChange}
                             disabled={isLoading}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-3 py-2 border border-input rounded-md bg-background text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                     </div>
                 </div>
@@ -271,112 +271,82 @@ export default function DashboardAccounting({
                     <>
                 {/* KPI Cards */}
                 <div className="grid auto-rows-min gap-4 md:grid-cols-4">
-                    <Card className={`border-l-4 ${pendapatanPositif ? 'border-l-green-500' : 'border-l-red-500'}`}>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center justify-between">
-                                Total Pendapatan
-                                {pendapatanPositif ? (
-                                    <TrendingUp className="h-4 w-4 text-green-600" />
-                                ) : (
-                                    <TrendingDown className="h-4 w-4 text-red-600" />
-                                )}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className={`text-2xl font-bold ${pendapatanPositif ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                {statistik ? formatCurrency(statistik.totalPendapatan) : 'Rp 0'}
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                {new Date(selectedMonth + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <div className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Pendapatan</span>
+                            {pendapatanPositif ? <TrendingUp className="h-4 w-4 text-foreground" /> : <TrendingDown className="h-4 w-4 text-muted-foreground" />}
+                        </div>
+                        <div className="text-2xl font-bold tabular-nums">
+                            {statistik ? formatCurrency(statistik.totalPendapatan) : 'Rp 0'}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(selectedMonth + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
+                        </p>
+                    </div>
 
-                    <Card className={`border-l-4 ${bebanPositif ? 'border-l-red-500' : 'border-l-green-500'}`}>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center justify-between">
-                                Total Beban
-                                {bebanPositif ? (
-                                    <TrendingDown className="h-4 w-4 text-red-600" />
-                                ) : (
-                                    <TrendingUp className="h-4 w-4 text-green-600" />
-                                )}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className={`text-2xl font-bold ${bebanPositif ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                                {statistik ? formatCurrency(statistik.totalBeban) : 'Rp 0'}
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                {new Date(selectedMonth + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <div className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Beban</span>
+                            {bebanPositif ? <TrendingDown className="h-4 w-4 text-foreground" /> : <TrendingUp className="h-4 w-4 text-muted-foreground" />}
+                        </div>
+                        <div className="text-2xl font-bold tabular-nums">
+                            {statistik ? formatCurrency(statistik.totalBeban) : 'Rp 0'}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(selectedMonth + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
+                        </p>
+                    </div>
 
-                    <Card className={`border-l-4 ${statistik && statistik.labaRugi >= 0 ? 'border-l-blue-500' : 'border-l-orange-500'}`}>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center justify-between">
+                    <div className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                 {statistik && statistik.labaRugi >= 0 ? 'Laba Bersih' : 'Rugi Bersih'}
-                                {statistik && statistik.labaRugi >= 0 ? 
-                                    <ArrowUpRight className="h-4 w-4 text-blue-600" /> : 
-                                    <ArrowDownRight className="h-4 w-4 text-orange-600" />
-                                }
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className={`text-2xl font-bold ${statistik && statistik.labaRugi >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                                {statistik ? formatCurrency(statistik.labaRugi) : 'Rp 0'}
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                {new Date(selectedMonth + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
-                            </p>
-                        </CardContent>
-                    </Card>
+                            </span>
+                            {statistik && statistik.labaRugi >= 0
+                                ? <ArrowUpRight className="h-4 w-4 text-foreground" />
+                                : <ArrowDownRight className="h-4 w-4 text-muted-foreground" />
+                            }
+                        </div>
+                        <div className="text-2xl font-bold tabular-nums">
+                            {statistik ? formatCurrency(statistik.labaRugi) : 'Rp 0'}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(selectedMonth + '-01').toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
+                        </p>
+                    </div>
 
-                    <Card className="border-l-4 border-l-purple-500">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center justify-between">
-                                Margin Rata-rata
-                                <Activity className="h-4 w-4 text-purple-600" />
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                {statistik ? statistik.marginRataRata.toFixed(2) : '0.00'}%
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Profit Margin</p>
-                        </CardContent>
-                    </Card>
+                    <div className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Margin Rata-rata</span>
+                            <Activity className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="text-2xl font-bold tabular-nums">
+                            {statistik ? statistik.marginRataRata.toFixed(2) : '0.00'}%
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Profit Margin</p>
+                    </div>
                 </div>
 
                 {/* Charts Row */}
                 <div className="grid gap-4 md:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
-                                Pendapatan vs Beban per Bulan
+                            <CardTitle className="flex items-center text-base">
+                                <BarChart3 className="h-4 w-4 mr-2 text-muted-foreground" />
+                                Pendapatan vs Beban
                             </CardTitle>
-                            <CardDescription>Perbandingan head-to-head bulanan</CardDescription>
+                            <CardDescription>Perbandingan bulanan</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
+                            <ResponsiveContainer width="100%" height={280}>
                                 <BarChart data={dataHarian}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="tanggal" />
-                                    <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                    <XAxis dataKey="tanggal" tick={{ fontSize: 11 }} />
+                                    <YAxis tickFormatter={(value) => formatCurrency(value)} tick={{ fontSize: 10 }} />
                                     <Tooltip content={<CustomTooltip />} />
                                     <Legend />
-                                    <Bar dataKey="pendapatan" name="Pendapatan">
-                                        {dataHarian?.map((entry, index) => (
-                                            <Cell key={`cell-pendapatan-${index}`} fill={entry.pendapatan >= 0 ? '#10b981' : '#ef4444'} />
-                                        ))}
-                                    </Bar>
-                                    <Bar dataKey="beban" name="Beban">
-                                        {dataHarian?.map((entry, index) => (
-                                            <Cell key={`cell-beban-${index}`} fill={entry.beban >= 0 ? '#ef4444' : '#10b981'} />
-                                        ))}
-                                    </Bar>
+                                    <Bar dataKey="pendapatan" name="Pendapatan" fill="var(--color-chart-1)" radius={[2,2,0,0]} />
+                                    <Bar dataKey="beban" name="Beban" fill="var(--color-chart-3)" radius={[2,2,0,0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>
@@ -384,26 +354,26 @@ export default function DashboardAccounting({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <TrendingUp className="h-5 w-5 mr-2 text-purple-600" />
-                                Tren Margin per Bulan
+                            <CardTitle className="flex items-center text-base">
+                                <TrendingUp className="h-4 w-4 mr-2 text-muted-foreground" />
+                                Tren Margin
                             </CardTitle>
                             <CardDescription>Persentase margin keuntungan</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
+                            <ResponsiveContainer width="100%" height={280}>
                                 <AreaChart data={dataHarian}>
                                     <defs>
                                         <linearGradient id="colorMargin" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                                            <stop offset="5%" stopColor="var(--color-chart-1)" stopOpacity={0.3}/>
+                                            <stop offset="95%" stopColor="var(--color-chart-1)" stopOpacity={0}/>
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="tanggal" />
-                                    <YAxis tickFormatter={(value) => `${value}%`} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                    <XAxis dataKey="tanggal" tick={{ fontSize: 11 }} />
+                                    <YAxis tickFormatter={(value) => `${value}%`} tick={{ fontSize: 11 }} />
                                     <Tooltip formatter={(value: any) => `${value}%`} />
-                                    <Area type="monotone" dataKey="margin" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorMargin)" name="Margin %" />
+                                    <Area type="monotone" dataKey="margin" stroke="var(--color-chart-1)" strokeWidth={2} fillOpacity={1} fill="url(#colorMargin)" name="Margin %" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </CardContent>
@@ -414,20 +384,20 @@ export default function DashboardAccounting({
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <Wallet className="h-5 w-5 mr-2 text-green-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <Wallet className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Kas & Bank
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-4">
+                            <div className="text-xl font-bold tabular-nums mb-3">
                                 {formatCurrency(kasBank.total)}
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                                 {kasBank.detail.slice(0, 5).map((item, idx) => (
-                                    <div key={idx} className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600 dark:text-gray-400 truncate">{item.nama}</span>
-                                        <span className="font-mono font-semibold">{formatCurrency(item.saldo)}</span>
+                                    <div key={idx} className="flex justify-between items-center text-xs">
+                                        <span className="text-muted-foreground truncate">{item.nama}</span>
+                                        <span className="font-mono font-medium tabular-nums">{formatCurrency(item.saldo)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -436,24 +406,24 @@ export default function DashboardAccounting({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <TrendingUp className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Top 5 Pendapatan
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-3">
+                            <div className="space-y-2.5">
                                 {topPendapatan.map((item, idx) => (
                                     <div key={idx}>
-                                        <div className="flex justify-between items-center text-sm mb-1">
-                                            <span className="text-gray-700 dark:text-gray-300 text-xs truncate flex-1">{item.nama}</span>
-                                            <span className="font-mono font-semibold text-xs text-green-600 dark:text-green-400 ml-2">
+                                        <div className="flex justify-between items-center text-xs mb-1">
+                                            <span className="text-foreground truncate flex-1">{item.nama}</span>
+                                            <span className="font-mono font-medium tabular-nums ml-2">
                                                 {formatCurrency(item.total)}
                                             </span>
                                         </div>
-                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                            <div 
-                                                className={`h-1.5 rounded-full ${item.total >= 0 ? 'bg-green-600' : 'bg-red-600'}`} 
+                                        <div className="w-full bg-muted rounded-full h-1">
+                                            <div
+                                                className="h-1 rounded-full bg-foreground"
                                                 style={{ width: safeWidth(item.total, topPendapatanMax) }}
                                             />
                                         </div>
@@ -465,24 +435,24 @@ export default function DashboardAccounting({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <TrendingDown className="h-5 w-5 mr-2 text-red-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <TrendingDown className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Top 5 Beban
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-3">
+                            <div className="space-y-2.5">
                                 {topBeban.map((item, idx) => (
                                     <div key={idx}>
-                                        <div className="flex justify-between items-center text-sm mb-1">
-                                            <span className="text-gray-700 dark:text-gray-300 text-xs truncate flex-1">{item.nama}</span>
-                                            <span className="font-mono font-semibold text-xs text-red-600 dark:text-red-400 ml-2">
+                                        <div className="flex justify-between items-center text-xs mb-1">
+                                            <span className="text-foreground truncate flex-1">{item.nama}</span>
+                                            <span className="font-mono font-medium tabular-nums ml-2">
                                                 {formatCurrency(item.total)}
                                             </span>
                                         </div>
-                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                            <div 
-                                                className={`h-1.5 rounded-full ${item.total >= 0 ? 'bg-red-600' : 'bg-green-600'}`} 
+                                        <div className="w-full bg-muted rounded-full h-1">
+                                            <div
+                                                className="h-1 rounded-full bg-muted-foreground"
                                                 style={{ width: safeWidth(item.total, topBebanMax) }}
                                             />
                                         </div>
@@ -497,29 +467,29 @@ export default function DashboardAccounting({
                 <div className="grid gap-4 md:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <PieChart className="h-5 w-5 mr-2 text-indigo-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <PieChart className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Posisi Keuangan
                             </CardTitle>
                             <CardDescription>Balance Sheet Overview</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                    <span className="font-semibold text-sm">Total Aset</span>
-                                    <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center p-2.5 bg-muted/40 rounded-md">
+                                    <span className="text-sm">Total Aset</span>
+                                    <span className="font-mono font-semibold text-sm tabular-nums">
                                         {formatCurrency(posisiKeuangan.aset)}
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                                    <span className="font-semibold text-sm">Total Kewajiban</span>
-                                    <span className="font-mono font-bold text-red-600 dark:text-red-400">
+                                <div className="flex justify-between items-center p-2.5 bg-muted/40 rounded-md">
+                                    <span className="text-sm">Total Kewajiban</span>
+                                    <span className="font-mono font-semibold text-sm tabular-nums">
                                         {formatCurrency(posisiKeuangan.kewajiban)}
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                    <span className="font-semibold text-sm">Total Ekuitas</span>
-                                    <span className="font-mono font-bold text-green-600 dark:text-green-400">
+                                <div className="flex justify-between items-center p-2.5 bg-muted/40 rounded-md">
+                                    <span className="text-sm">Total Ekuitas</span>
+                                    <span className="font-mono font-semibold text-sm tabular-nums">
                                         {formatCurrency(posisiKeuangan.ekuitas)}
                                     </span>
                                 </div>
@@ -529,29 +499,29 @@ export default function DashboardAccounting({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <Activity className="h-5 w-5 mr-2 text-purple-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <Activity className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Rasio Likuiditas
                             </CardTitle>
-                            <CardDescription>Current Ratio Assessment</CardDescription>
+                            <CardDescription>Current Ratio</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="text-center mb-4">
-                                <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                                <div className="text-4xl font-bold tabular-nums mb-2">
                                     {rasioLikuiditas.current_ratio.toFixed(2)}
                                 </div>
-                                <Badge variant={rasioLikuiditas.current_ratio >= 2 ? 'default' : rasioLikuiditas.current_ratio >= 1 ? 'secondary' : 'destructive'}>
+                                <Badge variant={rasioLikuiditas.current_ratio >= 2 ? 'default' : rasioLikuiditas.current_ratio >= 1 ? 'secondary' : 'outline'}>
                                     {rasioLikuiditas.current_ratio >= 2 ? 'Sangat Baik' : rasioLikuiditas.current_ratio >= 1 ? 'Baik' : 'Perlu Perhatian'}
                                 </Badge>
                             </div>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-400">Aset Lancar</span>
-                                    <span className="font-mono font-semibold">{formatCurrency(rasioLikuiditas.aset_lancar)}</span>
+                                    <span className="text-muted-foreground">Aset Lancar</span>
+                                    <span className="font-mono font-medium tabular-nums">{formatCurrency(rasioLikuiditas.aset_lancar)}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600 dark:text-gray-400">Kewajiban Lancar</span>
-                                    <span className="font-mono font-semibold">{formatCurrency(rasioLikuiditas.kewajiban_lancar)}</span>
+                                    <span className="text-muted-foreground">Kewajiban Lancar</span>
+                                    <span className="font-mono font-medium tabular-nums">{formatCurrency(rasioLikuiditas.kewajiban_lancar)}</span>
                                 </div>
                             </div>
                         </CardContent>

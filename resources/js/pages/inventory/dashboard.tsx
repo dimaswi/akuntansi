@@ -109,15 +109,21 @@ interface Props {
 }
 
 const STATUS_COLORS = {
-    draft: '#6b7280',
-    pending: '#f59e0b',
-    approved: '#10b981',
-    rejected: '#ef4444',
-    completed: '#10b981',
-    submitted: '#3b82f6',
+    draft: 'var(--color-chart-5)',
+    pending: 'var(--color-chart-4)',
+    approved: 'var(--color-chart-2)',
+    rejected: 'var(--color-chart-3)',
+    completed: 'var(--color-chart-2)',
+    submitted: 'var(--color-chart-1)',
 };
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const MONO_COLORS = [
+    'var(--color-chart-1)',
+    'var(--color-chart-2)',
+    'var(--color-chart-3)',
+    'var(--color-chart-4)',
+    'var(--color-chart-5)',
+];
 
 export default function InventoryDashboard({ 
     stats,
@@ -161,13 +167,13 @@ export default function InventoryDashboard({
     const getActivityIcon = (type: string) => {
         switch (type) {
             case 'stock_request':
-                return <FileCheck className="h-4 w-4 text-blue-600" />;
+                return <FileCheck className="h-4 w-4 text-foreground" />;
             case 'stock_transfer':
-                return <ArrowRightLeft className="h-4 w-4 text-purple-600" />;
+                return <ArrowRightLeft className="h-4 w-4 text-foreground" />;
             case 'stock_opname':
-                return <FileBarChart className="h-4 w-4 text-green-600" />;
+                return <FileBarChart className="h-4 w-4 text-foreground" />;
             default:
-                return <Activity className="h-4 w-4 text-gray-600" />;
+                return <Activity className="h-4 w-4 text-muted-foreground" />;
         }
     };
 
@@ -177,16 +183,16 @@ export default function InventoryDashboard({
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
                 {/* Tabs - Only show if user has access to accounting dashboard */}
                 {canAccessAccountingDashboard && (
-                    <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-full max-w-md">
+                    <div className="flex border-b mb-2 gap-0">
                         <button
                             onClick={() => router.visit(route('dashboard.accounting'))}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                            className="px-4 py-2 -mb-px border-b-2 text-sm font-medium transition-colors border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground flex items-center gap-2"
                         >
                             <BarChart3 className="h-4 w-4" />
                             Akuntansi
                         </button>
                         <button
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
+                            className="px-4 py-2 -mb-px border-b-2 text-sm font-medium transition-colors border-foreground text-foreground flex items-center gap-2"
                         >
                             <Package className="h-4 w-4" />
                             Inventory
@@ -197,8 +203,8 @@ export default function InventoryDashboard({
                 {/* Header */}
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard Inventory</h1>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <h1 className="text-xl font-semibold">Dashboard Inventory</h1>
+                        <p className="text-sm text-muted-foreground">
                             Overview dan monitoring sistem inventory
                         </p>
                     </div>
@@ -206,77 +212,41 @@ export default function InventoryDashboard({
 
                 {/* KPI Cards */}
                 <div className="grid auto-rows-min gap-4 md:grid-cols-4">
-                    {/* Total Items */}
-                    <Card className="border-l-4 border-l-blue-500">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center justify-between">
-                                Total Items
-                                <Package className="h-4 w-4 text-blue-600" />
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {stats.total_items.toLocaleString()}
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                Item dalam inventory
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <div className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Items</span>
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="text-2xl font-bold tabular-nums">{stats.total_items.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Item dalam inventory</p>
+                    </div>
 
-                    {/* Total Stock Value */}
-                    <Card className="border-l-4 border-l-green-500">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center justify-between">
-                                Total Stock Value
-                                <TrendingUp className="h-4 w-4 text-green-600" />
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                {formatCurrency(stats.total_stock_value)}
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                Nilai total persediaan
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <div className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Stock Value</span>
+                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="text-2xl font-bold tabular-nums">{formatCurrency(stats.total_stock_value)}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Nilai total persediaan</p>
+                    </div>
 
-                    {/* Low Stock */}
-                    <Card className="border-l-4 border-l-orange-500">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center justify-between">
-                                Low Stock Items
-                                <AlertTriangle className="h-4 w-4 text-orange-600" />
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                                {stats.low_stock_count}
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                Perlu diperhatikan
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <div className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Low Stock Items</span>
+                            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="text-2xl font-bold tabular-nums">{stats.low_stock_count}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Perlu diperhatikan</p>
+                    </div>
 
-                    {/* Pending Requests */}
-                    <Card className="border-l-4 border-l-purple-500">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center justify-between">
-                                Pending Requests
-                                <Clock className="h-4 w-4 text-purple-600" />
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                {stats.pending_requests}
-                            </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                Menunggu proses
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <div className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pending Requests</span>
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="text-2xl font-bold tabular-nums">{stats.pending_requests}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Menunggu proses</p>
+                    </div>
                 </div>
 
                 {/* Charts Row */}
@@ -284,8 +254,8 @@ export default function InventoryDashboard({
                     {/* Stock by Category */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <Package className="h-5 w-5 mr-2 text-blue-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <Package className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Stock by Category
                             </CardTitle>
                             <CardDescription>Distribusi stock per kategori</CardDescription>
@@ -300,11 +270,11 @@ export default function InventoryDashboard({
                                         labelLine={false}
                                         label={(entry: any) => entry.category}
                                         outerRadius={80}
-                                        fill="#8884d8"
+                                        fill="var(--color-chart-1)"
                                         dataKey="total_items"
                                     >
                                         {stockByCategory.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-${index}`} fill={MONO_COLORS[index % MONO_COLORS.length]} />
                                         ))}
                                     </Pie>
                                     <Tooltip />
@@ -316,8 +286,8 @@ export default function InventoryDashboard({
                     {/* Stock Movement Trend */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <Activity className="h-5 w-5 mr-2 text-purple-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <Activity className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Stock Movement (6 Months)
                             </CardTitle>
                             <CardDescription>Pergerakan stock 6 bulan terakhir</CardDescription>
@@ -325,14 +295,14 @@ export default function InventoryDashboard({
                         <CardContent>
                             <ResponsiveContainer width="100%" height={250}>
                                 <LineChart data={stockMovement}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                                    <YAxis tick={{ fontSize: 11 }} />
                                     <Tooltip />
                                     <Legend />
-                                    <Line type="monotone" dataKey="requests" stroke="#3b82f6" name="Requests" />
-                                    <Line type="monotone" dataKey="transfers" stroke="#8b5cf6" name="Transfers" />
-                                    <Line type="monotone" dataKey="adjustments" stroke="#10b981" name="Adjustments" />
+                                    <Line type="monotone" dataKey="requests" stroke="var(--color-chart-1)" strokeWidth={2} name="Requests" />
+                                    <Line type="monotone" dataKey="transfers" stroke="var(--color-chart-3)" strokeWidth={2} name="Transfers" />
+                                    <Line type="monotone" dataKey="adjustments" stroke="var(--color-chart-5)" strokeWidth={2} name="Adjustments" />
                                 </LineChart>
                             </ResponsiveContainer>
                         </CardContent>
@@ -344,32 +314,32 @@ export default function InventoryDashboard({
                     {/* Low Stock Items */}
                     <Card className="md:col-span-2">
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <AlertTriangle className="h-5 w-5 mr-2 text-orange-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <AlertTriangle className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Low Stock Alert
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2 max-h-80 overflow-y-auto">
                                 {lowStockItems.length === 0 ? (
-                                    <div className="text-center py-8 text-gray-500">
-                                        <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
-                                        <p>Semua stock dalam kondisi baik</p>
+                                    <div className="text-center py-8 text-muted-foreground">
+                                        <CheckCircle className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                                        <p className="text-sm">Semua stock dalam kondisi baik</p>
                                     </div>
                                 ) : (
                                     lowStockItems.map((item) => (
-                                        <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-900">
+                                        <div key={item.id} className="flex items-center justify-between p-2.5 bg-muted/40 rounded-md border">
                                             <div className="flex-1">
-                                                <div className="font-semibold text-sm">{item.item_name}</div>
-                                                <div className="text-xs text-gray-600 dark:text-gray-400">
+                                                <div className="font-medium text-sm">{item.item_name}</div>
+                                                <div className="text-xs text-muted-foreground">
                                                     {item.item_code} • {item.department}
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-sm font-bold text-orange-600">
+                                                <div className="text-sm font-semibold tabular-nums">
                                                     {item.quantity} {item.unit}
                                                 </div>
-                                                <div className="text-xs text-gray-600">
+                                                <div className="text-xs text-muted-foreground">
                                                     Min: {item.min_stock} (Short: {item.shortage})
                                                 </div>
                                             </div>
@@ -383,28 +353,28 @@ export default function InventoryDashboard({
                     {/* Pending Approvals */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Pending Approvals
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                    <span className="text-sm font-medium">Stock Requests</span>
-                                    <Badge variant="default">{pendingApprovals.stock_requests}</Badge>
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center p-2.5 bg-muted/40 rounded-md">
+                                    <span className="text-sm">Stock Requests</span>
+                                    <Badge variant="secondary">{pendingApprovals.stock_requests}</Badge>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                                    <span className="text-sm font-medium">Stock Transfers</span>
-                                    <Badge variant="default">{pendingApprovals.stock_transfers}</Badge>
+                                <div className="flex justify-between items-center p-2.5 bg-muted/40 rounded-md">
+                                    <span className="text-sm">Stock Transfers</span>
+                                    <Badge variant="secondary">{pendingApprovals.stock_transfers}</Badge>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                    <span className="text-sm font-medium">Stock Opnames</span>
-                                    <Badge variant="default">{pendingApprovals.stock_opnames}</Badge>
+                                <div className="flex justify-between items-center p-2.5 bg-muted/40 rounded-md">
+                                    <span className="text-sm">Stock Opnames</span>
+                                    <Badge variant="secondary">{pendingApprovals.stock_opnames}</Badge>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                                    <span className="text-sm font-medium">Purchases</span>
-                                    <Badge variant="default">{pendingApprovals.purchases}</Badge>
+                                <div className="flex justify-between items-center p-2.5 bg-muted/40 rounded-md">
+                                    <span className="text-sm">Purchases</span>
+                                    <Badge variant="secondary">{pendingApprovals.purchases}</Badge>
                                 </div>
                             </div>
                         </CardContent>
@@ -416,23 +386,23 @@ export default function InventoryDashboard({
                     {/* Recent Activities */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <Activity className="h-5 w-5 mr-2 text-gray-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <Activity className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Recent Activities
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                            <div className="space-y-1.5 max-h-96 overflow-y-auto">
                                 {recentActivities.map((activity, idx) => (
-                                    <div key={idx} className="flex items-start space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer" onClick={() => router.visit(activity.url)}>
-                                        <div className="mt-1">{getActivityIcon(activity.type)}</div>
+                                    <div key={idx} className="flex items-start space-x-3 p-2.5 hover:bg-muted/50 rounded-md transition-colors cursor-pointer" onClick={() => router.visit(activity.url)}>
+                                        <div className="mt-0.5 shrink-0">{getActivityIcon(activity.type)}</div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-sm font-semibold truncate">{activity.title}</p>
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-sm font-medium truncate">{activity.title}</p>
                                                 {getStatusBadge(activity.status)}
                                             </div>
-                                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{activity.description}</p>
-                                            <p className="text-xs text-gray-500 mt-1">
+                                            <p className="text-xs text-muted-foreground mt-0.5">{activity.description}</p>
+                                            <p className="text-xs text-muted-foreground/70 mt-0.5">
                                                 {activity.user} • {new Date(activity.date).toLocaleDateString('id-ID')}
                                             </p>
                                         </div>
@@ -445,8 +415,8 @@ export default function InventoryDashboard({
                     {/* Stock Opname Status */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center text-base">
-                                <FileBarChart className="h-5 w-5 mr-2 text-green-600" />
+                            <CardTitle className="flex items-center text-sm font-medium">
+                                <FileBarChart className="h-4 w-4 mr-2 text-muted-foreground" />
                                 Stock Opname Status
                             </CardTitle>
                             <CardDescription>Status opname bulan ini</CardDescription>
@@ -454,16 +424,16 @@ export default function InventoryDashboard({
                         <CardContent>
                             <div className="space-y-2 max-h-96 overflow-y-auto">
                                 {opnameStatus.map((status, idx) => (
-                                    <div key={idx} className={`p-3 rounded-lg border ${status.has_monthly_opname ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900' : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-900'}`}>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="font-semibold text-sm">{status.department}</span>
+                                    <div key={idx} className="p-2.5 rounded-md border bg-muted/20">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="font-medium text-sm">{status.department}</span>
                                             {status.has_monthly_opname ? (
-                                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                                <CheckCircle className="h-4 w-4 text-foreground" />
                                             ) : (
-                                                <XCircle className="h-4 w-4 text-orange-600" />
+                                                <XCircle className="h-4 w-4 text-muted-foreground" />
                                             )}
                                         </div>
-                                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                                        <div className="text-xs text-muted-foreground">
                                             {status.last_opname_date ? (
                                                 <>Last opname: {new Date(status.last_opname_date).toLocaleDateString('id-ID')}</>
                                             ) : (
@@ -471,9 +441,9 @@ export default function InventoryDashboard({
                                             )}
                                         </div>
                                         {status.can_create !== undefined && !status.has_monthly_opname && status.can_create && (
-                                            <Button 
-                                                size="sm" 
-                                                className="mt-2 w-full" 
+                                            <Button
+                                                size="sm"
+                                                className="mt-2 w-full"
                                                 variant="outline"
                                                 onClick={() => router.visit(route('stock-opnames.create'))}
                                             >

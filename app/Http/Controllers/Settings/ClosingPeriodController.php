@@ -34,7 +34,7 @@ class ClosingPeriodController extends Controller
             $query->whereYear('period_start', $request->year);
         }
 
-        $periods = $query->paginate(15);
+        $periods = $query->paginate(10);
 
         // Get available years for filter
         $years = ClosingPeriod::selectRaw('YEAR(period_start) as year')

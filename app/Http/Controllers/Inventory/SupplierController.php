@@ -29,7 +29,7 @@ class SupplierController extends Controller
         $filters = [
             'search' => $request->get('search'),
             'is_active' => $request->get('is_active') === '1' ? true : ($request->get('is_active') === '0' ? false : null),
-            'perPage' => $request->get('perPage', 15),
+            'perPage' => $request->get('perPage', 10),
         ];
 
         $suppliers = $this->supplierRepository->paginate($filters, $filters['perPage']);

@@ -1,16 +1,4 @@
-import React, { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+import { RevisionReasonDialog } from '@/components/closing-period/revision-reason-dialog';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -21,12 +9,18 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
-import { ArrowLeft, Edit, CheckCircle, RotateCcw, Trash2, BookOpen, Calculator } from 'lucide-react';
-import { BreadcrumbItem, SharedData } from '@/types';
-import { route } from "ziggy-js";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useRevisionDialog } from '@/hooks/use-revision-dialog';
-import { RevisionReasonDialog } from '@/components/closing-period/revision-reason-dialog';
+import AppLayout from '@/layouts/app-layout';
+import { BreadcrumbItem, SharedData } from '@/types';
+import { Head, router } from '@inertiajs/react';
+import { ArrowLeft, Calculator, CheckCircle, Edit, RotateCcw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { route } from 'ziggy-js';
 
 interface DaftarAkun {
     id: number;
@@ -129,7 +123,7 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
         open: boolean;
         type: 'post' | 'unpost' | 'reverse' | 'delete' | null;
     }>({ open: false, type: null });
-    
+
     const [currentActionType, setCurrentActionType] = useState<'edit' | 'delete' | 'unpost' | 'reverse'>('delete');
 
     // Use revision dialog hook
@@ -170,14 +164,18 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
         switch (type) {
             case 'post':
                 // Post tidak perlu revision dialog
-                router.post(route('akuntansi.jurnal-penyesuaian.post', jurnal?.id), {}, {
-                    onSuccess: () => {
-                        toast.success('Jurnal penyesuaian berhasil diposting');
+                router.post(
+                    route('akuntansi.jurnal-penyesuaian.post', jurnal?.id),
+                    {},
+                    {
+                        onSuccess: () => {
+                            toast.success('Jurnal penyesuaian berhasil diposting');
+                        },
+                        onError: () => {
+                            toast.error('Gagal memposting jurnal penyesuaian');
+                        },
                     },
-                    onError: () => {
-                        toast.error('Gagal memposting jurnal penyesuaian');
-                    },
-                });
+                );
                 break;
             case 'unpost':
                 setCurrentActionType('unpost');
@@ -205,7 +203,8 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
             case 'unpost':
                 return {
                     title: 'Batal Posting Jurnal Penyesuaian',
-                    description: 'Apakah Anda yakin ingin membatalkan posting jurnal penyesuaian ini? Jurnal akan kembali ke status draft dan dapat diubah kembali.',
+                    description:
+                        'Apakah Anda yakin ingin membatalkan posting jurnal penyesuaian ini? Jurnal akan kembali ke status draft dan dapat diubah kembali.',
                     confirmText: 'Ya, Batal Posting',
                 };
             case 'reverse':
@@ -229,18 +228,17 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="Jurnal Penyesuaian Tidak Ditemukan" />
-                <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                        <h2 className="text-lg font-semibold text-red-800 mb-2">Jurnal Penyesuaian Tidak Ditemukan</h2>
+                <div className="p-4 sm:px-6 lg:px-8">
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+                        <h2 className="mb-2 text-lg font-semibold text-red-800">Jurnal Penyesuaian Tidak Ditemukan</h2>
                         <p className="text-red-700">Jurnal penyesuaian yang Anda cari tidak ditemukan atau mungkin telah dihapus.</p>
                         <div className="mt-4">
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.index'))}
                                 className="flex items-center gap-2"
                             >
                                 <ArrowLeft className="h-4 w-4" />
-                                Kembali ke Daftar Jurnal Penyesuaian
                             </Button>
                         </div>
                     </div>
@@ -252,85 +250,76 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Detail Jurnal Penyesuaian - ${jurnal.nomor_jurnal}`} />
-            <div className="max-w-7xl p-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <BookOpen className="h-6 w-6 text-blue-600" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">{jurnal.nomor_jurnal}</h1>
+            <div className="p-4 sm:px-6 lg:px-8">
+                {/* Jurnal Information */}
+                <div className="mb-6 rounded-lg border bg-white">
+                    <div className="p-4">
+                        <div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.index'))}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                    <div>
+                                        <CardTitle>{jurnal.nomor_jurnal}</CardTitle>
+                                        <CardDescription>Detail jurnal penyesuaian</CardDescription>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {jurnal.status === 'draft' && (
+                                        <>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.edit', jurnal.id))}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                                Edit Jurnal Penyesuaian
+                                            </Button>
+                                            <Button
+                                                variant="default"
+                                                onClick={() => openDialog('post')}
+                                                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                                            >
+                                                <CheckCircle className="h-4 w-4" />
+                                                Posting Jurnal
+                                            </Button>
+                                            <Button variant="destructive" onClick={() => openDialog('delete')} className="flex items-center gap-2">
+                                                <Trash2 className="h-4 w-4" />
+                                                Hapus Jurnal
+                                            </Button>
+                                        </>
+                                    )}
+                                    {jurnal.status === 'posted' && (
+                                        <>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => openDialog('unpost')}
+                                                className="flex items-center gap-2 border-blue-300 text-blue-600 hover:bg-blue-50"
+                                            >
+                                                <CheckCircle className="h-4 w-4" />
+                                                Batal Posting
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => openDialog('reverse')}
+                                                className="flex items-center gap-2 border-orange-300 text-orange-600 hover:bg-orange-50"
+                                            >
+                                                <RotateCcw className="h-4 w-4" />
+                                                Reverse Jurnal
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            {jurnal.status === 'draft' && (
-                                <>
-                                    <Button 
-                                        variant="outline" 
-                                        onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.edit', jurnal.id))}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Edit className="h-4 w-4" />
-                                        Edit Jurnal Penyesuaian
-                                    </Button>
-                                    <Button 
-                                        variant="default" 
-                                        onClick={() => openDialog('post')}
-                                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                                    >
-                                        <CheckCircle className="h-4 w-4" />
-                                        Posting Jurnal
-                                    </Button>
-                                    <Button 
-                                        variant="destructive" 
-                                        onClick={() => openDialog('delete')}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                        Hapus Jurnal
-                                    </Button>
-                                </>
-                            )}
-                            {jurnal.status === 'posted' && (
-                                <>
-                                    <Button 
-                                        variant="outline" 
-                                        onClick={() => openDialog('unpost')}
-                                        className="flex items-center gap-2 border-blue-300 text-blue-600 hover:bg-blue-50"
-                                    >
-                                        <CheckCircle className="h-4 w-4" />
-                                        Batal Posting
-                                    </Button>
-                                    <Button 
-                                        variant="outline" 
-                                        onClick={() => openDialog('reverse')}
-                                        className="flex items-center gap-2 border-orange-300 text-orange-600 hover:bg-orange-50"
-                                    >
-                                        <RotateCcw className="h-4 w-4" />
-                                        Reverse Jurnal
-                                    </Button>
-                                </>
-                            )}
-                            <Button 
-                                variant="outline" 
-                                onClick={() => router.visit(route('akuntansi.jurnal-penyesuaian.index'))}
-                                className="flex items-center gap-2"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                Kembali
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Jurnal Information */}
-                <div className="bg-white rounded-lg border shadow-sm mb-6">
-                    <div className="border-b border-gray-200 px-6 py-4">
-                        <h2 className="text-lg font-semibold text-gray-900">Informasi Jurnal Penyesuaian</h2>
-                        <p className="text-sm text-gray-600">Detail informasi header jurnal penyesuaian</p>
                     </div>
                     <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Nomor Jurnal</label>
                                 <p className="text-lg font-semibold text-gray-900">{jurnal.nomor_jurnal}</p>
@@ -341,9 +330,7 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-gray-500">Status</label>
-                                <div className="mt-1">
-                                    {getStatusBadge(jurnal.status)}
-                                </div>
+                                <div className="mt-1">{getStatusBadge(jurnal.status)}</div>
                             </div>
                             {jurnal.jenis_referensi && (
                                 <div>
@@ -389,14 +376,14 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
                         {jurnal.keterangan && (
                             <div className="mt-6">
                                 <label className="text-sm font-medium text-gray-500">Keterangan</label>
-                                <p className="mt-2 text-gray-900 bg-gray-50 p-3 rounded-md">{jurnal.keterangan}</p>
+                                <p className="mt-2 rounded-md bg-gray-50 p-3 text-gray-900">{jurnal.keterangan}</p>
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Detail Jurnal */}
-                <div className="bg-white rounded-lg border shadow-sm mb-6">
+                <div className="mb-6 rounded-lg border bg-white">
                     <div className="border-b border-gray-200 px-6 py-4">
                         <h2 className="text-lg font-semibold text-gray-900">Detail Jurnal Penyesuaian</h2>
                         <p className="text-sm text-gray-600">Rincian debit dan kredit jurnal penyesuaian</p>
@@ -421,10 +408,10 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
                                                 <div className="font-medium">{detail.daftar_akun?.kode_akun || '-'}</div>
                                                 <div className="text-sm text-gray-500">{detail.daftar_akun?.nama_akun || '-'}</div>
                                             </TableCell>
-                                            <TableCell className="text-green-600 font-medium">
+                                            <TableCell className="font-medium text-green-600">
                                                 {Number(detail.jumlah_debit) > 0 ? formatCurrency(Number(detail.jumlah_debit)) : '-'}
                                             </TableCell>
-                                            <TableCell className="text-red-600 font-medium">
+                                            <TableCell className="font-medium text-red-600">
                                                 {Number(detail.jumlah_kredit) > 0 ? formatCurrency(Number(detail.jumlah_kredit)) : '-'}
                                             </TableCell>
                                             <TableCell className="text-sm">{detail.keterangan || '-'}</TableCell>
@@ -432,19 +419,15 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                        <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                                             Tidak ada detail jurnal penyesuaian
                                         </TableCell>
                                     </TableRow>
                                 )}
                                 <TableRow className="bg-gray-50 font-medium">
                                     <TableCell colSpan={2}>Total</TableCell>
-                                    <TableCell className="text-green-600 font-bold">
-                                        {formatCurrency(Number(jurnal.total_debit))}
-                                    </TableCell>
-                                    <TableCell className="text-red-600 font-bold">
-                                        {formatCurrency(Number(jurnal.total_kredit))}
-                                    </TableCell>
+                                    <TableCell className="font-bold text-green-600">{formatCurrency(Number(jurnal.total_debit))}</TableCell>
+                                    <TableCell className="font-bold text-red-600">{formatCurrency(Number(jurnal.total_kredit))}</TableCell>
                                     <TableCell></TableCell>
                                 </TableRow>
                             </TableBody>
@@ -453,7 +436,7 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="bg-white rounded-lg border shadow-sm">
+                <div className="rounded-lg border bg-white">
                     <div className="border-b border-gray-200 px-6 py-4">
                         <h2 className="text-lg font-semibold text-gray-900">Aksi</h2>
                         <p className="text-sm text-gray-600">Tindakan yang dapat dilakukan pada jurnal penyesuaian ini</p>
@@ -474,15 +457,11 @@ export default function JurnalPenyesuaianShow({ jurnal }: JurnalPageProps) {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>{getDialogContent().title}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {getDialogContent().description}
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>{getDialogContent().description}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Batal</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmAction}>
-                            {getDialogContent().confirmText}
-                        </AlertDialogAction>
+                        <AlertDialogAction onClick={handleConfirmAction}>{getDialogContent().confirmText}</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

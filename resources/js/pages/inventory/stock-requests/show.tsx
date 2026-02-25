@@ -194,106 +194,7 @@ export default function show() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title={`Permintaan Stok - ${stockRequest.request_number}`} />
 
-            <div className="space-y-6 mt-6">
-                {/* Header with Actions */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.visit(route('stock-requests.index'))}
-                        >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Back
-                        </Button>
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-semibold text-gray-900">
-                                    {stockRequest.request_number}
-                                </h1>
-                                {getStatusBadge(stockRequest.status)}
-                                {getPriorityBadge(stockRequest.priority)}
-                            </div>
-                            <p className="text-sm text-gray-600 mt-1">
-                                Permintaan Stok details and items
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {stockRequest.can_edit && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => router.visit(route('stock-requests.edit', stockRequest.id))}
-                            >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                            </Button>
-                        )}
-                        {stockRequest.can_submit && (
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => setSubmitDialogOpen(true)}
-                            >
-                                <Send className="h-4 w-4 mr-2" />
-                                Submit
-                            </Button>
-                        )}
-                        {stockRequest.can_approve && !hasRemainingToApprove() && (
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => router.visit(route('stock-requests.approve', stockRequest.id))}
-                            >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Approve
-                            </Button>
-                        )}
-                        {stockRequest.can_approve && hasRemainingToApprove() && (
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => router.visit(route('stock-requests.approve', stockRequest.id))}
-                            >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Approve Sisanya
-                            </Button>
-                        )}
-                        {stockRequest.can_complete && (
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => setCompleteDialogOpen(true)}
-                            >
-                                <TruckIcon className="h-4 w-4 mr-2" />
-                                Complete
-                            </Button>
-                        )}
-                        {stockRequest.can_cancel && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCancelDialogOpen(true)}
-                            >
-                                <XCircle className="h-4 w-4 mr-2" />
-                                Cancel
-                            </Button>
-                        )}
-                        {stockRequest.can_delete && (
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => setDeleteDialogOpen(true)}
-                            >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                            </Button>
-                        )}
-                    </div>
-                </div>
-
+            <div className="p-4 space-y-4">
                 {/* Partial Approval Warning */}
                 {stockRequest.status === 'approved' && hasRemainingToApprove() && (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -313,13 +214,100 @@ export default function show() {
                 {/* Request Information */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5" />
-                            Request Information
-                        </CardTitle>
-                        <CardDescription>
-                            Basic information about this Permintaan Stok
-                        </CardDescription>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.visit(route('stock-requests.index'))}
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <FileText className="h-5 w-5" />
+                                        {stockRequest.request_number}
+                                        {getStatusBadge(stockRequest.status)}
+                                        {getPriorityBadge(stockRequest.priority)}
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Basic information about this Permintaan Stok
+                                    </CardDescription>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {stockRequest.can_edit && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.visit(route('stock-requests.edit', stockRequest.id))}
+                                    >
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Edit
+                                    </Button>
+                                )}
+                                {stockRequest.can_submit && (
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => setSubmitDialogOpen(true)}
+                                    >
+                                        <Send className="h-4 w-4 mr-2" />
+                                        Submit
+                                    </Button>
+                                )}
+                                {stockRequest.can_approve && !hasRemainingToApprove() && (
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => router.visit(route('stock-requests.approve', stockRequest.id))}
+                                    >
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                        Approve
+                                    </Button>
+                                )}
+                                {stockRequest.can_approve && hasRemainingToApprove() && (
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => router.visit(route('stock-requests.approve', stockRequest.id))}
+                                    >
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                        Approve Sisanya
+                                    </Button>
+                                )}
+                                {stockRequest.can_complete && (
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => setCompleteDialogOpen(true)}
+                                    >
+                                        <TruckIcon className="h-4 w-4 mr-2" />
+                                        Complete
+                                    </Button>
+                                )}
+                                {stockRequest.can_cancel && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCancelDialogOpen(true)}
+                                    >
+                                        <XCircle className="h-4 w-4 mr-2" />
+                                        Cancel
+                                    </Button>
+                                )}
+                                {stockRequest.can_delete && (
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => setDeleteDialogOpen(true)}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,18 +1,18 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { BreadcrumbItem, SharedData } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Check, ChevronsUpDown, DollarSign, Save } from 'lucide-react';
-import { route } from 'ziggy-js';
-import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { route } from 'ziggy-js';
 
 interface BankAccount {
     kode_akun: string;
@@ -86,21 +86,27 @@ export default function EditPurchasePayment({ payment, bankAccounts }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit Payment" />
 
-            <div className="mt-4 space-y-4">
-                {/* Back Button */}
-                <Button variant="outline" onClick={() => router.visit(route('purchase-payments.show', payment.id))} className="gap-2">
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke Detail
-                </Button>
-
+            <div className="p-4">
                 <form onSubmit={handleSubmit}>
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <DollarSign className="h-5 w-5" />
-                                Edit Payment {payment.payment_number}
-                            </CardTitle>
-                            <CardDescription>Update informasi pembayaran</CardDescription>
+                            <div className="flex items-center gap-2">
+                                <div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => router.visit(route('purchase-payments.show', payment.id))}
+                                        className="gap-2"
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <DollarSign className="h-5 w-5" />
+                                    Edit Payment - {payment.payment_number}
+                                </CardTitle>
+                                <CardDescription>Perbarui detail pembayaran untuk PO ini</CardDescription>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* PO Info (Read-only) */}
@@ -109,15 +115,11 @@ export default function EditPurchasePayment({ payment, bankAccounts }: Props) {
                                     <div>
                                         <div className="font-medium">PO: {payment.purchase.purchase_number}</div>
                                         <div className="text-sm text-gray-600">Supplier: {payment.purchase.supplier.name}</div>
-                                        <div className="mt-1 text-sm">
-                                            Total PO: {formatCurrency(payment.purchase.total_amount)}
-                                        </div>
+                                        <div className="mt-1 text-sm">Total PO: {formatCurrency(payment.purchase.total_amount)}</div>
                                     </div>
                                     <div className="text-right">
                                         <div className="text-xs text-gray-500">Outstanding</div>
-                                        <div className="text-lg font-bold text-blue-600">
-                                            {formatCurrency(payment.purchase.ap_outstanding)}
-                                        </div>
+                                        <div className="text-lg font-bold text-blue-600">{formatCurrency(payment.purchase.ap_outstanding)}</div>
                                     </div>
                                 </div>
                             </div>
@@ -130,7 +132,13 @@ export default function EditPurchasePayment({ payment, bankAccounts }: Props) {
                                     <Label htmlFor="payment_date">
                                         Tanggal Payment <span className="text-red-500">*</span>
                                     </Label>
-                                    <Input id="payment_date" type="date" value={data.payment_date} onChange={(e) => setData('payment_date', e.target.value)} required />
+                                    <Input
+                                        id="payment_date"
+                                        type="date"
+                                        value={data.payment_date}
+                                        onChange={(e) => setData('payment_date', e.target.value)}
+                                        required
+                                    />
                                     {errors.payment_date && <p className="text-sm text-red-500">{errors.payment_date}</p>}
                                 </div>
 
@@ -165,24 +173,29 @@ export default function EditPurchasePayment({ payment, bankAccounts }: Props) {
                                                 variant="outline"
                                                 role="combobox"
                                                 aria-expanded={openBankSelect}
-                                                className="w-full justify-between h-auto py-2"
+                                                className="h-auto w-full justify-between py-2"
                                             >
                                                 {data.kode_akun_bank ? (
-                                                    <div className="flex items-center justify-between w-full">
+                                                    <div className="flex w-full items-center justify-between">
                                                         <span className="truncate text-left">
-                                                            {bankAccounts.find((acc) => acc.kode_akun === data.kode_akun_bank)?.kode_akun} - {bankAccounts.find((acc) => acc.kode_akun === data.kode_akun_bank)?.nama_akun}
+                                                            {bankAccounts.find((acc) => acc.kode_akun === data.kode_akun_bank)?.kode_akun} -{' '}
+                                                            {bankAccounts.find((acc) => acc.kode_akun === data.kode_akun_bank)?.nama_akun}
                                                         </span>
-                                                        <span className={cn(
-                                                            "ml-2 font-semibold shrink-0",
-                                                            (bankAccounts.find((acc) => acc.kode_akun === data.kode_akun_bank)?.saldo || 0) >= 0 
-                                                                ? "text-green-600" 
-                                                                : "text-red-600"
-                                                        )}>
-                                                            {formatCurrency(bankAccounts.find((acc) => acc.kode_akun === data.kode_akun_bank)?.saldo || 0)}
+                                                        <span
+                                                            className={cn(
+                                                                'ml-2 shrink-0 font-semibold',
+                                                                (bankAccounts.find((acc) => acc.kode_akun === data.kode_akun_bank)?.saldo || 0) >= 0
+                                                                    ? 'text-green-600'
+                                                                    : 'text-red-600',
+                                                            )}
+                                                        >
+                                                            {formatCurrency(
+                                                                bankAccounts.find((acc) => acc.kode_akun === data.kode_akun_bank)?.saldo || 0,
+                                                            )}
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    "Pilih Akun Bank..."
+                                                    'Pilih Akun Bank...'
                                                 )}
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
@@ -205,19 +218,21 @@ export default function EditPurchasePayment({ payment, bankAccounts }: Props) {
                                                             <Check
                                                                 className={cn(
                                                                     'mr-2 h-4 w-4',
-                                                                    data.kode_akun_bank === account.kode_akun
-                                                                        ? 'opacity-100'
-                                                                        : 'opacity-0'
+                                                                    data.kode_akun_bank === account.kode_akun ? 'opacity-100' : 'opacity-0',
                                                                 )}
                                                             />
-                                                            <div className="flex items-center justify-between w-full">
+                                                            <div className="flex w-full items-center justify-between">
                                                                 <div className="flex-1">
-                                                                    <div className="font-medium">{account.kode_akun} - {account.nama_akun}</div>
+                                                                    <div className="font-medium">
+                                                                        {account.kode_akun} - {account.nama_akun}
+                                                                    </div>
                                                                 </div>
-                                                                <div className={cn(
-                                                                    "ml-4 font-semibold",
-                                                                    account.saldo >= 0 ? "text-green-600" : "text-red-600"
-                                                                )}>
+                                                                <div
+                                                                    className={cn(
+                                                                        'ml-4 font-semibold',
+                                                                        account.saldo >= 0 ? 'text-green-600' : 'text-red-600',
+                                                                    )}
+                                                                >
                                                                     {formatCurrency(account.saldo)}
                                                                 </div>
                                                             </div>
@@ -251,14 +266,22 @@ export default function EditPurchasePayment({ payment, bankAccounts }: Props) {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="discount_amount">Diskon (jika ada)</Label>
-                                    <Input id="discount_amount" type="number" step="0.01" value={data.discount_amount} onChange={(e) => setData('discount_amount', e.target.value)} />
+                                    <Input
+                                        id="discount_amount"
+                                        type="number"
+                                        step="0.01"
+                                        value={data.discount_amount}
+                                        onChange={(e) => setData('discount_amount', e.target.value)}
+                                    />
                                     {errors.discount_amount && <p className="text-sm text-red-500">{errors.discount_amount}</p>}
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label>Net Amount</Label>
                                     <div className="rounded-lg border bg-gray-50 px-3 py-2 font-bold text-blue-600">
-                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(netAmount)}
+                                        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(
+                                            netAmount,
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -266,13 +289,24 @@ export default function EditPurchasePayment({ payment, bankAccounts }: Props) {
                             {/* Notes */}
                             <div className="space-y-2">
                                 <Label htmlFor="notes">Catatan</Label>
-                                <Textarea id="notes" placeholder="Catatan tambahan (opsional)" value={data.notes} onChange={(e) => setData('notes', e.target.value)} rows={3} />
+                                <Textarea
+                                    id="notes"
+                                    placeholder="Catatan tambahan (opsional)"
+                                    value={data.notes}
+                                    onChange={(e) => setData('notes', e.target.value)}
+                                    rows={3}
+                                />
                                 {errors.notes && <p className="text-sm text-red-500">{errors.notes}</p>}
                             </div>
 
                             {/* Submit Button */}
                             <div className="flex justify-end gap-2 pt-4">
-                                <Button type="button" variant="outline" onClick={() => router.visit(route('purchase-payments.show', payment.id))} disabled={processing}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => router.visit(route('purchase-payments.show', payment.id))}
+                                    disabled={processing}
+                                >
                                     Batal
                                 </Button>
                                 <Button type="submit" disabled={processing} className="gap-2">

@@ -143,7 +143,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             $query->whereDate('purchase_date', '<=', $filters['date_to']);
         }
 
-        $perPage = $filters['perPage'] ?? 15;
+        $perPage = $filters['perPage'] ?? 10;
         
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }

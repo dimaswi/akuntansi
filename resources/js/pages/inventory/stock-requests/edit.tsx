@@ -2,18 +2,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DepartmentSearchableDropdown } from '@/components/ui/department-searchable-dropdown';
-import { ItemSearchableDropdown } from '@/components/ui/item-searchable-dropdown';
 import { Input } from '@/components/ui/input';
+import { ItemSearchableDropdown } from '@/components/ui/item-searchable-dropdown';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { toast } from '@/lib/toast';
 import { BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Home, Package, Plus, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Package, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from '@/lib/toast';
 import { route } from 'ziggy-js';
 
 interface Item {
@@ -79,7 +79,7 @@ export default function edit() {
             item_id: item.item_id,
             quantity_requested: item.quantity_requested,
             notes: item.notes || '',
-        }))
+        })),
     );
 
     const [processing, setProcessing] = useState(false);
@@ -137,7 +137,7 @@ export default function edit() {
                     toast.error(errors?.message || 'Gagal mengupdate permintaan stok');
                 },
                 onFinish: () => setProcessing(false),
-            }
+            },
         );
     };
 
@@ -145,75 +145,49 @@ export default function edit() {
         <AppLayout breadcrumbs={breadcrumbItems}>
             <Head title={`Edit Permintaan Stok - ${stockRequest.request_number}`} />
 
-            <div className="space-y-6 mt-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.visit(route('stock-requests.show', stockRequest.id))}
-                        >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Kembali
-                        </Button>
-                        <div>
-                            <h1 className="text-2xl font-semibold text-gray-900">
-                                Edit Permintaan Stok
-                            </h1>
-                            <p className="text-sm text-gray-600 mt-1">
-                                Edit permintaan item dari gudang pusat
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
+            <div className="space-y-4 p-4">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Request Information Card */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Package className="h-5 w-5" />
-                                Informasi Permintaan
-                            </CardTitle>
-                            <CardDescription>
-                                Update informasi dasar untuk permintaan stok
-                            </CardDescription>
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                                        <ArrowLeft className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Package className="h-5 w-5" />
+                                        Informasi Permintaan
+                                    </CardTitle>
+                                    <CardDescription>Update informasi dasar untuk permintaan stok</CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="department_id">
                                         Departemen <span className="text-red-500">*</span>
                                     </Label>
                                     <DepartmentSearchableDropdown
                                         value={formData.department_id}
-                                        onValueChange={(value) =>
-                                            setFormData({ ...formData, department_id: value || 0 })
-                                        }
-                                        departments={departments.map((d: any) => ({ 
-                                            ...d, 
-                                            is_active: d.is_active ?? true 
+                                        onValueChange={(value) => setFormData({ ...formData, department_id: value || 0 })}
+                                        departments={departments.map((d: any) => ({
+                                            ...d,
+                                            is_active: d.is_active ?? true,
                                         }))}
                                         placeholder="Pilih departemen"
                                     />
-                                    {errors.department_id && (
-                                        <p className="text-sm text-red-600">
-                                            {errors.department_id}
-                                        </p>
-                                    )}
+                                    {errors.department_id && <p className="text-sm text-red-600">{errors.department_id}</p>}
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="priority">
                                         Prioritas <span className="text-red-500">*</span>
                                     </Label>
-                                    <Select
-                                        value={formData.priority}
-                                        onValueChange={(value) =>
-                                            setFormData({ ...formData, priority: value })
-                                        }
-                                    >
+                                    <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
@@ -224,26 +198,20 @@ export default function edit() {
                                             <SelectItem value="urgent">Mendesak</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {errors.priority && (
-                                        <p className="text-sm text-red-600">{errors.priority}</p>
-                                    )}
+                                    {errors.priority && <p className="text-sm text-red-600">{errors.priority}</p>}
                                 </div>
 
-                                <div className="md:col-span-2 space-y-2">
+                                <div className="space-y-2 md:col-span-2">
                                     <Label htmlFor="notes">Catatan</Label>
                                     <Textarea
                                         id="notes"
                                         value={formData.notes}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, notes: e.target.value })
-                                        }
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                         rows={3}
                                         placeholder="Catatan tambahan atau permintaan khusus..."
                                         className="resize-none"
                                     />
-                                    {errors.notes && (
-                                        <p className="text-sm text-red-600">{errors.notes}</p>
-                                    )}
+                                    {errors.notes && <p className="text-sm text-red-600">{errors.notes}</p>}
                                 </div>
                             </div>
                         </CardContent>
@@ -252,26 +220,19 @@ export default function edit() {
                     {/* Request Items Card */}
                     <Card>
                         <CardHeader>
-                            <div className="flex justify-between items-center">
+                            <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle>Item Permintaan</CardTitle>
-                                    <CardDescription>
-                                        Update item di permintaan stok Anda
-                                    </CardDescription>
+                                    <CardDescription>Update item di permintaan stok Anda</CardDescription>
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={addItemRow}
-                                >
-                                    <Plus className="h-4 w-4 mr-2" />
+                                <Button type="button" variant="outline" size="sm" onClick={addItemRow}>
+                                    <Plus className="mr-2 h-4 w-4" />
                                     Tambah Item
                                 </Button>
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="border rounded-lg overflow-hidden">
+                            <div className="overflow-hidden rounded-lg border">
                                 <div className="overflow-x-auto">
                                     <Table>
                                         <TableHeader>
@@ -280,16 +241,12 @@ export default function edit() {
                                                     Item <span className="text-red-500">*</span>
                                                 </TableHead>
                                                 <TableHead className="w-[100px]">Satuan</TableHead>
-                                                <TableHead className="w-[120px] text-right">
-                                                    Stok Pusat
-                                                </TableHead>
+                                                <TableHead className="w-[120px] text-right">Stok Pusat</TableHead>
                                                 <TableHead className="w-[150px]">
                                                     Jumlah <span className="text-red-500">*</span>
                                                 </TableHead>
                                                 <TableHead>Catatan</TableHead>
-                                                <TableHead className="w-[80px] text-center">
-                                                    Aksi
-                                                </TableHead>
+                                                <TableHead className="w-[80px] text-center">Aksi</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -297,22 +254,15 @@ export default function edit() {
                                                 const selectedItem = getSelectedItem(row.item_id);
                                                 const availableQty = selectedItem?.central_stock?.available_quantity ?? null;
                                                 const isOutOfStock = availableQty !== null && availableQty === 0;
-                                                const isLowStock = availableQty !== null && 
-                                                    availableQty > 0 && 
-                                                    availableQty < (selectedItem?.reorder_level || 0);
+                                                const isLowStock =
+                                                    availableQty !== null && availableQty > 0 && availableQty < (selectedItem?.reorder_level || 0);
 
                                                 return (
                                                     <TableRow key={index}>
                                                         <TableCell>
                                                             <ItemSearchableDropdown
                                                                 value={row.item_id > 0 ? row.item_id : null}
-                                                                onValueChange={(value) =>
-                                                                    updateItemRow(
-                                                                        index,
-                                                                        'item_id',
-                                                                        value || 0
-                                                                    )
-                                                                }
+                                                                onValueChange={(value) => updateItemRow(index, 'item_id', value || 0)}
                                                                 items={items}
                                                                 placeholder="Cari dan pilih item..."
                                                             />
@@ -323,9 +273,11 @@ export default function edit() {
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-right">
-                                                            {selectedItem && selectedItem.central_stock && selectedItem.central_stock.available_quantity !== undefined ? (
+                                                            {selectedItem &&
+                                                            selectedItem.central_stock &&
+                                                            selectedItem.central_stock.available_quantity !== undefined ? (
                                                                 <div className="space-y-1">
-                                                                    <div className="font-semibold text-sm">
+                                                                    <div className="text-sm font-semibold">
                                                                         {selectedItem.central_stock.available_quantity.toLocaleString()}
                                                                     </div>
                                                                     {isOutOfStock && (
@@ -354,11 +306,7 @@ export default function edit() {
                                                                 min="0"
                                                                 value={row.quantity_requested || ''}
                                                                 onChange={(e) =>
-                                                                    updateItemRow(
-                                                                        index,
-                                                                        'quantity_requested',
-                                                                        parseFloat(e.target.value) || 0
-                                                                    )
+                                                                    updateItemRow(index, 'quantity_requested', parseFloat(e.target.value) || 0)
                                                                 }
                                                                 placeholder="0.00"
                                                                 className="text-right"
@@ -368,13 +316,7 @@ export default function edit() {
                                                             <Input
                                                                 type="text"
                                                                 value={row.notes || ''}
-                                                                onChange={(e) =>
-                                                                    updateItemRow(
-                                                                        index,
-                                                                        'notes',
-                                                                        e.target.value
-                                                                    )
-                                                                }
+                                                                onChange={(e) => updateItemRow(index, 'notes', e.target.value)}
                                                                 placeholder="Catatan item..."
                                                             />
                                                         </TableCell>
@@ -398,9 +340,7 @@ export default function edit() {
                                 </div>
                             </div>
 
-                            {errors.items && (
-                                <p className="text-sm text-red-600 mt-2">{errors.items}</p>
-                            )}
+                            {errors.items && <p className="mt-2 text-sm text-red-600">{errors.items}</p>}
                         </CardContent>
                     </Card>
 
@@ -414,12 +354,8 @@ export default function edit() {
                         >
                             Batal
                         </Button>
-                        <Button 
-                            type="submit" 
-                            disabled={processing}
-                            className="min-w-[150px]"
-                        >
-                            <Save className="h-4 w-4 mr-2" />
+                        <Button type="submit" disabled={processing} className="min-w-[150px]">
+                            <Save className="mr-2 h-4 w-4" />
                             {processing ? 'Mengupdate...' : 'Update Permintaan'}
                         </Button>
                     </div>

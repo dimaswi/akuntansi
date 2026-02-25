@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,28 +80,25 @@ export default function EditBankAccount() {
             <Head title={`Edit Bank Account - ${bank_account.kode_rekening}`} />
 
             <div className="p-4">
-                <div className="flex items-center justify-between pb-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="rounded-lg p-2">
-                            <Building2 className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Edit Bank Account</h1>
-                        </div>
-                    </div>
-                    <Button variant="outline" onClick={() => router.visit(route('kas.bank-accounts.show', bank_account.id))}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Kembali
-                    </Button>
-                </div>
-
                 <form onSubmit={submit} className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Informasi Bank Account</CardTitle>
-                            <CardDescription>Perbarui informasi lengkap rekening bank</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
+                    <div className="border rounded-lg p-6 bg-card">
+                        <div className='flex items-center gap-2'>
+                            <div>
+                                <Button
+                                    type='button'
+                                    variant="outline"
+                                    onClick={() => window.history.back()}
+                                    className="flex items-center gap-2 mb-4"
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            <div className="mb-4">
+                            <h3 className="text-base font-semibold">Informasi Bank Account</h3>
+                            <p className="text-sm text-muted-foreground">Perbarui informasi lengkap rekening bank</p>
+                        </div>
+                        </div>
+                        <div className="space-y-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="kode_rekening">
@@ -249,8 +245,8 @@ export default function EditBankAccount() {
                                 />
                                 <Label htmlFor="is_aktif">Rekening Aktif</Label>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
 
                     <div className="flex justify-end space-x-4">
                         <Button type="button" variant="outline" onClick={() => router.visit(route('kas.bank-accounts.show', bank_account.id))}>
