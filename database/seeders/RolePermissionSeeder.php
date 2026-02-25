@@ -233,6 +233,55 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'laporan.giro-report.view', 'display_name' => 'Lihat Laporan Giro', 'description' => 'Dapat melihat laporan giro', 'module' => 'Laporan'],
             ['name' => 'laporan.giro-report.export', 'display_name' => 'Export Laporan Giro', 'description' => 'Dapat export laporan giro', 'module' => 'Laporan'],
             
+            // ========== ASET MODULE ==========
+            ['name' => 'aset.dashboard.view', 'display_name' => 'Lihat Dashboard Aset', 'description' => 'Dapat mengakses dashboard aset', 'module' => 'Aset - Dashboard'],
+            ['name' => 'aset.view', 'display_name' => 'Lihat Modul Aset', 'description' => 'Dapat mengakses modul aset', 'module' => 'Aset - Dashboard'],
+
+            // Aset - Kategori
+            ['name' => 'aset.categories.view', 'display_name' => 'Lihat Kategori Aset', 'description' => 'Dapat melihat daftar kategori aset', 'module' => 'Aset - Kategori'],
+            ['name' => 'aset.categories.create', 'display_name' => 'Tambah Kategori Aset', 'description' => 'Dapat menambah kategori aset baru', 'module' => 'Aset - Kategori'],
+            ['name' => 'aset.categories.edit', 'display_name' => 'Edit Kategori Aset', 'description' => 'Dapat mengedit kategori aset', 'module' => 'Aset - Kategori'],
+            ['name' => 'aset.categories.delete', 'display_name' => 'Hapus Kategori Aset', 'description' => 'Dapat menghapus kategori aset', 'module' => 'Aset - Kategori'],
+
+            // Aset - Daftar Aset
+            ['name' => 'aset.assets.view', 'display_name' => 'Lihat Daftar Aset', 'description' => 'Dapat melihat daftar aset', 'module' => 'Aset - Daftar Aset'],
+            ['name' => 'aset.assets.create', 'display_name' => 'Tambah Aset', 'description' => 'Dapat menambah aset baru', 'module' => 'Aset - Daftar Aset'],
+            ['name' => 'aset.assets.edit', 'display_name' => 'Edit Aset', 'description' => 'Dapat mengedit data aset', 'module' => 'Aset - Daftar Aset'],
+            ['name' => 'aset.assets.delete', 'display_name' => 'Hapus Aset', 'description' => 'Dapat menghapus aset', 'module' => 'Aset - Daftar Aset'],
+
+            // Aset - Penyusutan
+            ['name' => 'aset.depreciations.view', 'display_name' => 'Lihat Penyusutan', 'description' => 'Dapat melihat data penyusutan aset', 'module' => 'Aset - Penyusutan'],
+            ['name' => 'aset.depreciations.create', 'display_name' => 'Proses Penyusutan', 'description' => 'Dapat menjalankan proses penyusutan bulanan', 'module' => 'Aset - Penyusutan'],
+
+            // Aset - Maintenance
+            ['name' => 'aset.maintenances.view', 'display_name' => 'Lihat Maintenance', 'description' => 'Dapat melihat daftar maintenance aset', 'module' => 'Aset - Maintenance'],
+            ['name' => 'aset.maintenances.create', 'display_name' => 'Tambah Maintenance', 'description' => 'Dapat menambah maintenance aset', 'module' => 'Aset - Maintenance'],
+            ['name' => 'aset.maintenances.edit', 'display_name' => 'Edit Maintenance', 'description' => 'Dapat mengedit maintenance aset', 'module' => 'Aset - Maintenance'],
+            ['name' => 'aset.maintenances.delete', 'display_name' => 'Hapus Maintenance', 'description' => 'Dapat menghapus maintenance aset', 'module' => 'Aset - Maintenance'],
+
+            // Aset - Disposal
+            ['name' => 'aset.disposals.view', 'display_name' => 'Lihat Disposal', 'description' => 'Dapat melihat daftar disposal aset', 'module' => 'Aset - Disposal'],
+            ['name' => 'aset.disposals.create', 'display_name' => 'Tambah Disposal', 'description' => 'Dapat menambah disposal aset', 'module' => 'Aset - Disposal'],
+            ['name' => 'aset.disposals.approve', 'display_name' => 'Approve Disposal', 'description' => 'Dapat menyetujui, menyelesaikan, atau membatalkan disposal', 'module' => 'Aset - Disposal'],
+
+            // Aset - Transfer
+            ['name' => 'aset.transfers.view', 'display_name' => 'Lihat Transfer Aset', 'description' => 'Dapat melihat daftar transfer aset', 'module' => 'Aset - Transfer'],
+            ['name' => 'aset.transfers.create', 'display_name' => 'Tambah Transfer Aset', 'description' => 'Dapat membuat transfer aset antar departemen', 'module' => 'Aset - Transfer'],
+            ['name' => 'aset.transfers.approve', 'display_name' => 'Approve Transfer Aset', 'description' => 'Dapat menyetujui, menyelesaikan, atau membatalkan transfer', 'module' => 'Aset - Transfer'],
+
+            // Aset - RAB (Rencana Anggaran Belanja)
+            ['name' => 'aset.budgets.view', 'display_name' => 'Lihat RAB Aset', 'description' => 'Dapat melihat daftar RAB aset', 'module' => 'Aset - RAB'],
+            ['name' => 'aset.budgets.create', 'display_name' => 'Buat RAB Aset', 'description' => 'Dapat membuat RAB aset baru', 'module' => 'Aset - RAB'],
+            ['name' => 'aset.budgets.edit', 'display_name' => 'Edit RAB Aset', 'description' => 'Dapat mengedit RAB aset', 'module' => 'Aset - RAB'],
+            ['name' => 'aset.budgets.delete', 'display_name' => 'Hapus RAB Aset', 'description' => 'Dapat menghapus RAB aset', 'module' => 'Aset - RAB'],
+            ['name' => 'aset.budgets.submit', 'display_name' => 'Submit RAB Aset', 'description' => 'Dapat mengajukan RAB aset untuk persetujuan', 'module' => 'Aset - RAB'],
+            ['name' => 'aset.budgets.approve', 'display_name' => 'Approve RAB Aset', 'description' => 'Dapat menyetujui RAB aset', 'module' => 'Aset - RAB'],
+            ['name' => 'aset.budgets.realize', 'display_name' => 'Realisasi RAB Aset', 'description' => 'Dapat melakukan realisasi item RAB aset', 'module' => 'Aset - RAB'],
+
+            // Aset - Laporan
+            ['name' => 'aset.reports.view', 'display_name' => 'Lihat Laporan Aset', 'description' => 'Dapat melihat laporan register dan penyusutan aset', 'module' => 'Aset - Laporan'],
+            ['name' => 'aset.reports.export', 'display_name' => 'Export Laporan Aset', 'description' => 'Dapat export laporan aset', 'module' => 'Aset - Laporan'],
+
             // ========== PENGGAJIAN MODULE ==========
             ['name' => 'penggajian.view', 'display_name' => 'Lihat Penggajian', 'description' => 'Dapat melihat daftar batch gaji', 'module' => 'Penggajian'],
             ['name' => 'penggajian.create', 'display_name' => 'Buat Batch Gaji', 'description' => 'Dapat membuat batch gaji baru', 'module' => 'Penggajian'],

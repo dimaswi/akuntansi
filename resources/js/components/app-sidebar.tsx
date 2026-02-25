@@ -239,6 +239,73 @@ export const mainNavItems: NavItem[] = [
         ],
     },
     {
+        title: 'Aset',
+        href: '/aset',
+        icon: Landmark,
+        children: [
+            {
+                title: 'Dashboard',
+                href: '/aset',
+                icon: LayoutGrid,
+                permission: 'aset.view',
+            },
+            {
+                title: 'Kategori Aset',
+                href: '/aset/categories',
+                icon: Tag,
+                permission: 'aset.categories.view',
+            },
+            {
+                title: 'Daftar Aset',
+                href: '/aset/assets',
+                icon: Box,
+                permission: 'aset.assets.view',
+            },
+            {
+                title: 'Penyusutan',
+                href: '/aset/depreciations',
+                icon: TrendingUp,
+                permission: 'aset.depreciations.view',
+            },
+            {
+                title: 'Maintenance',
+                href: '/aset/maintenances',
+                icon: Settings,
+                permission: 'aset.maintenances.view',
+            },
+            {
+                title: 'Disposal',
+                href: '/aset/disposals',
+                icon: FileText,
+                permission: 'aset.disposals.view',
+            },
+            {
+                title: 'Transfer',
+                href: '/aset/transfers',
+                icon: ArrowRightLeft,
+                permission: 'aset.transfers.view',
+            },
+            {
+                title: 'RAB (Anggaran)',
+                href: '/aset/budgets',
+                icon: ClipboardList,
+                permission: 'aset.budgets.view',
+            },
+            {
+                title: 'Laporan Register',
+                href: '/aset/reports/register',
+                icon: FileBarChart,
+                permission: 'aset.reports.view',
+            },
+            {
+                title: 'Laporan Penyusutan',
+                href: '/aset/reports/depreciation',
+                icon: BarChart,
+                permission: 'aset.reports.view',
+            },
+        ],
+    },
+    {
         title: 'Penggajian',
         href: '/penggajian',
         icon: Banknote,

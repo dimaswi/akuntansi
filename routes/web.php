@@ -24,5 +24,6 @@ require __DIR__.'/master.php';
 require __DIR__.'/akuntansi.php';
 require __DIR__.'/kas.php';
 require __DIR__.'/penggajian.php';
+require __DIR__.'/aset.php';
 require __DIR__.'/notifications.php';
 require __DIR__.'/auth.php';
