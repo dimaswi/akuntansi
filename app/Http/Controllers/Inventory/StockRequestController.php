@@ -36,6 +36,8 @@ class StockRequestController extends Controller
                 ->with('error', 'Anda belum terdaftar di departemen manapun. Silahkan hubungi administrator untuk assign departemen.');
         }
         
+        $perPage = $request->input('perPage', 10);
+        
         $query = StockRequest::with(['department', 'requestedByUser', 'approvedByUser', 'items'])
             ->orderBy('created_at', 'desc');
         
@@ -69,7 +71,7 @@ class StockRequestController extends Controller
             });
         }
         
-        $stockRequests = $query->paginate(10)->through(function($request) {
+        $stockRequests = $query->paginate($perPage)->withQueryString()->through(function($request) {
             return [
                 'id' => $request->id,
                 'request_number' => $request->request_number,
@@ -99,7 +101,7 @@ class StockRequestController extends Controller
         return Inertia::render('inventory/stock-requests/index', [
             'stockRequests' => $stockRequests,
             'departments' => $departments,
-            'filters' => $request->only(['status', 'department_id', 'priority', 'search']),
+            'filters' => $request->only(['status', 'department_id', 'priority', 'search', 'perPage']),
         ]);
     }
 

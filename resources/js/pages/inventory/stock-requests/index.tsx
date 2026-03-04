@@ -25,11 +25,21 @@ interface StockRequest {
 
 interface Department { id: number; name: string; is_active?: boolean }
 
+interface PaginatedStockRequests {
+    data: StockRequest[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number;
+    to: number;
+}
+
 interface Props extends PageProps {
-    stockRequests: { data: StockRequest[]; links: any; meta?: any };
+    stockRequests: PaginatedStockRequests;
     statistics: Record<string, number>;
     departments: Department[];
-    filters: { search?: string; status?: string; department_id?: number; priority?: string };
+    filters: { search?: string; status?: string; department_id?: number; priority?: string; perPage?: string };
 }
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -55,16 +65,6 @@ const priorityCfg: Record<string, { variant: 'secondary' | 'default' | 'destruct
 
 export default function index() {
     const { stockRequests, departments, filters } = usePage<Props>().props;
-
-    const meta = stockRequests.meta || {};
-    const pagination = {
-        current_page: meta.current_page ?? 1,
-        last_page: meta.last_page ?? 1,
-        per_page: meta.per_page ?? 10,
-        total: meta.total ?? 0,
-        from: meta.from ?? 0,
-        to: meta.to ?? 0,
-    };
 
     const navigate = (p: Record<string, any>) =>
         router.get(route('stock-requests.index'), p, { preserveState: true, preserveScroll: true });
@@ -171,7 +171,7 @@ export default function index() {
                     pageSubtitle="Kelola data permintaan stok Anda di sini"
                     columns={columns}
                     data={stockRequests.data}
-                    pagination={pagination}
+                    pagination={stockRequests}
                     searchValue={fp.search}
                     searchPlaceholder="Search by request number or notes..."
                     onSearch={(v) => navigate({ ...fp, search: v, page: 1 })}
