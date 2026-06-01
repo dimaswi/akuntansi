@@ -85,12 +85,14 @@ interface ClosingPeriod {
 
 interface Props {
     period: ClosingPeriod;
+    closingMode: string;
 }
 
-export default function ShowClosingPeriod({ period }: Props) {
+export default function ShowClosingPeriod({ period, closingMode }: Props) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [showReopenDialog, setShowReopenDialog] = useState(false);
     const [reopenReason, setReopenReason] = useState('');
+    const hardCloseEnabled = closingMode === 'soft_and_hard';
 
     const getStatusBadge = (status: string) => {
         const badges = {
@@ -278,6 +280,16 @@ export default function ShowClosingPeriod({ period }: Props) {
                     </div>
                 )}
 
+                {period.status === 'soft_close' && !hardCloseEnabled && (
+                    <div className="mb-6 flex items-start gap-3 rounded-md border bg-muted/50 p-4">
+                        <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="text-sm text-muted-foreground">
+                            <p className="font-medium text-foreground">Hard close belum aktif</p>
+                            <p className="mt-1">Aktifkan Mode Tutup Buku = Full Implementation di halaman Settings &gt; Tutup Buku untuk menampilkan aksi hard close.</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Info - Reopen Reason */}
                 {period.reopen_reason && (
                     <div className="mb-6 flex items-start gap-3 rounded-md border bg-muted/50 p-4">
@@ -452,7 +464,7 @@ export default function ShowClosingPeriod({ period }: Props) {
                                     </Button>
                                 )}
 
-                                {period.status === 'soft_close' && (
+                                {period.status === 'soft_close' && hardCloseEnabled && (
                                     <Button
                                         className="w-full bg-orange-600 hover:bg-orange-700"
                                         onClick={handleHardClose}

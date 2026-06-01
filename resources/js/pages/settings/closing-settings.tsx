@@ -55,7 +55,7 @@ export default function ClosingSettings({ settings }: ClosingSettingsProps) {
         e.preventDefault();
         setIsSaving(true);
 
-        router.put(route('settings.closing-periods.update'), formData, {
+        router.put(route('settings.closing-periods.settings-update'), formData, {
             onSuccess: () => {
                 toast.success('Settings berhasil disimpan');
             },
@@ -74,11 +74,21 @@ export default function ClosingSettings({ settings }: ClosingSettingsProps) {
     };
 
     const getBooleanValue = (key: string): boolean => {
-        return formData[key] as boolean;
+        return Boolean(formData[key]);
     };
 
     const getStringValue = (key: string): string => {
-        return formData[key] as string;
+        const value = formData[key];
+
+        if (typeof value === 'string') {
+            return value;
+        }
+
+        if (typeof value === 'boolean') {
+            return value ? 'true' : 'false';
+        }
+
+        return '';
     };
 
     const updateSetting = (key: string, value: string | boolean) => {

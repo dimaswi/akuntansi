@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            ClosingPeriodSettingsSeeder::class,
             // BankAccountSeeder::class,
             DaftarAkunSeeder::class,
             DepartmentSeeder::class,

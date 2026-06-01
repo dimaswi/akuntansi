@@ -183,7 +183,12 @@ class ClosingPeriodSettingsSeeder extends Seeder
             ],
         ];
 
-        DB::table('closing_period_settings')->insert($settings);
+        foreach ($settings as $setting) {
+            DB::table('closing_period_settings')->updateOrInsert(
+                ['key' => $setting['key']],
+                $setting,
+            );
+        }
 
         // ===== PERIOD TEMPLATES =====
         $templates = [
@@ -270,7 +275,12 @@ class ClosingPeriodSettingsSeeder extends Seeder
             ],
         ];
 
-        DB::table('period_templates')->insert($templates);
+        foreach ($templates as $template) {
+            DB::table('period_templates')->updateOrInsert(
+                ['template_name' => $template['template_name']],
+                $template,
+            );
+        }
 
         $this->command->info('✓ Closing period settings and templates seeded successfully!');
         $this->command->info('✓ Module is DISABLED by default (closing_module_enabled = false)');

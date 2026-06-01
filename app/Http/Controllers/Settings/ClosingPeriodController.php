@@ -172,9 +172,14 @@ class ClosingPeriodController extends Controller
             'pending_approvals' => $closingPeriod->revisionLogs()->pending()->count(),
         ];
 
+        $period = $closingPeriod->toArray();
+        $period['statistics'] = $stats;
+        $period['recent_revisions'] = $closingPeriod->revisionLogs->toArray();
+        $closingMode = ClosingPeriodSetting::getClosingMode();
+
         return Inertia::render('settings/closing-periods/show', [
-            'period' => $closingPeriod,
-            'stats' => $stats,
+            'period' => $period,
+            'closingMode' => $closingMode,
         ]);
     }
 
@@ -192,8 +197,12 @@ class ClosingPeriodController extends Controller
 
         $templates = PeriodTemplate::active()->get();
 
+        $period = $closingPeriod->toArray();
+        $period['period_start'] = Carbon::parse($closingPeriod->period_start)->format('Y-m-d');
+        $period['period_end'] = Carbon::parse($closingPeriod->period_end)->format('Y-m-d');
+
         return Inertia::render('settings/closing-periods/edit', [
-            'period' => $closingPeriod,
+            'period' => $period,
             'templates' => $templates,
         ]);
     }
@@ -332,7 +341,7 @@ class ClosingPeriodController extends Controller
         // Check if mode supports hard close
         $mode = ClosingPeriodSetting::getClosingMode();
         if ($mode !== 'soft_and_hard') {
-            return back()->withErrors(['message' => 'Mode hard close belum diaktifkan di settings']);
+            return back()->withErrors(['message' => 'Hard close hanya tersedia jika Mode Tutup Buku diatur ke Full Implementation pada Settings > Tutup Buku']);
         }
 
         // Check if there are pending approvals
