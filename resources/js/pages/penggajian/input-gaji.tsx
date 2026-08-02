@@ -35,6 +35,7 @@ interface SalaryDetail {
     jasa_pelayanan_pratama: number;
     jasa_pelayanan_rawat_inap: number;
     jasa_pelayanan_rawat_jalan: number;
+    jasa_pelayanan_rawat_jalan_bpjs: number;
     tugas_tambahan: number;
     pph_21: number;
     infaq: number;
@@ -97,6 +98,7 @@ export default function InputGaji({ batch, users, details }: Props) {
                 jasa_pelayanan_pratama: d.jasa_pelayanan_pratama || 0,
                 jasa_pelayanan_rawat_inap: d.jasa_pelayanan_rawat_inap || 0,
                 jasa_pelayanan_rawat_jalan: d.jasa_pelayanan_rawat_jalan || 0,
+                jasa_pelayanan_rawat_jalan_bpjs: d.jasa_pelayanan_rawat_jalan_bpjs || 0,
                 tugas_tambahan: d.tugas_tambahan || 0,
                 pph_21: d.pph_21 || 0,
                 infaq: d.infaq || 0,
@@ -126,6 +128,7 @@ export default function InputGaji({ batch, users, details }: Props) {
             jasa_pelayanan_pratama: 0,
             jasa_pelayanan_rawat_inap: 0,
             jasa_pelayanan_rawat_jalan: 0,
+            jasa_pelayanan_rawat_jalan_bpjs: 0,
             tugas_tambahan: 0,
             pph_21: 0,
             infaq: 0,
@@ -183,6 +186,7 @@ export default function InputGaji({ batch, users, details }: Props) {
             (parseFloat(row.jasa_pelayanan_pratama?.toString() || '0')) +
             (parseFloat(row.jasa_pelayanan_rawat_inap?.toString() || '0')) +
             (parseFloat(row.jasa_pelayanan_rawat_jalan?.toString() || '0')) +
+            (parseFloat(row.jasa_pelayanan_rawat_jalan_bpjs?.toString() || '0')) +
             (parseFloat(row.tugas_tambahan?.toString() || '0'));
 
         const potongan =
@@ -239,7 +243,7 @@ export default function InputGaji({ batch, users, details }: Props) {
         const editableFields = [
             'gaji_pokok', 'tunjangan_sia', 'tunjangan_transportasi', 'tunjangan_jabatan',
             'uang_jaga_utama', 'uang_jaga_pratama', 'jasa_pelayanan_pratama',
-            'jasa_pelayanan_rawat_inap', 'jasa_pelayanan_rawat_jalan', 'tugas_tambahan',
+            'jasa_pelayanan_rawat_inap', 'jasa_pelayanan_rawat_jalan', 'jasa_pelayanan_rawat_jalan_bpjs', 'tugas_tambahan',
             'pph_21', 'infaq', 'bpjs_kesehatan', 'bpjs_ketenagakerjaan',
             'denda_absen', 'arisan_keluarga', 'denda_ngaji', 'kasbon'
         ];
@@ -357,7 +361,7 @@ export default function InputGaji({ batch, users, details }: Props) {
         const editableFields = [
             'gaji_pokok', 'tunjangan_sia', 'tunjangan_transportasi', 'tunjangan_jabatan',
             'uang_jaga_utama', 'uang_jaga_pratama', 'jasa_pelayanan_pratama',
-            'jasa_pelayanan_rawat_inap', 'jasa_pelayanan_rawat_jalan', 'tugas_tambahan',
+            'jasa_pelayanan_rawat_inap', 'jasa_pelayanan_rawat_jalan', 'jasa_pelayanan_rawat_jalan_bpjs', 'tugas_tambahan',
             'pph_21', 'infaq', 'bpjs_kesehatan', 'bpjs_ketenagakerjaan',
             'denda_absen', 'arisan_keluarga', 'denda_ngaji', 'kasbon'
         ];
@@ -518,6 +522,7 @@ export default function InputGaji({ batch, users, details }: Props) {
                     jasa_pelayanan_pratama: d.jasa_pelayanan_pratama || 0,
                     jasa_pelayanan_rawat_inap: d.jasa_pelayanan_rawat_inap || 0,
                     jasa_pelayanan_rawat_jalan: d.jasa_pelayanan_rawat_jalan || 0,
+                    jasa_pelayanan_rawat_jalan_bpjs: d.jasa_pelayanan_rawat_jalan_bpjs || 0,
                     tugas_tambahan: d.tugas_tambahan || 0,
                     pph_21: d.pph_21 || 0,
                     infaq: d.infaq || 0,
@@ -545,6 +550,7 @@ export default function InputGaji({ batch, users, details }: Props) {
                     jasa_pelayanan_pratama: 0,
                     jasa_pelayanan_rawat_inap: 0,
                     jasa_pelayanan_rawat_jalan: 0,
+                    jasa_pelayanan_rawat_jalan_bpjs: 0,
                     tugas_tambahan: 0,
                     pph_21: 0,
                     infaq: 0,
@@ -720,6 +726,7 @@ export default function InputGaji({ batch, users, details }: Props) {
                                 <th className="px-3 py-2 text-center font-semibold bg-green-50 border-r border-gray-200 w-[110px]">Jaspel Pratama</th>
                                 <th className="px-3 py-2 text-center font-semibold bg-green-50 border-r border-gray-200 w-[110px]">Jaspel Ranap</th>
                                 <th className="px-3 py-2 text-center font-semibold bg-green-50 border-r border-gray-200 w-[110px]">Jaspel Rajal</th>
+                                <th className="px-3 py-2 text-center font-semibold bg-green-50 border-r border-gray-200 w-[110px]">Jaspel Rajal BPJS</th>
                                 <th className="px-3 py-2 text-center font-semibold bg-green-50 border-r border-gray-200 w-[120px]">Tugas Tambahan</th>
                                 <th className="px-3 py-2 text-center font-semibold bg-red-50 border-r border-gray-200 w-[100px]">PPh 21</th>
                                 <th className="px-3 py-2 text-center font-semibold bg-red-50 border-r border-gray-200 w-[100px]">Infaq</th>
@@ -749,15 +756,16 @@ export default function InputGaji({ batch, users, details }: Props) {
                                     {renderInputCell(row, idx, 'jasa_pelayanan_pratama', 6)}
                                     {renderInputCell(row, idx, 'jasa_pelayanan_rawat_inap', 7)}
                                     {renderInputCell(row, idx, 'jasa_pelayanan_rawat_jalan', 8)}
-                                    {renderInputCell(row, idx, 'tugas_tambahan', 9)}
-                                    {renderInputCell(row, idx, 'pph_21', 10, 'bg-red-50/30')}
-                                    {renderInputCell(row, idx, 'infaq', 11, 'bg-red-50/30')}
-                                    {renderInputCell(row, idx, 'bpjs_kesehatan', 12, 'bg-red-50/30')}
-                                    {renderInputCell(row, idx, 'bpjs_ketenagakerjaan', 13, 'bg-red-50/30')}
-                                    {renderInputCell(row, idx, 'denda_absen', 14, 'bg-red-50/30')}
-                                    {renderInputCell(row, idx, 'arisan_keluarga', 15, 'bg-red-50/30')}
-                                    {renderInputCell(row, idx, 'denda_ngaji', 16, 'bg-red-50/30')}
-                                    {renderInputCell(row, idx, 'kasbon', 17, 'bg-red-50/30')}
+                                    {renderInputCell(row, idx, 'jasa_pelayanan_rawat_jalan_bpjs', 9)}
+                                    {renderInputCell(row, idx, 'tugas_tambahan', 10)}
+                                    {renderInputCell(row, idx, 'pph_21', 11, 'bg-red-50/30')}
+                                    {renderInputCell(row, idx, 'infaq', 12, 'bg-red-50/30')}
+                                    {renderInputCell(row, idx, 'bpjs_kesehatan', 13, 'bg-red-50/30')}
+                                    {renderInputCell(row, idx, 'bpjs_ketenagakerjaan', 14, 'bg-red-50/30')}
+                                    {renderInputCell(row, idx, 'denda_absen', 15, 'bg-red-50/30')}
+                                    {renderInputCell(row, idx, 'arisan_keluarga', 16, 'bg-red-50/30')}
+                                    {renderInputCell(row, idx, 'denda_ngaji', 17, 'bg-red-50/30')}
+                                    {renderInputCell(row, idx, 'kasbon', 18, 'bg-red-50/30')}
                                     <td className="sticky right-[270px] text-right bg-blue-100 font-semibold px-3 py-1 border-r border-gray-200 z-10 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                                         {formatRupiah(row.total_pendapatan)}
                                     </td>
@@ -771,7 +779,7 @@ export default function InputGaji({ batch, users, details }: Props) {
                             ))}
                             {/* Grand Total Row */}
                             <tr className="font-bold bg-gray-100 border-t-2 border-gray-300">
-                                <td colSpan={19} className="text-right px-3 py-2 sticky left-0 bg-gray-100 border-r border-gray-200 z-10 sticky-shadow-right">
+                                <td colSpan={20} className="text-right px-3 py-2 sticky left-0 bg-gray-100 border-r border-gray-200 z-10 sticky-shadow-right">
                                     GRAND TOTAL:
                                 </td>
                                 <td className="sticky right-[270px] text-right bg-blue-100 px-3 py-2 border-r border-gray-200 z-10 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">

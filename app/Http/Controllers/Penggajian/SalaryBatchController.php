@@ -293,6 +293,7 @@ class SalaryBatchController extends Controller
             'details.*.jasa_pelayanan_pratama' => 'nullable|numeric|min:0',
             'details.*.jasa_pelayanan_rawat_inap' => 'nullable|numeric|min:0',
             'details.*.jasa_pelayanan_rawat_jalan' => 'nullable|numeric|min:0',
+            'details.*.jasa_pelayanan_rawat_jalan_bpjs' => 'nullable|numeric|min:0',
             'details.*.tugas_tambahan' => 'nullable|numeric|min:0',
             'details.*.pph_21' => 'nullable|numeric|min:0',
             'details.*.infaq' => 'nullable|numeric|min:0',

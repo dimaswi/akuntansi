@@ -32,6 +32,7 @@ interface SalarySlip {
     jasa_pelayanan_pratama: number;
     jasa_pelayanan_rawat_inap: number;
     jasa_pelayanan_rawat_jalan: number;
+    jasa_pelayanan_rawat_jalan_bpjs: number;
     tugas_tambahan: number;
     total_pendapatan: number;
     // Potongan
@@ -404,6 +405,14 @@ export default function MySalary({ salarySlips, filters, summary, userName, user
                                                                     <span className="text-gray-600">Jaspel Rajal</span>
                                                                     <span className="item-amount font-medium text-green-600">
                                                                         {formatRupiah(slip.jasa_pelayanan_rawat_jalan)}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            {slip.jasa_pelayanan_rawat_jalan_bpjs > 0 && (
+                                                                <div className="item-row flex justify-between border-b border-gray-100 py-1 sm:py-1.5">
+                                                                    <span className="text-gray-600">Jaspel Rajal BPJS</span>
+                                                                    <span className="item-amount font-medium text-green-600">
+                                                                        {formatRupiah(slip.jasa_pelayanan_rawat_jalan_bpjs)}
                                                                     </span>
                                                                 </div>
                                                             )}
@@ -787,6 +796,12 @@ export default function MySalary({ salarySlips, filters, summary, userName, user
                                         <div className="flex justify-between p-2 text-sm">
                                             <span className="text-gray-700">Jaspel Rajal</span>
                                             <span className="font-semibold text-green-700">{formatRupiah(selectedSlip.jasa_pelayanan_rawat_jalan)}</span>
+                                        </div>
+                                    )}
+                                    {selectedSlip.jasa_pelayanan_rawat_jalan_bpjs > 0 && (
+                                        <div className="flex justify-between p-2 text-sm">
+                                            <span className="text-gray-700">Jaspel Rajal BPJS</span>
+                                            <span className="font-semibold text-green-700">{formatRupiah(selectedSlip.jasa_pelayanan_rawat_jalan_bpjs)}</span>
                                         </div>
                                     )}
                                     {selectedSlip.tugas_tambahan > 0 && (

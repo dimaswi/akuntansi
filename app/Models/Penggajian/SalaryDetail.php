@@ -24,6 +24,7 @@ class SalaryDetail extends Model
         'jasa_pelayanan_pratama',
         'jasa_pelayanan_rawat_inap',
         'jasa_pelayanan_rawat_jalan',
+        'jasa_pelayanan_rawat_jalan_bpjs',
         'tugas_tambahan',
         'total_pendapatan',
         // Potongan
@@ -50,6 +51,7 @@ class SalaryDetail extends Model
         'jasa_pelayanan_pratama' => 'decimal:2',
         'jasa_pelayanan_rawat_inap' => 'decimal:2',
         'jasa_pelayanan_rawat_jalan' => 'decimal:2',
+        'jasa_pelayanan_rawat_jalan_bpjs' => 'decimal:2',
         'tugas_tambahan' => 'decimal:2',
         'total_pendapatan' => 'decimal:2',
         'pph_21' => 'decimal:2',
@@ -91,6 +93,7 @@ class SalaryDetail extends Model
             $this->jasa_pelayanan_pratama +
             $this->jasa_pelayanan_rawat_inap +
             $this->jasa_pelayanan_rawat_jalan +
+            $this->jasa_pelayanan_rawat_jalan_bpjs +
             $this->tugas_tambahan;
 
         $this->total_potongan =
